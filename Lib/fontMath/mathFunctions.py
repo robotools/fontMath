@@ -1,0 +1,1 @@
+def add(v1, v2):    return v1 + v2def sub(v1, v2):    return v1 - v2def mul(v, f):    return v * fdef div(v, f):    return v / f
