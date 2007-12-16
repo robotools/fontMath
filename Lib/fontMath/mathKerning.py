@@ -40,7 +40,7 @@ class MathKerning(object):
         groupMap = self._groupMap
         #
         for groupName, glyphList in groupDict.items():
-            if groupName[0] != KERNING_CLASS_PREFIX:
+            if not groupName.startswith(KERNING_CLASS_PREFIX):
                 continue
             for glyphName in glyphList:
                 if not groupMap.has_key(glyphName):
