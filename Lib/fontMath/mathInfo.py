@@ -8,7 +8,8 @@ _infoAttrs = [
         'xHeight',
         'defaultWidth',
         'italicAngle',
-        'slantAngle'
+        'slantAngle',
+        'weightValue'
         ]
 
 
@@ -43,7 +44,10 @@ class MathInfo(object):
         for attr in _infoAttrs:
             if hasattr(copiedInfo, attr):
                 v = getattr(copiedInfo, attr)
-                v = funct(v, factor)
+                if v is not None and factor is not None:
+                    v = funct(v, factor)
+                else:
+                    v = None
                 setattr(copiedInfo, attr, v)
 
     def copy(self):
