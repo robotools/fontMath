@@ -419,7 +419,7 @@ class MathKerning(object):
         for (left, right), v in self._kerning.items():
             if v == 0:
                 leftType, rightType = self.guessPairType((left, right))
-                if leftType != "exception" or rightType != "exception":
+                if leftType != "exception" and rightType != "exception":
                     del self._kerning[left, right]
 
     def addTo(self, value):
