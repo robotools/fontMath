@@ -84,6 +84,9 @@ class MathKerning(object):
         """
         return list(self._groups[groupName])
 
+    def __contains__(self, pair):
+        return pair in self._kerning
+
     def __getitem__(self, pair):
         """
         >>> kerning = {
