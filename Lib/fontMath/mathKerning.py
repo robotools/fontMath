@@ -195,8 +195,7 @@ class MathKerning(object):
         return k
 
     def _processMathOne(self, other, funct):
-        from sets import Set
-        comboPairs = Set(self._kerning.keys()) | Set(other._kerning.keys())
+        comboPairs = set(self._kerning.keys()) | set(other._kerning.keys())
         kerning = dict.fromkeys(comboPairs, None)
         for k in comboPairs:
             v1 = self.get(k, 0)
@@ -208,11 +207,11 @@ class MathKerning(object):
         if g1 == g2:
             groups = g1
         else:
-            comboGroups = Set(g1.keys()) | Set(g2.keys())
-            groups = dict.fromkeys(comboGroups, Set())
+            comboGroups = set(g1.keys()) | set(g2.keys())
+            groups = dict.fromkeys(comboGroups, None)
             for groupName in comboGroups:
-                s1 = Set(g1.get(groupName, []))
-                s2 = Set(g2.get(groupName, []))
+                s1 = set(g1.get(groupName, []))
+                s2 = set(g2.get(groupName, []))
                 groups[groupName] = list(s1 | s2)
         ks = MathKerning(kerning, groups)
         return ks
