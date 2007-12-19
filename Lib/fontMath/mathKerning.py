@@ -357,7 +357,7 @@ class MathKerning(object):
         ... }
         >>> obj = MathKerning(kerning, groups) / 2
         >>> sorted(obj.items())
-        [(('@C', '@C'), 4), (('B', 'B'), 2), (('C2', '@C'), 0)]
+        [(('@C', '@C'), 2), (('B', 'B'), 2), (('C2', '@C'), 0)]
         """
         k = self._processMathTwo(value, div)
         k.cleanup()
@@ -377,7 +377,7 @@ class MathKerning(object):
         ... }
         >>> obj = 2 / MathKerning(kerning, groups)
         >>> sorted(obj.items())
-        [(('@C', '@C'), 4), (('B', 'B'), 2), (('C2', '@C'), 0)]
+        [(('@C', '@C'), 2), (('B', 'B'), 2), (('C2', '@C'), 0)]
         """
         k = self._processMathTwo(value, div)
         k.cleanup()
@@ -407,6 +407,8 @@ class MathKerning(object):
         ...     ("B", "B") : 1,
         ...     ("C", "@C") : 0,
         ...     ("@C", "@C") : 1,
+        ...     ("D", "D") : 1.0,
+        ...     ("E", "E") : 1.2,
         ... }
         >>> groups = {
         ...     "@C" : ["C", "C1"]
@@ -414,9 +416,12 @@ class MathKerning(object):
         >>> obj = MathKerning(kerning, groups)
         >>> obj.cleanup()
         >>> sorted(obj.items())
-        [(('@C', '@C'), 1), (('B', 'B'), 1), (('C', '@C'), 0)]
+        [(('@C', '@C'), 1), (('B', 'B'), 1), (('C', '@C'), 0), (('D', 'D'), 1), (('E', 'E'), 1.2)]
         """
         for (left, right), v in self._kerning.items():
+            if int(v) == v:
+                v = int(v)
+                self._kerning[left, right] = v
             if v == 0:
                 leftType, rightType = self.guessPairType((left, right))
                 if leftType != "exception" and rightType != "exception":
