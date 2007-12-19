@@ -62,6 +62,22 @@ class MathKerning(object):
                     g[groupName].append(glyphName)
         return g
 
+    def getGroupsForGlyph(self, glyphName):
+        """
+        >>> groups = {
+        ...     "@A1" : ["A", "B"],
+        ...     "@A2" : ["A"],
+        ...     "@A3" : ["A"],
+        ...     "@A4" : ["A"],
+        ... }
+        >>> obj = MathKerning({}, groups)
+        >>> sorted(obj.getGroupsForGlyph("A"))
+        ['@A1', '@A2', '@A3', '@A4']
+        >>> sorted(obj.getGroupsForGlyph("B"))
+        ['@A1']
+        """
+        return list(self._groupMap.get(glyphName, []))
+
     def __getitem__(self, pair):
         """
         >>> kerning = {
