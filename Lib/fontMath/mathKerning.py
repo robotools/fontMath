@@ -32,10 +32,8 @@ class MathKerning(object):
 
     def updateGroups(self, groups):
         self._groupMap = {}
-        #
         groupDict = groups
         groupMap = self._groupMap
-        #
         for groupName, glyphList in groupDict.items():
             if not groupName.startswith("@"):
                 continue
@@ -90,14 +88,13 @@ class MathKerning(object):
         """
         if self._kerning.has_key(pair):
             return self._kerning[pair]
-        #
+
         left, right = pair
-        #
         potentialLeft = [left]
         potentialLeft.extend(self._groupMap.get(left, []))
         potentialRight = [right]
         potentialRight.extend(self._groupMap.get(right, []))
-        #
+
         notClassed = []
         halfClassed = []
         fullClassed = []
@@ -153,7 +150,7 @@ class MathKerning(object):
         CLASS_TYPE = "class"
         SINGLE_TYPE = "single"
         EXCEPTION_TYPE = "exception"
-        #
+
         leftType = SINGLE_TYPE
         rightType = SINGLE_TYPE
         # is the left a simple class?
@@ -162,7 +159,7 @@ class MathKerning(object):
         # or is it part of a class?
         if right[0] == "@":
             rightType = CLASS_TYPE
-        #
+
         if self._kerning.has_key(pair):
             potLeft = [left]
             potRight = [right]
@@ -172,7 +169,6 @@ class MathKerning(object):
             if rightType == SINGLE_TYPE and self._groupMap.has_key(right):
                     for groupName in self._groupMap[right]:
                         potRight.append(groupName)
-            #
             hits = []
             for left in potLeft:
                 for right in potRight:
@@ -207,7 +203,6 @@ class MathKerning(object):
             v2 = other.get(k, 0)
             v = funct(v1, v2)
             kerning[k] = v
-        #
         g1 = self.groups()
         g2 = other.groups()
         if g1 == g2:
@@ -219,7 +214,6 @@ class MathKerning(object):
                 s1 = Set(g1.get(groupName, []))
                 s2 = Set(g2.get(groupName, []))
                 groups[groupName] = list(s1 | s2)
-        #
         ks = MathKerning(kerning, groups)
         return ks
 
