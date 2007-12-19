@@ -16,9 +16,6 @@ from copy import deepcopy
 from mathFunctions import add, sub, mul, div
 
 
-KERNING_CLASS_PREFIX = '@'
-
-
 class MathKerning(object):
 
     def __init__(self, kerning={}, groups={}):
@@ -40,7 +37,7 @@ class MathKerning(object):
         groupMap = self._groupMap
         #
         for groupName, glyphList in groupDict.items():
-            if not groupName.startswith(KERNING_CLASS_PREFIX):
+            if not groupName.startswith("@"):
                 continue
             for glyphName in glyphList:
                 if not groupMap.has_key(glyphName):
@@ -108,11 +105,11 @@ class MathKerning(object):
             for r in potentialRight:
                 if self._kerning.has_key((l, r)):
                     v = self._kerning[l, r]
-                    if l[0] == KERNING_CLASS_PREFIX and r[0] == KERNING_CLASS_PREFIX:
+                    if l[0] == "@" and r[0] == "@":
                         fullClassed.append((l, r, v))
-                    elif l[0] == KERNING_CLASS_PREFIX and r[0] != KERNING_CLASS_PREFIX:
+                    elif l[0] == "@" and r[0] != "@":
                         halfClassed.append((l, r, v))
-                    elif l[0] != KERNING_CLASS_PREFIX and r[0] == KERNING_CLASS_PREFIX:
+                    elif l[0] != "@" and r[0] == "@":
                         halfClassed.append((l, r, v))
                     else:
                         notClassed.append((l, r, v))
@@ -160,10 +157,10 @@ class MathKerning(object):
         leftType = SINGLE_TYPE
         rightType = SINGLE_TYPE
         # is the left a simple class?
-        if left[0] == KERNING_CLASS_PREFIX:
+        if left[0] == "@":
             leftType = CLASS_TYPE
         # or is it part of a class?
-        if right[0] == KERNING_CLASS_PREFIX:
+        if right[0] == "@":
             rightType = CLASS_TYPE
         #
         if self._kerning.has_key(pair):
@@ -183,10 +180,10 @@ class MathKerning(object):
                         hits.append((left, right))
             for left, right in hits:
                 if leftType != CLASS_TYPE:
-                    if left[0] == KERNING_CLASS_PREFIX:
+                    if left[0] == "@":
                         leftType = EXCEPTION_TYPE
                 if rightType != CLASS_TYPE:
-                    if right[0] == KERNING_CLASS_PREFIX:
+                    if right[0] == "@":
                         rightType = EXCEPTION_TYPE
         return (leftType, rightType)
 
