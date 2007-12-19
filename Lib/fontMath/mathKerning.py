@@ -32,11 +32,13 @@ class MathKerning(object):
 
     def updateGroups(self, groups):
         self._groupMap = {}
+        self._groups = {}
         groupDict = groups
         groupMap = self._groupMap
         for groupName, glyphList in groupDict.items():
             if not groupName.startswith("@"):
                 continue
+            self._groups[groupName] = list(glyphList)
             for glyphName in glyphList:
                 if not groupMap.has_key(glyphName):
                     groupMap[glyphName] = []
@@ -53,14 +55,7 @@ class MathKerning(object):
         return self._kerning.items()
 
     def groups(self):
-        g = {}
-        for glyphName, groupList in self._groupMap.items():
-            for groupName in groupList:
-                if not g.has_key(groupName):
-                    g[groupName] = []
-                if not glyphName in g[groupName]:
-                    g[groupName].append(glyphName)
-        return g
+        return deepcopy(self._groups)
 
     def getGroupsForGlyph(self, glyphName):
         """
@@ -77,6 +72,17 @@ class MathKerning(object):
         ['@A1']
         """
         return list(self._groupMap.get(glyphName, []))
+
+    def getGroupContents(self, groupName):
+        """
+        >>> groups = {
+        ...     "@A1" : ["A", "B"]
+        ... }
+        >>> obj = MathKerning({}, groups)
+        >>> obj.getGroupContents("@A1")
+        ['A', 'B']
+        """
+        return list(self._groups[groupName])
 
     def __getitem__(self, pair):
         """
