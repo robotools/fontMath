@@ -201,11 +201,11 @@ class MathInfo(object):
                 v = getattr(self, attr)
                 if v is not None:
                     if typ == int:
-                        v = int(v)
+                        v = int(round(v))
                     elif typ == float:
                         v = float(v)
                     elif typ == intList:
-                        v = [int(i) for i in v]
+                        v = [int(round(i)) for i in v]
                     elif typ == unicode:
                         # don't need to do any conversion
                         pass
