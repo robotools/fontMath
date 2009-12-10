@@ -312,7 +312,7 @@ class MathInfo(object):
         >>> sorted(expected) == sorted(written)
         True
         """
-        for attr, typ in _infoAttrs.items():
+        for attr, typ in _infoAttrs.items() + [("postscriptWeightName", unicode)]:
             if hasattr(self, attr):
                 v = getattr(self, attr)
                 if v is not None:
