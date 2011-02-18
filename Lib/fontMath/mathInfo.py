@@ -69,6 +69,11 @@ _postscriptWeightNameOptions = {
     900 : "Black"
 }
 
+_valueClippingRanges = dict(
+    openTypeOS2WidthClass=(1, 9),
+    openTypeOS2WeightClass=(0, None), # the OT spec is vague and doesn't really give a minimum or a maximum apart from the 16-bit unsigned int range
+)
+
 
 class MathInfo(object):
 
@@ -316,6 +321,14 @@ class MathInfo(object):
             if hasattr(self, attr):
                 v = getattr(self, attr)
                 if v is not None:
+                    # normalize values
+                    if attr in _valueClippingRanges:
+                        minValue, maxValue = _valueClippingRanges[attr]
+                        if minValue is not None and v < minValue:
+                            v = minValue
+                        elif maxValue is not None and v > maxValue:
+                            v = maxValue
+                    # convert to proper type
                     if typ == int:
                         v = int(round(v))
                     elif typ == float:
