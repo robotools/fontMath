@@ -5,16 +5,15 @@ class kerning dictionary.
 It scans a group dictionary and stores
 a mapping of glyph to group relationships.
 this map is then used to lookup kerning values.
-
-It is important to note that all groups names
-used in class kerning pairs must have the
-standard kerning class prefix (@) at the begining
-of the group name.
 """
 
 from copy import deepcopy
 from mathFunctions import add, sub, mul, div
 
+try:
+    set
+except NameError:
+    from sets import Set as set
 
 class MathKerning(object):
 
@@ -36,7 +35,7 @@ class MathKerning(object):
         groupDict = groups
         groupMap = self._groupMap
         for groupName, glyphList in groupDict.items():
-            if not groupName.startswith("@"):
+            if not groupName.startswith("public.kern1.") and not groupName.startswith("public.kern2."):
                 continue
             self._groups[groupName] = list(glyphList)
             for glyphName in glyphList:
@@ -60,26 +59,26 @@ class MathKerning(object):
     def getGroupsForGlyph(self, glyphName):
         """
         >>> groups = {
-        ...     "@A1" : ["A", "B"],
-        ...     "@A2" : ["A"],
-        ...     "@A3" : ["A"],
-        ...     "@A4" : ["A"],
+        ...     "public.kern1.A1" : ["A", "B"],
+        ...     "public.kern1.A2" : ["A"],
+        ...     "public.kern2.A3" : ["A"],
+        ...     "public.kern2.A4" : ["A"],
         ... }
         >>> obj = MathKerning({}, groups)
         >>> sorted(obj.getGroupsForGlyph("A"))
-        ['@A1', '@A2', '@A3', '@A4']
+        ['public.kern1.A1', 'public.kern1.A2', 'public.kern2.A3', 'public.kern2.A4']
         >>> sorted(obj.getGroupsForGlyph("B"))
-        ['@A1']
+        ['public.kern1.A1']
         """
         return list(self._groupMap.get(glyphName, []))
 
     def getGroupContents(self, groupName):
         """
         >>> groups = {
-        ...     "@A1" : ["A", "B"]
+        ...     "public.kern1.A1" : ["A", "B"]
         ... }
         >>> obj = MathKerning({}, groups)
-        >>> obj.getGroupContents("@A1")
+        >>> obj.getGroupContents("public.kern1.A1")
         ['A', 'B']
         """
         return list(self._groups[groupName])
@@ -90,14 +89,14 @@ class MathKerning(object):
     def __getitem__(self, pair):
         """
         >>> kerning = {
-        ...     ("@A_left", "@A_right") : 1,
-        ...     ("A1", "@A_right") : 2,
-        ...     ("@A_left", "A2") : 3,
+        ...     ("public.kern1.A", "public.kern2.A") : 1,
+        ...     ("A1", "public.kern2.A") : 2,
+        ...     ("public.kern1.A", "A2") : 3,
         ...     ("A3", "A3") : 4,
         ... }
         >>> groups = {
-        ... "@A_left" : ["A", "A1", "A2", "A3"],
-        ... "@A_right" : ["A", "A1", "A2", "A3"],
+        ... "public.kern1.A" : ["A", "A1", "A2", "A3"],
+        ... "public.kern2.A" : ["A", "A1", "A2", "A3"],
         ... }
         >>> obj = MathKerning(kerning, groups)
         >>> obj["A", "A"]
@@ -114,24 +113,24 @@ class MathKerning(object):
         if self._kerning.has_key(pair):
             return self._kerning[pair]
 
-        left, right = pair
-        potentialLeft = [left]
-        potentialLeft.extend(self._groupMap.get(left, []))
-        potentialRight = [right]
-        potentialRight.extend(self._groupMap.get(right, []))
+        side1, side2 = pair
+        potentialSide1 = [side1]
+        potentialSide1.extend(self._groupMap.get(side1, []))
+        potentialSide2 = [side2]
+        potentialSide2.extend(self._groupMap.get(side2, []))
 
         notClassed = []
         halfClassed = []
         fullClassed = []
-        for l in potentialLeft:
-            for r in potentialRight:
+        for l in potentialSide1:
+            for r in potentialSide2:
                 if self._kerning.has_key((l, r)):
                     v = self._kerning[l, r]
-                    if l[0] == "@" and r[0] == "@":
+                    if l.startswith("public.kern1.") and r.startswith("public.kern2."):
                         fullClassed.append((l, r, v))
-                    elif l[0] == "@" and r[0] != "@":
+                    elif l.startswith("public.kern1.") and not l.startswith("public.kern2.") :
                         halfClassed.append((l, r, v))
-                    elif l[0] != "@" and r[0] == "@":
+                    elif not l.startswith("public.kern1.") and r.startswith("public.kern2."):
                         halfClassed.append((l, r, v))
                     else:
                         notClassed.append((l, r, v))
@@ -150,63 +149,63 @@ class MathKerning(object):
     def guessPairType(self, pair):
         """
         >>> kerning = {
-        ...     ("@A_left", "@A_right") : 1,
-        ...     ("A1", "@A_right") : 2,
-        ...     ("@A_left", "A2") : 3,
+        ...     ("public.kern1.A", "public.kern2.A") : 1,
+        ...     ("A1", "public.kern2.A") : 2,
+        ...     ("public.kern1.A", "A2") : 3,
         ...     ("A3", "A3") : 4,
         ... }
         >>> groups = {
-        ... "@A_left" : ["A", "A1", "A2", "A3"],
-        ... "@A_right" : ["A", "A1", "A2", "A3"],
+        ... "public.kern1.A" : ["A", "A1", "A2", "A3"],
+        ... "public.kern2.A" : ["A", "A1", "A2", "A3"],
         ... }
         >>> obj = MathKerning(kerning, groups)
-        >>> obj.guessPairType(("@A_left", "@A_right"))
+        >>> obj.guessPairType(("public.kern1.A", "public.kern2.A"))
         ('class', 'class')
-        >>> obj.guessPairType(("A1", "@A_right"))
+        >>> obj.guessPairType(("A1", "public.kern2.A"))
         ('exception', 'class')
-        >>> obj.guessPairType(("@A_left", "A2"))
+        >>> obj.guessPairType(("public.kern1.A", "A2"))
         ('class', 'exception')
         >>> obj.guessPairType(("A3", "A3"))
         ('exception', 'exception')
         >>> obj.guessPairType(("A", "A"))
         ('single', 'single')
         """
-        left, right = pair
+        side1, side2 = pair
         CLASS_TYPE = "class"
         SINGLE_TYPE = "single"
         EXCEPTION_TYPE = "exception"
 
-        leftType = SINGLE_TYPE
-        rightType = SINGLE_TYPE
-        # is the left a simple class?
-        if left[0] == "@":
-            leftType = CLASS_TYPE
+        side1Type = SINGLE_TYPE
+        side2Type = SINGLE_TYPE
+        # is the side1 a simple class?
+        if side1.startswith("public.kern1."):
+            side1Type = CLASS_TYPE
         # or is it part of a class?
-        if right[0] == "@":
-            rightType = CLASS_TYPE
+        if side2.startswith("public.kern2."):
+            side2Type = CLASS_TYPE
 
         if self._kerning.has_key(pair):
-            potLeft = [left]
-            potRight = [right]
-            if leftType == SINGLE_TYPE and self._groupMap.has_key(left):
-                    for groupName in self._groupMap[left]:
-                        potLeft.append(groupName)
-            if rightType == SINGLE_TYPE and self._groupMap.has_key(right):
-                    for groupName in self._groupMap[right]:
-                        potRight.append(groupName)
+            potSide1 = [side1]
+            potSide2 = [side2]
+            if side1Type == SINGLE_TYPE and self._groupMap.has_key(side1):
+                    for groupName in self._groupMap[side1]:
+                        potSide1.append(groupName)
+            if side2Type == SINGLE_TYPE and self._groupMap.has_key(side2):
+                    for groupName in self._groupMap[side2]:
+                        potSide2.append(groupName)
             hits = []
-            for left in potLeft:
-                for right in potRight:
-                    if self._kerning.has_key((left, right)):
-                        hits.append((left, right))
-            for left, right in hits:
-                if leftType != CLASS_TYPE:
-                    if left[0] == "@":
-                        leftType = EXCEPTION_TYPE
-                if rightType != CLASS_TYPE:
-                    if right[0] == "@":
-                        rightType = EXCEPTION_TYPE
-        return (leftType, rightType)
+            for side1 in potSide1:
+                for side2 in potSide2:
+                    if self._kerning.has_key((side1, side2)):
+                        hits.append((side1, side2))
+            for side1, side2 in hits:
+                if side1Type != CLASS_TYPE:
+                    if side1.startswith("public.kern1."):
+                        side1Type = EXCEPTION_TYPE
+                if side2Type != CLASS_TYPE:
+                    if side2.startswith("public.kern2."):
+                        side2Type = EXCEPTION_TYPE
+        return (side1Type, side2Type)
 
     def get(self, pair, default=0):
         v = self[pair]
@@ -256,28 +255,32 @@ class MathKerning(object):
         ...     ("A", "A") : 1,
         ...     ("B", "B") : 1,
         ...     ("NotIn2", "NotIn2") : 1,
-        ...     ("@NotIn2", "C") : 1,
-        ...     ("@D", "@D") : 1,
+        ...     ("public.kern1.NotIn2", "C") : 1,
+        ...     ("public.kern1.D", "public.kern2.D") : 1,
         ... }
         >>> groups1 = {
-        ...     "@NotIn1" : ["C"],
-        ...     "@D" : ["D", "H"],
+        ...     "public.kern1.NotIn1" : ["C"],
+        ...     "public.kern1.D" : ["D", "H"],
+        ...     "public.kern2.D" : ["D", "H"],
         ... }
         >>> kerning2 = {
         ...     ("A", "A") : -1,
         ...     ("B", "B") : 1,
         ...     ("NotIn1", "NotIn1") : 1,
-        ...     ("@NotIn1", "C") : 1,
-        ...     ("@D", "@D") : 1,
+        ...     ("public.kern1.NotIn1", "C") : 1,
+        ...     ("public.kern1.D", "public.kern2.D") : 1,
         ... }
         >>> groups2 = {
-        ...     "@NotIn2" : ["C"],
-        ...     "@D" : ["D"],
+        ...     "public.kern1.NotIn2" : ["C"],
+        ...     "public.kern1.D" : ["D", "H"],
+        ...     "public.kern2.D" : ["D", "H"],
         ... }
         >>> obj = MathKerning(kerning1, groups1) + MathKerning(kerning2, groups2)
         >>> sorted(obj.items())
-        [(('@D', '@D'), 2), (('@NotIn1', 'C'), 1), (('@NotIn2', 'C'), 1), (('B', 'B'), 2), (('NotIn1', 'NotIn1'), 1), (('NotIn2', 'NotIn2'), 1)]
-        >>> sorted(obj.groups()["@D"])
+        [(('B', 'B'), 2), (('NotIn1', 'NotIn1'), 1), (('NotIn2', 'NotIn2'), 1), (('public.kern1.D', 'public.kern2.D'), 2), (('public.kern1.NotIn1', 'C'), 1), (('public.kern1.NotIn2', 'C'), 1)]
+        >>> sorted(obj.groups()["public.kern1.D"])
+        ['D', 'H']
+        >>> sorted(obj.groups()["public.kern2.D"])
         ['D', 'H']
         """
         k = self._processMathOne(other, add)
@@ -290,28 +293,32 @@ class MathKerning(object):
         ...     ("A", "A") : 1,
         ...     ("B", "B") : 1,
         ...     ("NotIn2", "NotIn2") : 1,
-        ...     ("@NotIn2", "C") : 1,
-        ...     ("@D", "@D") : 1,
+        ...     ("public.kern1.NotIn2", "C") : 1,
+        ...     ("public.kern1.D", "public.kern2.D") : 1,
         ... }
         >>> groups1 = {
-        ...     "@NotIn1" : ["C"],
-        ...     "@D" : ["D", "H"],
+        ...     "public.kern1.NotIn1" : ["C"],
+        ...     "public.kern1.D" : ["D", "H"],
+        ...     "public.kern2.D" : ["D", "H"],
         ... }
         >>> kerning2 = {
         ...     ("A", "A") : -1,
         ...     ("B", "B") : 1,
         ...     ("NotIn1", "NotIn1") : 1,
-        ...     ("@NotIn1", "C") : 1,
-        ...     ("@D", "@D") : 1,
+        ...     ("public.kern1.NotIn1", "C") : 1,
+        ...     ("public.kern1.D", "public.kern2.D") : 1,
         ... }
         >>> groups2 = {
-        ...     "@NotIn2" : ["C"],
-        ...     "@D" : ["D"],
+        ...     "public.kern1.NotIn2" : ["C"],
+        ...     "public.kern1.D" : ["D"],
+        ...     "public.kern2.D" : ["D", "H"],
         ... }
         >>> obj = MathKerning(kerning1, groups1) - MathKerning(kerning2, groups2)
         >>> sorted(obj.items())
-        [(('@NotIn1', 'C'), -1), (('@NotIn2', 'C'), 1), (('A', 'A'), 2), (('NotIn1', 'NotIn1'), -1), (('NotIn2', 'NotIn2'), 1)]
-        >>> sorted(obj.groups()["@D"])
+        [(('A', 'A'), 2), (('NotIn1', 'NotIn1'), -1), (('NotIn2', 'NotIn2'), 1), (('public.kern1.NotIn1', 'C'), -1), (('public.kern1.NotIn2', 'C'), 1)]
+        >>> sorted(obj.groups()["public.kern1.D"])
+        ['D', 'H']
+        >>> sorted(obj.groups()["public.kern2.D"])
         ['D', 'H']
         """
         k = self._processMathOne(other, sub)
@@ -323,16 +330,16 @@ class MathKerning(object):
         >>> kerning = {
         ...     ("A", "A") : 0,
         ...     ("B", "B") : 1,
-        ...     ("C2", "@C") : 0,
-        ...     ("@C", "@C") : 2,
+        ...     ("C2", "public.kern2.C") : 0,
+        ...     ("public.kern1.C", "public.kern2.C") : 2,
         ... }
         >>> groups = {
-        ...     "@C" : ["C1", "C2"],
-        ...     "@C" : ["C1", "C2"],
+        ...     "public.kern1.C" : ["C1", "C2"],
+        ...     "public.kern2.C" : ["C1", "C2"],
         ... }
         >>> obj = MathKerning(kerning, groups) * 2
         >>> sorted(obj.items())
-        [(('@C', '@C'), 4), (('B', 'B'), 2), (('C2', '@C'), 0)]
+        [(('B', 'B'), 2), (('C2', 'public.kern2.C'), 0), (('public.kern1.C', 'public.kern2.C'), 4)]
         """
         k = self._processMathTwo(value, mul)
         k.cleanup()
@@ -343,16 +350,16 @@ class MathKerning(object):
         >>> kerning = {
         ...     ("A", "A") : 0,
         ...     ("B", "B") : 1,
-        ...     ("C2", "@C") : 0,
-        ...     ("@C", "@C") : 2,
+        ...     ("C2", "public.kern2.C") : 0,
+        ...     ("public.kern1.C", "public.kern2.C") : 2,
         ... }
         >>> groups = {
-        ...     "@C" : ["C1", "C2"],
-        ...     "@C" : ["C1", "C2"],
+        ...     "public.kern1.C" : ["C1", "C2"],
+        ...     "public.kern2.C" : ["C1", "C2"],
         ... }
         >>> obj = 2 * MathKerning(kerning, groups)
         >>> sorted(obj.items())
-        [(('@C', '@C'), 4), (('B', 'B'), 2), (('C2', '@C'), 0)]
+        [(('B', 'B'), 2), (('C2', 'public.kern2.C'), 0), (('public.kern1.C', 'public.kern2.C'), 4)]
         """
         k = self._processMathTwo(value, mul)
         k.cleanup()
@@ -363,16 +370,16 @@ class MathKerning(object):
         >>> kerning = {
         ...     ("A", "A") : 0,
         ...     ("B", "B") : 4,
-        ...     ("C2", "@C") : 0,
-        ...     ("@C", "@C") : 4,
+        ...     ("C2", "public.kern2.C") : 0,
+        ...     ("public.kern1.C", "public.kern2.C") : 4,
         ... }
         >>> groups = {
-        ...     "@C" : ["C1", "C2"],
-        ...     "@C" : ["C1", "C2"],
+        ...     "public.kern1.C" : ["C1", "C2"],
+        ...     "public.kern2.C" : ["C1", "C2"],
         ... }
         >>> obj = MathKerning(kerning, groups) / 2
         >>> sorted(obj.items())
-        [(('@C', '@C'), 2), (('B', 'B'), 2), (('C2', '@C'), 0)]
+        [(('B', 'B'), 2), (('C2', 'public.kern2.C'), 0), (('public.kern1.C', 'public.kern2.C'), 2)]
         """
         k = self._processMathTwo(value, div)
         k.cleanup()
@@ -383,16 +390,16 @@ class MathKerning(object):
         >>> kerning = {
         ...     ("A", "A") : 0,
         ...     ("B", "B") : 4,
-        ...     ("C2", "@C") : 0,
-        ...     ("@C", "@C") : 4,
+        ...     ("C2", "public.kern2.C") : 0,
+        ...     ("public.kern1.C", "public.kern2.C") : 4,
         ... }
         >>> groups = {
-        ...     "@C" : ["C1", "C2"],
-        ...     "@C" : ["C1", "C2"],
+        ...     "public.kern1.C" : ["C1", "C2"],
+        ...     "public.kern2.C" : ["C1", "C2"],
         ... }
         >>> obj = 2 / MathKerning(kerning, groups)
         >>> sorted(obj.items())
-        [(('@C', '@C'), 2), (('B', 'B'), 2), (('C2', '@C'), 0)]
+        [(('B', 'B'), 2), (('C2', 'public.kern2.C'), 0), (('public.kern1.C', 'public.kern2.C'), 2)]
         """
         k = self._processMathTwo(value, div)
         k.cleanup()
@@ -420,27 +427,28 @@ class MathKerning(object):
         >>> kerning = {
         ...     ("A", "A") : 0,
         ...     ("B", "B") : 1,
-        ...     ("C", "@C") : 0,
-        ...     ("@C", "@C") : 1,
+        ...     ("C", "public.kern2.C") : 0,
+        ...     ("public.kern1.C", "public.kern2.C") : 1,
         ...     ("D", "D") : 1.0,
         ...     ("E", "E") : 1.2,
         ... }
         >>> groups = {
-        ...     "@C" : ["C", "C1"]
+        ...     "public.kern1.C" : ["C", "C1"],
+        ...     "public.kern2.C" : ["C", "C1"]
         ... }
         >>> obj = MathKerning(kerning, groups)
         >>> obj.cleanup()
         >>> sorted(obj.items())
-        [(('@C', '@C'), 1), (('B', 'B'), 1), (('C', '@C'), 0), (('D', 'D'), 1), (('E', 'E'), 1.2)]
+        [(('B', 'B'), 1), (('C', 'public.kern2.C'), 0), (('D', 'D'), 1), (('E', 'E'), 1.2), (('public.kern1.C', 'public.kern2.C'), 1)]
         """
-        for (left, right), v in self._kerning.items():
+        for (side1, side2), v in self._kerning.items():
             if int(v) == v:
                 v = int(v)
-                self._kerning[left, right] = v
+                self._kerning[side1, side2] = v
             if v == 0:
-                leftType, rightType = self.guessPairType((left, right))
-                if leftType != "exception" and rightType != "exception":
-                    del self._kerning[left, right]
+                side1Type, side2Type = self.guessPairType((side1, side2))
+                if side1Type != "exception" and side2Type != "exception":
+                    del self._kerning[side1, side2]
 
     def addTo(self, value):
         """
