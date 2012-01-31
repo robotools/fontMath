@@ -1,58 +1,102 @@
 from mathFunctions import add, sub, mul, div
 
+# ----------
+# Formatters
+# ----------
+
+def _numberFormatter(value):
+    v = int(value)
+    if v == value:
+        return v
+    return value
+
+def _integerFormatter(value):
+    return int(round(value))
+
+def _floatFormatter(value):
+    return float(value)
+
+def _nonNegativeNumberFormatter(value):
+    if value < 0:
+        return 0
+    return value
+
+def _integerListFormatter(value):
+    return [_integerFormatter(v) for v in value]
+
+def _numberListFormatter(value):
+    return [_numberFormatter(v) for v in value]
+
+def _openTypeOS2WidthClassFormatter(value):
+    value = int(round(value))
+    if value > 9:
+        value = 9
+    elif value < 1:
+        value = 1
+    return value
+
+def _openTypeOS2WeightClassFormatter(value):
+    value = int(round(value))
+    if value < 0:
+        value = 0
+    return value
+
 _infoAttrs = dict(
-    unitsPerEm=int,
-    descender=int,
-    xHeight=int,
-    capHeight=int,
-    ascender=int,
-    italicAngle=float,
-    openTypeHeadLowestRecPPEM=int,
-    openTypeHheaAscender=int,
-    openTypeHheaDescender=int,
-    openTypeHheaLineGap=int,
-    openTypeHheaCaretSlopeRise=int,
-    openTypeHheaCaretSlopeRun=int,
-    openTypeHheaCaretOffset=int,
-    openTypeOS2WidthClass=int,
-    openTypeOS2WeightClass=int,
-    openTypeOS2Panose="intList",
-    openTypeOS2FamilyClass="intList",
-    openTypeOS2TypoAscender=int,
-    openTypeOS2TypoDescender=int,
-    openTypeOS2TypoLineGap=int,
-    openTypeOS2WinAscent=int,
-    openTypeOS2WinDescent=int,
-    openTypeOS2SubscriptXSize=int,
-    openTypeOS2SubscriptYSize=int,
-    openTypeOS2SubscriptXOffset=int,
-    openTypeOS2SubscriptYOffset=int,
-    openTypeOS2SuperscriptXSize=int,
-    openTypeOS2SuperscriptYSize=int,
-    openTypeOS2SuperscriptXOffset=int,
-    openTypeOS2SuperscriptYOffset=int,
-    openTypeOS2StrikeoutSize=int,
-    openTypeOS2StrikeoutPosition=int,
-    openTypeVheaVertTypoAscender=int,
-    openTypeVheaVertTypoDescender=int,
-    openTypeVheaVertTypoLineGap=int,
-    openTypeVheaCaretSlopeRise=int,
-    openTypeVheaCaretSlopeRun=int,
-    openTypeVheaCaretOffset=int,
-    postscriptSlantAngle=float,
-    postscriptUnderlineThickness=int,
-    postscriptUnderlinePosition=int,
-    postscriptBlueValues="intList",
-    postscriptOtherBlues="intList",
-    postscriptFamilyBlues="intList",
-    postscriptFamilyOtherBlues="intList",
-    postscriptStemSnapH="intList",
-    postscriptStemSnapV="intList",
-    postscriptBlueFuzz=int,
-    postscriptBlueShift=int,
-    postscriptBlueScale=float,
-    postscriptDefaultWidthX=int,
-    postscriptNominalWidthX=int,
+    unitsPerEm=_nonNegativeNumberFormatter,
+    descender=_numberFormatter,
+    xHeight=_numberFormatter,
+    capHeight=_numberFormatter,
+    ascender=_numberFormatter,
+    italicAngle=_numberFormatter,
+
+    openTypeHeadLowestRecPPEM=_nonNegativeNumberFormatter,
+
+    openTypeHheaAscender=_numberFormatter,
+    openTypeHheaDescender=_numberFormatter,
+    openTypeHheaLineGap=_numberFormatter,
+    openTypeHheaCaretSlopeRise=_integerFormatter,
+    openTypeHheaCaretSlopeRun=_integerFormatter,
+    openTypeHheaCaretOffset=_numberFormatter,
+
+    openTypeOS2WidthClass=_openTypeOS2WidthClassFormatter,
+    openTypeOS2WeightClass=_openTypeOS2WeightClassFormatter,
+    openTypeOS2TypoAscender=_numberFormatter,
+    openTypeOS2TypoDescender=_numberFormatter,
+    openTypeOS2TypoLineGap=_numberFormatter,
+    openTypeOS2WinAscent=_nonNegativeNumberFormatter,
+    openTypeOS2WinDescent=_nonNegativeNumberFormatter,
+    openTypeOS2SubscriptXSize=_numberFormatter,
+    openTypeOS2SubscriptYSize=_numberFormatter,
+    openTypeOS2SubscriptXOffset=_numberFormatter,
+    openTypeOS2SubscriptYOffset=_numberFormatter,
+    openTypeOS2SuperscriptXSize=_numberFormatter,
+    openTypeOS2SuperscriptYSize=_numberFormatter,
+    openTypeOS2SuperscriptXOffset=_numberFormatter,
+    openTypeOS2SuperscriptYOffset=_numberFormatter,
+    openTypeOS2StrikeoutSize=_numberFormatter,
+    openTypeOS2StrikeoutPosition=_numberFormatter,
+
+    openTypeVheaVertTypoAscender=_numberFormatter,
+    openTypeVheaVertTypoDescender=_numberFormatter,
+    openTypeVheaVertTypoLineGap=_numberFormatter,
+    openTypeVheaCaretSlopeRise=_integerFormatter,
+    openTypeVheaCaretSlopeRun=_integerFormatter,
+    openTypeVheaCaretOffset=_numberFormatter,
+
+    postscriptSlantAngle=_numberFormatter,
+    postscriptUnderlineThickness=_numberFormatter,
+    postscriptUnderlinePosition=_numberFormatter,
+    postscriptBlueValues=_numberListFormatter,
+    postscriptOtherBlues=_numberListFormatter,
+    postscriptFamilyBlues=_numberListFormatter,
+    postscriptFamilyOtherBlues=_numberListFormatter,
+    postscriptStemSnapH=_numberListFormatter,
+    postscriptStemSnapV=_numberListFormatter,
+    postscriptBlueFuzz=_numberFormatter,
+    postscriptBlueShift=_numberFormatter,
+    postscriptBlueScale=_floatFormatter,
+    postscriptDefaultWidthX=_numberFormatter,
+    postscriptNominalWidthX=_numberFormatter,
     # this will be handled in a special way
     # postscriptWeightName=unicode
 )
@@ -69,11 +113,9 @@ _postscriptWeightNameOptions = {
     900 : "Black"
 }
 
-_valueClippingRanges = dict(
-    openTypeOS2WidthClass=(1, 9),
-    openTypeOS2WeightClass=(0, None), # the OT spec is vague and doesn't really give a minimum or a maximum apart from the 16-bit unsigned int range
-)
-
+# ------
+# Object
+# ------
 
 class MathInfo(object):
 
@@ -84,10 +126,7 @@ class MathInfo(object):
 
     def _processMathOne(self, copiedInfo, otherInfo, funct):
         # used by: __add__, __sub__
-        for attr, typ in _infoAttrs.items():
-            # strings will be handled by special methods
-            if typ == unicode:
-                continue
+        for attr in _infoAttrs.keys():
             a = None
             b = None
             v = None
@@ -96,12 +135,10 @@ class MathInfo(object):
             if hasattr(otherInfo, attr):
                 b = getattr(otherInfo, attr)
             if a is not None and b is not None:
-                if typ == int:
-                    v = self._processMathOneInt(a, b, funct)
-                elif typ == float:
-                    v = self._processMathOneFloat(a, b, funct)
-                elif typ == "intList":
-                    v = self._processMathOneIntList(a, b, funct)
+                if isinstance(a, (list, tuple)):
+                    v = self._processMathOneNumberList(a, b, funct)
+                else:
+                    v = self._processMathOneNumber(a, b, funct)
             elif a is not None and b is None:
                 v = a
             elif b is not None and a is None:
@@ -112,37 +149,26 @@ class MathInfo(object):
 
     def _processMathTwo(self, copiedInfo, factor, funct):
         # used by: __mul__, __div__
-        for attr, typ in _infoAttrs.items():
-            # strings will be handled by special methods
-            if typ == unicode:
-                continue
+        for attr in _infoAttrs.keys():
             if hasattr(copiedInfo, attr):
                 v = getattr(copiedInfo, attr)
                 if v is not None and factor is not None:
-                    if typ == int:
-                        v = self._processMathTwoInt(v, factor, funct)
-                    elif typ == float:
-                        v = self._processMathTwoFloat(v, factor, funct)
-                    elif typ == "intList":
-                        v = self._processMathTwoIntList(v, factor, funct)
+                    if isinstance(v, (list, tuple)):
+                        v = self._processMathTwoNumberList(v, factor, funct)
+                    else:
+                        v = self._processMathTwoNumber(v, factor, funct)
                 else:
                     v = None
                 setattr(copiedInfo, attr, v)
         self._processPostscriptWeightName(copiedInfo)
 
-    def _processMathOneInt(self, a, b, funct):
+    def _processMathOneNumber(self, a, b, funct):
         return funct(a, b)
 
-    def _processMathTwoInt(self, v, factor, funct):
+    def _processMathTwoNumber(self, v, factor, funct):
         return funct(v, factor)
 
-    def _processMathOneFloat(self, a, b, funct):
-        return funct(a, b)
-
-    def _processMathTwoFloat(self, v, factor, funct):
-        return funct(v, factor)
-
-    def _processMathOneIntList(self, a, b, funct):
+    def _processMathOneNumberList(self, a, b, funct):
         if len(a) != len(b):
             return None
         v = []
@@ -151,7 +177,7 @@ class MathInfo(object):
             v.append(funct(aItem, bItem))
         return v
 
-    def _processMathTwoIntList(self, v, factor, funct):
+    def _processMathTwoNumberList(self, v, factor, funct):
         return [funct(i, factor) for i in v]
 
     def _processPostscriptWeightName(self, copiedInfo):
@@ -317,27 +343,12 @@ class MathInfo(object):
         >>> sorted(expected) == sorted(written)
         True
         """
-        for attr, typ in _infoAttrs.items() + [("postscriptWeightName", unicode)]:
+        for attr, formatter in _infoAttrs.items() + [("postscriptWeightName", None)]:
             if hasattr(self, attr):
                 v = getattr(self, attr)
                 if v is not None:
-                    # normalize values
-                    if attr in _valueClippingRanges:
-                        minValue, maxValue = _valueClippingRanges[attr]
-                        if minValue is not None and v < minValue:
-                            v = minValue
-                        elif maxValue is not None and v > maxValue:
-                            v = maxValue
-                    # convert to proper type
-                    if typ == int:
-                        v = int(round(v))
-                    elif typ == float:
-                        v = float(v)
-                    elif typ == "intList":
-                        v = [int(round(i)) for i in v]
-                    elif typ == unicode:
-                        # don't need to do any conversion
-                        pass
+                    if formatter is not None:
+                        v = formatter(v)
                 setattr(otherInfoObject, attr, v)
 
 
@@ -365,8 +376,6 @@ _testData = dict(
     # OS/2
     openTypeOS2WidthClass=5,
     openTypeOS2WeightClass=500,
-    openTypeOS2Panose=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-    openTypeOS2FamilyClass=[1, 1],
     openTypeOS2TypoAscender=700,
     openTypeOS2TypoDescender=-200,
     openTypeOS2TypoLineGap=200,
@@ -416,4 +425,3 @@ class _TestInfoObject(object):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-
