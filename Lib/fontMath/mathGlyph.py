@@ -294,7 +294,6 @@ class MathGlyph(object):
         # gather compatible anchors
         #
         # adapted from robofab.objects.objectsBase.RGlyph._anchorCompare
-        from sets import Set
         selfAnchors = {}
         for pt, name in self.anchors:
             if not selfAnchors.has_key(name):
@@ -305,7 +304,7 @@ class MathGlyph(object):
             if not otherAnchors.has_key(name):
                 otherAnchors[name] = []
             otherAnchors[name].append(pt)
-        compatAnchors = Set(selfAnchors.keys()) & Set(otherAnchors.keys())
+        compatAnchors = set(selfAnchors.keys()) & set(otherAnchors.keys())
         finalSelfAnchors = {}
         finalOtherAnchors = {}
         for name in compatAnchors:
@@ -329,7 +328,6 @@ class MathGlyph(object):
     def _componentCompare(self, other):
         # gather compatible compoenents
         #
-        from sets import Set
         selfComponents = {}
         for baseName, transformation in self.components:
             if not selfComponents.has_key(baseName):
@@ -340,7 +338,7 @@ class MathGlyph(object):
             if not otherComponents.has_key(baseName):
                 otherComponents[baseName] = []
             otherComponents[baseName].append(transformation)
-        compatComponents = Set(selfComponents.keys()) & Set(otherComponents.keys())
+        compatComponents = set(selfComponents.keys()) & set(otherComponents.keys())
         finalSelfComponents = {}
         finalOtherComponents = {}
         for baseName in compatComponents:
