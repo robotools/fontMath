@@ -19,12 +19,12 @@ X anchors
 """
 
 
-def divPt(pt, scalar):
-    if not isinstance(scalar, tuple):
-        f1 = scalar
-        f2 = scalar
+def divPt(pt, factor):
+    if not isinstance(factor, tuple):
+        f1 = factor
+        f2 = factor
     else:
-        f1, f2 = scalar
+        f1, f2 = factor
     return pt[0] / f1, pt[1] / f2
 
 
@@ -95,8 +95,8 @@ class MathGlyphPen(AbstractPointPen):
     def endPath(self):
         self._flushContour()
 
-    def addComponent(self, baseGlyphName, transformation):
-        self.components.append((baseGlyphName, transformation))
+    def addComponent(self, baseGlyph, transformation, identifier=None, **kwargs):
+        self.components.append(dict(baseGlyph=baseGlyph, transformation=transformation, identifier=identifier))
 
 
 class FilterRedundantPointPen(AbstractPointPen):
@@ -179,8 +179,8 @@ class FilterRedundantPointPen(AbstractPointPen):
         self._flushContour()
         self._pen.endPath()
 
-    def addComponent(self, baseGlyphName, transformation):
-        self._pen.addComponent(baseGlyphName, transformation)
+    def addComponent(self, baseGlyph, transformation, identifier=None, **kwargs):
+        self._pen.addComponent(baseGlyph, transformation, identifier)
 
 
 class MathGlyph(object):
@@ -257,7 +257,7 @@ class MathGlyph(object):
         contourStructure = []
         for contour in self.contours:
             contourStructure.append([segmentType for segmentType, pt, smooth, name in contour])
-        componentStructure = [baseName for baseName, transformation in self.components]
+        componentStructure = [baseName for baseName, transformation, identifier in self.components]
         anchorStructure = [anchor["name"] for anchor in self.anchors]
         return contourStructure, componentStructure, anchorStructure
 
@@ -296,40 +296,6 @@ class MathGlyph(object):
             n.lib[k] = v
         return n
 
-    def _componentCompare(self, other):
-        # gather compatible compoenents
-        #
-        selfComponents = {}
-        for baseName, transformation in self.components:
-            if not selfComponents.has_key(baseName):
-                selfComponents[baseName] = []
-            selfComponents[baseName].append(transformation)
-        otherComponents = {}
-        for baseName, transformation in other.components:
-            if not otherComponents.has_key(baseName):
-                otherComponents[baseName] = []
-            otherComponents[baseName].append(transformation)
-        compatComponents = set(selfComponents.keys()) & set(otherComponents.keys())
-        finalSelfComponents = {}
-        finalOtherComponents = {}
-        for baseName in compatComponents:
-            if not finalSelfComponents.has_key(baseName):
-                finalSelfComponents[baseName] = []
-            if not finalOtherComponents.has_key(baseName):
-                finalOtherComponents[baseName] = []
-            selfList = selfComponents[baseName]
-            otherList = otherComponents[baseName]
-            selfCount = len(selfList)
-            otherCount = len(otherList)
-            if selfCount != otherCount:
-                r = range(min(selfCount, otherCount))
-            else:
-                r = range(selfCount)
-            for i in r:
-                finalSelfComponents[baseName].append(selfList[i])
-                finalOtherComponents[baseName].append(otherList[i])
-        return finalSelfComponents, finalOtherComponents
-
     # math with other glyph
 
     def __add__(self, otherGlyph):
@@ -366,19 +332,8 @@ class MathGlyph(object):
         # components
         copiedGlyph.components = []
         if len(self.components) > 0:
-            selfComponents, otherComponents = self._componentCompare(otherGlyph)
-            componentNames = selfComponents.keys()
-            for componentName in componentNames:
-                selfComponentList = selfComponents[componentName]
-                otherComponentList = otherComponents[componentName]
-                for i in range(len(selfComponentList)):
-                    # transformation breakdown: xScale, xyScale, yxScale, yScale, xOffset, yOffset
-                    selfXScale, selfXYScale, selfYXScale, selfYScale, selfXOffset, selfYOffset = selfComponentList[i]
-                    otherXScale, otherXYScale, otherYXScale, otherYScale, otherXOffset, otherYOffset = otherComponentList[i]
-                    newXScale, newXYScale = funct((selfXScale, selfXYScale), (otherXScale, otherXYScale))
-                    newYXScale, newYScale = funct((selfYXScale, selfYScale), (otherYXScale, otherYScale))
-                    newXOffset, newYOffset = funct((selfXOffset, selfYOffset), (otherXOffset, otherYOffset))
-                    copiedGlyph.components.append((componentName, (newXScale, newXYScale, newYXScale, newYScale, newXOffset, newYOffset)))
+            componentPairs = _pairComponents(self.components, other.components)
+            copiedGlyph.components = _processMathOneComponents(componentPairs)
 
     # math with factor
 
@@ -418,12 +373,7 @@ class MathGlyph(object):
         # components
         copiedGlyph.components = []
         if len(self.components) > 0:
-            for baseName, transformation in self.components:
-                xScale, xyScale, yxScale, yScale, xOffset, yOffset = transformation
-                newXOffset, newYOffset = funct((xOffset, yOffset), factor)
-                newXScale, newYScale = funct((xScale, yScale), factor)
-                newXYScale, newYXScale = funct((xyScale, yxScale), factor)
-                copiedGlyph.components.append((baseName, (newXScale, newXYScale, newYXScale, newYScale, newXOffset, newYOffset)))
+            copiedGlyph.components = _processMathTwoComponents(self.components, factor, funct)
 
 
 
@@ -617,7 +567,7 @@ def _pairAnchors(anchorDict1, anchorDict2):
         if name not in anchorDict2:
             continue
         anchors2 = anchorDict2[name]
-        # test for matching identifiers first
+        # align with matching identifiers
         removeFromAnchors1 = []
         for anchor1 in anchors1:
             match = None
@@ -694,6 +644,136 @@ def _processMathTwoAnchors(anchors, factor, funct):
         pt = (anchor["x"], anchor["y"])
         anchor["x"], anchor["y"] = funct(pt, factor)
         result.append(anchor)
+    return result
+
+# components
+
+def _pairComponents(components1, components2):
+    """
+    >>> components1 = [
+    ...     dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier="1"),
+    ...     dict(baseGlyph="B", transformation=(0, 0, 0, 0, 0, 0), identifier="1"),
+    ...     dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier=None)
+    ... ]
+    >>> components2 = [
+    ...     dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier=None),
+    ...     dict(baseGlyph="B", transformation=(0, 0, 0, 0, 0, 0), identifier="1"),
+    ...     dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier="1")
+    ... ]
+    >>> expected = [
+    ...     (
+    ...         dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier="1"),
+    ...         dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier="1")
+    ...     ),
+    ...     (
+    ...         dict(baseGlyph="B", transformation=(0, 0, 0, 0, 0, 0), identifier="1"),
+    ...         dict(baseGlyph="B", transformation=(0, 0, 0, 0, 0, 0), identifier="1")
+    ...     ),
+    ...     (
+    ...         dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier=None),
+    ...         dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier=None)
+    ...     ),
+    ... ]
+    >>> _pairComponents(components1, components2) == expected
+    True
+
+    >>> components1 = [
+    ...     dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier=None),
+    ...     dict(baseGlyph="B", transformation=(0, 0, 0, 0, 0, 0), identifier=None)
+    ... ]
+    >>> components2 = [
+    ...     dict(baseGlyph="B", transformation=(0, 0, 0, 0, 0, 0), identifier=None),
+    ...     dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier=None)
+    ... ]
+    >>> expected = [
+    ...     (
+    ...         dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier=None),
+    ...         dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier=None)
+    ...     ),
+    ...     (
+    ...         dict(baseGlyph="B", transformation=(0, 0, 0, 0, 0, 0), identifier=None),
+    ...         dict(baseGlyph="B", transformation=(0, 0, 0, 0, 0, 0), identifier=None)
+    ...     ),
+    ... ]
+    >>> _pairComponents(components1, components2) == expected
+    True
+    """
+    components1 = list(components1)
+    components2 = list(components2)
+    pairs = []
+    # align with matching identifiers
+    removeFromComponents1 = []
+    for component1 in components1:
+        baseGlyph = component1["baseGlyph"]
+        identifier = component1["identifier"]
+        match = None
+        for component2 in components2:
+            if component2["baseGlyph"] == baseGlyph and component2["identifier"] == identifier:
+                match = component2
+                break
+        if match is not None:
+            component2 = match
+            removeFromComponents1.append(component1)
+            components2.remove(component2)
+            pairs.append((component1, component2))
+    for component1 in removeFromComponents1:
+        components1.remove(component1)
+    # align with index
+    for component1 in components1:
+        baseGlyph = component1["baseGlyph"]
+        for component2 in components2:
+            if component2["baseGlyph"] == baseGlyph:
+                components2.remove(component2)
+                pairs.append((component1, component2))
+                break
+    return pairs
+
+def _processMathOneComponents(componentPairs, funct):
+    """
+    >>> components = [
+    ...    (
+    ...        dict(baseGlyph="A", transformation=( 1,  3,  5,  7,  9, 11), identifier="1"),
+    ...        dict(baseGlyph="A", transformation=(12, 14, 16, 18, 20, 22), identifier=None)
+    ...    )
+    ... ]
+    >>> expected = [
+    ...     dict(baseGlyph="A", transformation=(13, 17, 21, 25, 29, 33), identifier="1")
+    ... ]
+    >>> _processMathOneComponents(components, addPt) == expected
+    True
+    """
+    result = []
+    for component1, component2 in componentPairs:
+        component = dict(component1)
+        xScale1, xyScale1, yxScale1, yScale1, xOffset1, yOffset1 = component1["transformation"]
+        xScale2, xyScale2, yxScale2, yScale2, xOffset2, yOffset2 = component2["transformation"]
+        xScale, yScale = funct((xScale1, yScale1), (xScale2, yScale2))
+        xyScale, yxScale = funct((xyScale1, yxScale1), (xyScale2, yxScale2))
+        xOffset, yOffset = funct((xOffset1, yOffset1), (xOffset2, yOffset2))
+        component["transformation"] = (xScale, xyScale, yxScale, yScale, xOffset, yOffset)
+        result.append(component)
+    return result
+
+def _processMathTwoComponents(components, factor, funct):
+    """
+    >>> components = [
+    ...     dict(baseGlyph="A", transformation=(1, 2, 3, 4, 5, 6), identifier="1"),
+    ... ]
+    >>> expected = [
+    ...     dict(baseGlyph="A", transformation=(2, 4, 4.5, 6, 10, 9), identifier="1")
+    ... ]
+    >>> _processMathTwoComponents(components, (2, 1.5), mulPt) == expected
+    True
+    """
+    result = []
+    for component in components:
+        component = dict(component)
+        xScale, xyScale, yxScale, yScale, xOffset, yOffset = component["transformation"]
+        xScale, yScale = funct((xScale, yScale), factor)
+        xyScale, yxScale = funct((xyScale, yxScale), factor)
+        xOffset, yOffset = funct((xOffset, yOffset), factor)
+        component["transformation"] = (xScale, xyScale, yxScale, yScale, xOffset, yOffset)
+        result.append(component)
     return result
 
 
