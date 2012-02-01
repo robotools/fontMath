@@ -2,6 +2,22 @@ import weakref
 from robofab.pens.pointPen import BasePointToSegmentPen, AbstractPointPen
 from robofab.objects.objectsBase import addPt, subPt, mulPt, BaseGlyph
 
+"""
+to do:
+X anchors
+- components
+  - identifiers
+- contours
+  - identifiers
+- points
+  - identifiers
+- guidelines
+- height
+
+- is there any cruft that can be removed?
+- why is divPt here? move all of those to the math functions and get rid of the robofab dependency.
+"""
+
 
 def divPt(pt, scalar):
     if not isinstance(scalar, tuple):
@@ -21,59 +37,54 @@ class MathGlyphPen(AbstractPointPen):
     def __init__(self):
         self.contours = []
         self.components = []
-        self.anchors = []
         self._points = []
 
     def _flushContour(self):
         points = self._points
-        if len(points) == 1:
-            segmentType, pt, smooth, name = points[0]
-            self.anchors.append((pt, name))
+        self.contours.append([])
+        prevOnCurve = None
+        offCurves = []
+        # deal with the first point
+        segmentType, pt, smooth, name = points[0]
+        # if it is an offcurve, add it to the offcurve list
+        if segmentType is None:
+            offCurves.append((segmentType, pt, smooth, name))
+        # if it is a line, change the type to curve and add it to the contour
+        # create offcurves corresponding with the last oncurve and
+        # this point and add them to the points list
+        elif segmentType == "line":
+            prevOnCurve = pt
+            self.contours[-1].append(("curve", pt, False, name))
+            lastPoint = points[-1][1]
+            points.append((None, lastPoint, False, None))
+            points.append((None, pt, False, None))
+        # a move, curve or qcurve. simple append the data.
         else:
-            self.contours.append([])
-            prevOnCurve = None
-            offCurves = []
-            # deal with the first point
-            segmentType, pt, smooth, name = points[0]
-            # if it is an offcurve, add it to the offcurve list
+            self.contours[-1].append((segmentType, pt, smooth, name))
+            prevOnCurve = pt
+        # now go through the rest of the points
+        for segmentType, pt, smooth, name in points[1:]:
+            # store the off curves
             if segmentType is None:
                 offCurves.append((segmentType, pt, smooth, name))
-            # if it is a line, change the type to curve and add it to the contour
-            # create offcurves corresponding with the last oncurve and
-            # this point and add them to the points list
-            elif segmentType == "line":
-                prevOnCurve = pt
-                self.contours[-1].append(("curve", pt, False, name))
-                lastPoint = points[-1][1]
-                points.append((None, lastPoint, False, None))
-                points.append((None, pt, False, None))
-            # a move, curve or qcurve. simple append the data.
-            else:
-                self.contours[-1].append((segmentType, pt, smooth, name))
-                prevOnCurve = pt
-            # now go through the rest of the points
-            for segmentType, pt, smooth, name in points[1:]:
-                # store the off curves
-                if segmentType is None:
-                    offCurves.append((segmentType, pt, smooth, name))
-                    continue
-                # make off curve corresponding the the previous
-                # on curve an dthis point
-                if segmentType == "line":
-                    segmentType = "curve"
-                    offCurves.append((None, prevOnCurve, False, None))
-                    offCurves.append((None, pt, False, None))
-                # add the offcurves to the contour
-                for offCurve in offCurves:
-                    self.contours[-1].append(offCurve)
-                # add the oncurve to the contour
-                self.contours[-1].append((segmentType, pt, smooth, name))
-                # reset the stored data
-                prevOnCurve = pt
-                offCurves = []
-            # catch offcurves that belong to the first
-            if len(offCurves) != 0:
-                self.contours[-1].extend(offCurves)
+                continue
+            # make off curve corresponding the the previous
+            # on curve an dthis point
+            if segmentType == "line":
+                segmentType = "curve"
+                offCurves.append((None, prevOnCurve, False, None))
+                offCurves.append((None, pt, False, None))
+            # add the offcurves to the contour
+            for offCurve in offCurves:
+                self.contours[-1].append(offCurve)
+            # add the oncurve to the contour
+            self.contours[-1].append((segmentType, pt, smooth, name))
+            # reset the stored data
+            prevOnCurve = pt
+            offCurves = []
+        # catch offcurves that belong to the first
+        if len(offCurves) != 0:
+            self.contours[-1].extend(offCurves)
 
     def beginPath(self):
         self._points = []
@@ -96,71 +107,66 @@ class FilterRedundantPointPen(AbstractPointPen):
 
     def _flushContour(self):
         points = self._points
-        # an anchor
-        if len(points) == 1:
-            pt, segmentType, smooth, name = points[0]
-            self._pen.addPoint(pt, segmentType, smooth, name)
+        prevOnCurve = None
+        offCurves = []
+            
+        pointsToDraw = []
+            
+        # deal with the first point
+        pt, segmentType, smooth, name = points[0]
+        # if it is an offcurve, add it to the offcurve list
+        if segmentType is None:
+            offCurves.append((pt, segmentType, smooth, name))
         else:
-            prevOnCurve = None
-            offCurves = []
-            
-            pointsToDraw = []
-            
-            # deal with the first point
-            pt, segmentType, smooth, name = points[0]
-            # if it is an offcurve, add it to the offcurve list
+            # potential redundancy
+            if segmentType == "curve":
+                # gather preceding off curves
+                testOffCurves = []
+                lastPoint = None
+                for i in xrange(len(points)):
+                    i = -i - 1
+                    testPoint = points[i]
+                    testSegmentType = testPoint[1]
+                    if testSegmentType is not None:
+                        lastPoint = testPoint[0]
+                        break
+                    testOffCurves.append(testPoint[0])
+                # if two offcurves exist we can test for redundancy
+                if len(testOffCurves) == 2:
+                    if testOffCurves[1] == lastPoint and testOffCurves[0] == pt:
+                        segmentType = "line"
+                        # remove the last two points
+                        points = points[:-2]
+            # add the point to the contour
+            pointsToDraw.append((pt, segmentType, smooth, name))
+            prevOnCurve = pt
+        for pt, segmentType, smooth, name in points[1:]:
+            # store offcurves
             if segmentType is None:
                 offCurves.append((pt, segmentType, smooth, name))
-            else:
-                # potential redundancy
-                if segmentType == "curve":
-                    # gather preceding off curves
-                    testOffCurves = []
-                    lastPoint = None
-                    for i in xrange(len(points)):
-                        i = -i - 1
-                        testPoint = points[i]
-                        testSegmentType = testPoint[1]
-                        if testSegmentType is not None:
-                            lastPoint = testPoint[0]
-                            break
-                        testOffCurves.append(testPoint[0])
-                    # if two offcurves exist we can test for redundancy
-                    if len(testOffCurves) == 2:
-                        if testOffCurves[1] == lastPoint and testOffCurves[0] == pt:
-                            segmentType = "line"
-                            # remove the last two points
-                            points = points[:-2]
-                # add the point to the contour
-                pointsToDraw.append((pt, segmentType, smooth, name))
-                prevOnCurve = pt
-            for pt, segmentType, smooth, name in points[1:]:
-                # store offcurves
-                if segmentType is None:
-                    offCurves.append((pt, segmentType, smooth, name))
-                    continue
-                # curves are a potential redundancy
-                elif segmentType == "curve":
-                    if len(offCurves) == 2:
-                        # test for redundancy
-                        if offCurves[0][0] == prevOnCurve and offCurves[1][0] == pt:
-                            offCurves = []
-                            segmentType = "line"
-                # add all offcurves
-                for offCurve in offCurves:
-                    pointsToDraw.append(offCurve)
-                # add the on curve
-                pointsToDraw.append((pt, segmentType, smooth, name))
-                # reset the stored data
-                prevOnCurve = pt
-                offCurves = []
-            # catch any remaining offcurves
-            if len(offCurves) != 0:
-                for offCurve in offCurves:
-                    pointsToDraw.append(offCurve)
-            # draw to the pen
-            for pt, segmentType, smooth, name in pointsToDraw:
-                self._pen.addPoint(pt, segmentType, smooth, name)
+                continue
+            # curves are a potential redundancy
+            elif segmentType == "curve":
+                if len(offCurves) == 2:
+                    # test for redundancy
+                    if offCurves[0][0] == prevOnCurve and offCurves[1][0] == pt:
+                        offCurves = []
+                        segmentType = "line"
+            # add all offcurves
+            for offCurve in offCurves:
+                pointsToDraw.append(offCurve)
+            # add the on curve
+            pointsToDraw.append((pt, segmentType, smooth, name))
+            # reset the stored data
+            prevOnCurve = pt
+            offCurves = []
+        # catch any remaining offcurves
+        if len(offCurves) != 0:
+            for offCurve in offCurves:
+                pointsToDraw.append(offCurve)
+        # draw to the pen
+        for pt, segmentType, smooth, name in pointsToDraw:
+            self._pen.addPoint(pt, segmentType, smooth, name)
 
     def beginPath(self):
         self._points = []
@@ -215,13 +221,13 @@ class MathGlyph(object):
             glyph.drawPoints(p)
             self.contours = p.contours
             self.components = p.components
-            self.anchors = p.anchors
             self.lib = {}
             #
             self.name = glyph.name
             self.unicodes = glyph.unicodes
             self.width = glyph.width
             self.note = glyph.note
+            self.anchors = [dict(anchor) for anchor in glyph.anchors]
             #
             for k, v in glyph.lib.items():
                 self.lib[k] = v
@@ -252,7 +258,7 @@ class MathGlyph(object):
         for contour in self.contours:
             contourStructure.append([segmentType for segmentType, pt, smooth, name in contour])
         componentStructure = [baseName for baseName, transformation in self.components]
-        anchorStructure = [name for pt, name in self.anchors]
+        anchorStructure = [anchor["name"] for anchor in self.anchors]
         return contourStructure, componentStructure, anchorStructure
 
     structure = property(_get_structure, doc="returns a tuple of (contour structure, component structure, anchor structure)")
@@ -290,41 +296,6 @@ class MathGlyph(object):
             n.lib[k] = v
         return n
 
-    def _anchorCompare(self, other):
-        # gather compatible anchors
-        #
-        # adapted from robofab.objects.objectsBase.RGlyph._anchorCompare
-        selfAnchors = {}
-        for pt, name in self.anchors:
-            if not selfAnchors.has_key(name):
-                selfAnchors[name] = []
-            selfAnchors[name].append(pt)
-        otherAnchors = {}
-        for pt, name in other.anchors:
-            if not otherAnchors.has_key(name):
-                otherAnchors[name] = []
-            otherAnchors[name].append(pt)
-        compatAnchors = set(selfAnchors.keys()) & set(otherAnchors.keys())
-        finalSelfAnchors = {}
-        finalOtherAnchors = {}
-        for name in compatAnchors:
-            if not finalSelfAnchors.has_key(name):
-                finalSelfAnchors[name] = []
-            if not finalOtherAnchors.has_key(name):
-                finalOtherAnchors[name] = []
-            selfList = selfAnchors[name]
-            otherList = otherAnchors[name]
-            selfCount = len(selfList)
-            otherCount = len(otherList)
-            if selfCount != otherCount:
-                r = range(min(selfCount, otherCount))
-            else:
-                r = range(selfCount)
-            for i in r:
-                finalSelfAnchors[name].append(selfList[i])
-                finalOtherAnchors[name].append(otherList[i])
-        return finalSelfAnchors, finalOtherAnchors
-
     def _componentCompare(self, other):
         # gather compatible compoenents
         #
@@ -359,10 +330,21 @@ class MathGlyph(object):
                 finalOtherComponents[baseName].append(otherList[i])
         return finalSelfComponents, finalOtherComponents
 
+    # math with other glyph
+
+    def __add__(self, otherGlyph):
+        copiedGlyph = self.copyWithoutIterables()
+        self._processMathOne(copiedGlyph, otherGlyph, addPt)
+        copiedGlyph.width = self.width + otherGlyph.width
+        return copiedGlyph
+
+    def __sub__(self, otherGlyph):
+        copiedGlyph = self.copyWithoutIterables()
+        self._processMathOne(copiedGlyph, otherGlyph, subPt)
+        copiedGlyph.width = self.width - otherGlyph.width
+        return copiedGlyph
+
     def _processMathOne(self, copiedGlyph, otherGlyph, funct):
-        # glyph processing that recalculates glyph values based on another glyph
-        # used by: __add__, __sub__
-        #
         # contours
         copiedGlyph.contours = []
         if len(self.contours) > 0:
@@ -377,16 +359,10 @@ class MathGlyph(object):
         # anchors
         copiedGlyph.anchors = []
         if len(self.anchors) > 0:
-            selfAnchors, otherAnchors = self._anchorCompare(otherGlyph)
-            anchorNames = selfAnchors.keys()
-            for anchorName in anchorNames:
-                selfAnchorList = selfAnchors[anchorName]
-                otherAnchorList = otherAnchors[anchorName]
-                for i in range(len(selfAnchorList)):
-                    selfAnchor = selfAnchorList[i]
-                    otherAnchor = otherAnchorList[i]
-                    newAnchor = funct(selfAnchor, otherAnchor)
-                    copiedGlyph.anchors.append((newAnchor, anchorName))
+            anchorTree1 = _anchorTree(self.anchors)
+            anchorTree2 = _anchorTree(otherGlyph.anchors)
+            anchorPairs = _pairAnchors(anchorTree1, anchorTree2)
+            copiedGlyph.anchors = _processMathOneAnchors(anchorPairs)
         # components
         copiedGlyph.components = []
         if len(self.components) > 0:
@@ -404,10 +380,29 @@ class MathGlyph(object):
                     newXOffset, newYOffset = funct((selfXOffset, selfYOffset), (otherXOffset, otherYOffset))
                     copiedGlyph.components.append((componentName, (newXScale, newXYScale, newYXScale, newYScale, newXOffset, newYOffset)))
 
+    # math with factor
+
+    def __mul__(self, factor):
+        if not isinstance(factor, tuple):
+            factor = (factor, factor)
+        copiedGlyph = self.copyWithoutIterables()
+        self._processMathTwo(copiedGlyph, factor, mulPt)
+        copiedGlyph.width = self.width * factor[0]
+        return copiedGlyph
+
+    __rmul__ = __mul__
+
+    def __div__(self, factor):
+        if not isinstance(factor, tuple):
+            factor = (factor, factor)
+        copiedGlyph = self.copyWithoutIterables()
+        self._processMathTwo(copiedGlyph, factor, divPt)
+        copiedGlyph.width = self.width / factor[0]
+        return copiedGlyph
+
+    __rdiv__ = __div__
+
     def _processMathTwo(self, copiedGlyph, factor, funct):
-        # glyph processing that recalculates glyph values based on a factor
-        # used by: __mul__, __div__
-        #
         # contours
         copiedGlyph.contours = []
         if len(self.contours) > 0:
@@ -419,9 +414,7 @@ class MathGlyph(object):
         # anchors
         copiedGlyph.anchors = []
         if len(self.anchors) > 0:
-            for pt, anchorName in self.anchors:
-                newPt = funct(pt, factor)
-                copiedGlyph.anchors.append((newPt, anchorName))
+            copiedGlyph.anchors = _processMathTwoAnchors(anchor, factor, funct)
         # components
         copiedGlyph.components = []
         if len(self.components) > 0:
@@ -431,6 +424,8 @@ class MathGlyph(object):
                 newXScale, newYScale = funct((xScale, yScale), factor)
                 newXYScale, newYXScale = funct((xyScale, yxScale), factor)
                 copiedGlyph.components.append((baseName, (newXScale, newXYScale, newYXScale, newYScale, newXOffset, newYOffset)))
+
+
 
     def __repr__(self):
         return "<MathGlyph %s>" % self.name
@@ -455,38 +450,6 @@ class MathGlyph(object):
             flag = True
         return flag
 
-    def __add__(self, otherGlyph):
-        copiedGlyph = self.copyWithoutIterables()
-        self._processMathOne(copiedGlyph, otherGlyph, addPt)
-        copiedGlyph.width = self.width + otherGlyph.width
-        return copiedGlyph
-
-    def __sub__(self, otherGlyph):
-        copiedGlyph = self.copyWithoutIterables()
-        self._processMathOne(copiedGlyph, otherGlyph, subPt)
-        copiedGlyph.width = self.width - otherGlyph.width
-        return copiedGlyph
-
-    def __mul__(self, factor):
-        if not isinstance(factor, tuple):
-            factor = (factor, factor)
-        copiedGlyph = self.copyWithoutIterables()
-        self._processMathTwo(copiedGlyph, factor, mulPt)
-        copiedGlyph.width = self.width * factor[0]
-        return copiedGlyph
-
-    __rmul__ = __mul__
-
-    def __div__(self, factor):
-        if not isinstance(factor, tuple):
-            factor = (factor, factor)
-        copiedGlyph = self.copyWithoutIterables()
-        self._processMathTwo(copiedGlyph, factor, divPt)
-        copiedGlyph.width = self.width / factor[0]
-        return copiedGlyph
-
-    __rdiv__ = __div__
-
     def drawPoints(self, pointPen):
         """draw self using pointPen"""
         for contour in self.contours:
@@ -496,10 +459,6 @@ class MathGlyph(object):
             pointPen.endPath()
         for baseName, transformation in self.components:
             pointPen.addComponent(baseName, transformation)
-        for pt, name in self.anchors:
-            pointPen.beginPath()
-            pointPen.addPoint(pt=pt, segmentType="move", smooth=False, name=name)
-            pointPen.endPath()
 
     def draw(self, pen):
         """draw self using pen"""
@@ -528,6 +487,7 @@ class MathGlyph(object):
         glyph.unicodes = self.unicodes
         glyph.width = self.width
         glyph.note = self.note
+        glyph.anchors = self.anchors
         #
         for k, v in self.lib.items():
             glyph.lib[k] = v
@@ -557,3 +517,186 @@ class MathGlyph(object):
                 result = False
         return result
 
+
+# -------
+# Support
+# -------
+
+# anchors
+
+def _anchorTree(anchors):
+    """
+    >>> anchors = [
+    ...     dict(identifier="1", name="test", x=1, y=2, color=None),
+    ...     dict(name="test", x=1, y=2, color=None),
+    ...     dict(name="test", x=3, y=4, color=None),
+    ...     dict(name="test", x=2, y=3, color=None),
+    ...     dict(name="test 2", x=1, y=2, color=None),
+    ... ]
+    >>> expected = {
+    ...     "test" : [
+    ...         ("1", 1, 2, None),
+    ...         (None, 1, 2, None),
+    ...         (None, 3, 4, None),
+    ...         (None, 2, 3, None),
+    ...     ],
+    ...     "test 2" : [
+    ...         (None, 1, 2, None)
+    ...     ]
+    ... }
+    >>> _anchorTree(anchors) == expected
+    True
+    """
+    tree = {}
+    for anchor in anchors:
+        x = anchor["x"]
+        y = anchor["y"]
+        name = anchor.get("name")
+        identifier = anchor.get("identifier")
+        color = anchor.get("color")
+        if name not in tree:
+            tree[name] = []
+        tree[name].append((identifier, x, y, color))
+    return tree
+
+def _pairAnchors(anchorDict1, anchorDict2):
+    """
+    Anchors are paired using the following rules:
+
+
+    Matching Identifiers
+    --------------------
+    >>> anchors1 = {
+    ...     "test" : [
+    ...         (None, 1, 2, None),
+    ...         ("identifier 1", 3, 4, None)
+    ...      ]
+    ... }
+    >>> anchors2 = {
+    ...     "test" : [
+    ...         ("identifier 1", 1, 2, None),
+    ...         (None, 3, 4, None)
+    ...      ]
+    ... }
+    >>> expected = [
+    ...     (
+    ...         dict(name="test", identifier=None, x=1, y=2, color=None),
+    ...         dict(name="test", identifier=None, x=3, y=4, color=None)
+    ...     ),
+    ...     (
+    ...         dict(name="test", identifier="identifier 1", x=3, y=4, color=None),
+    ...         dict(name="test", identifier="identifier 1", x=1, y=2, color=None)
+    ...     )
+    ... ]
+    >>> _pairAnchors(anchors1, anchors2) == expected
+    True
+
+    Mismatched Identifiers
+    ----------------------
+    >>> anchors1 = {
+    ...     "test" : [
+    ...         ("identifier 1", 3, 4, None)
+    ...      ]
+    ... }
+    >>> anchors2 = {
+    ...     "test" : [
+    ...         ("identifier 2", 1, 2, None),
+    ...      ]
+    ... }
+    >>> expected = [
+    ...     (
+    ...         dict(name="test", identifier="identifier 1", x=3, y=4, color=None),
+    ...         dict(name="test", identifier="identifier 2", x=1, y=2, color=None)
+    ...     )
+    ... ]
+    >>> _pairAnchors(anchors1, anchors2) == expected
+    True
+    """
+    pairs = []
+    for name, anchors1 in anchorDict1.items():
+        if name not in anchorDict2:
+            continue
+        anchors2 = anchorDict2[name]
+        # test for matching identifiers first
+        removeFromAnchors1 = []
+        for anchor1 in anchors1:
+            match = None
+            identifier = anchor1[0]
+            for anchor2 in anchors2:
+                if anchor2[0] == identifier:
+                    match = anchor2
+                    break
+            if match is not None:
+                anchor2 = match
+                anchors2.remove(anchor2)
+                removeFromAnchors1.append(anchor1)
+                a1 = dict(name=name, identifier=identifier)
+                a1["x"], a1["y"], a1["color"] = anchor1[1:]
+                a2 = dict(name=name, identifier=identifier)
+                a2["x"], a2["y"], a2["color"] = anchor2[1:]
+                pairs.append((a1, a2))
+        for anchor1 in removeFromAnchors1:
+            anchors1.remove(anchor1)
+        if not anchors1 or not anchors2:
+            continue
+        # align by index
+        while 1:
+            anchor1 = anchors1.pop(0)
+            anchor2 = anchors2.pop(0)
+            a1 = dict(name=name)
+            a1["identifier"], a1["x"], a1["y"], a1["color"] = anchor1
+            a2 = dict(name=name, identifier=identifier)
+            a2["identifier"], a2["x"], a2["y"], a2["color"] = anchor2
+            pairs.append((a1, a2))
+            if not anchors1:
+                break
+            if not anchors2:
+                break
+    return pairs
+
+def _processMathOneAnchors(anchorPairs, funct):
+    """
+    >>> anchorPairs = [
+    ...     (
+    ...         dict(x=100, y=-100, name="foo", identifier="1", color="0,0,0,0"),
+    ...         dict(x=200, y=-200, name="bar", identifier="2", color="1,1,1,1")
+    ...     )
+    ... ]
+    >>> expected = [
+    ...     dict(x=300, y=-300, name="foo", identifier="1", color="0,0,0,0")
+    ... ]
+    >>> _processMathOneAnchors(anchorPairs, addPt) == expected
+    True
+    """
+    result = []
+    for anchor1, anchor2 in anchorPairs:
+        anchor = dict(anchor1)
+        pt1 = (anchor1["x"], anchor1["y"])
+        pt2 = (anchor2["x"], anchor2["y"])
+        anchor["x"], anchor["y"] = funct(pt1, pt2)
+        result.append(anchor)
+    return result
+
+def _processMathTwoAnchors(anchors, factor, funct):
+    """
+    >>> anchors = [
+    ...     dict(x=100, y=-100, name="foo", identifier="1", color="0,0,0,0")
+    ... ]
+    >>> expected = [
+    ...     dict(x=200, y=-150, name="foo", identifier="1", color="0,0,0,0")
+    ... ]
+    >>> _processMathTwoAnchors(anchors, (2, 1.5), mulPt) == expected
+    True
+    """
+    result = []
+    for anchor in anchors:
+        anchor = dict(anchor)
+        pt = (anchor["x"], anchor["y"])
+        anchor["x"], anchor["y"] = funct(pt, factor)
+        result.append(anchor)
+    return result
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
