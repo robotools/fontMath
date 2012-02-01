@@ -15,6 +15,11 @@ try:
 except NameError:
     from sets import Set as set
 
+
+side1Prefix = "public.kern1."
+side2Prefix = "public.kern2."
+
+
 class MathKerning(object):
 
     def __init__(self, kerning={}, groups={}):
@@ -30,19 +35,22 @@ class MathKerning(object):
         self._kerning = kerning
 
     def updateGroups(self, groups):
-        self._groupMap = {}
         self._groups = {}
-        groupDict = groups
-        groupMap = self._groupMap
-        for groupName, glyphList in groupDict.items():
-            if not groupName.startswith("public.kern1.") and not groupName.startswith("public.kern2."):
-                continue
-            self._groups[groupName] = list(glyphList)
-            for glyphName in glyphList:
-                if not groupMap.has_key(glyphName):
-                    groupMap[glyphName] = []
-                if groupName not in groupMap[glyphName]:
-                    groupMap[glyphName].append(groupName)
+        self._side1GroupMap = {}
+        self._side2GroupMap = {}
+        self._side1Groups = {}
+        self._side2Groups = {}
+        for groupName, glyphList in groups.items():
+            if groupName.startswith(side1Prefix):
+                self._groups[groupName] = list(glyphList)
+                self._side1Groups[groupName] = glyphList
+                for glyphName in glyphList:
+                    self._side1GroupMap[glyphName] = groupName
+            elif groupName.startswith(side2Prefix):
+                self._groups[groupName] = list(glyphList)
+                self._side2Groups[groupName] = glyphList
+                for glyphName in glyphList:
+                    self._side2GroupMap[glyphName] = groupName
 
     def keys(self):
         return self._kerning.keys()
@@ -55,33 +63,6 @@ class MathKerning(object):
 
     def groups(self):
         return deepcopy(self._groups)
-
-    def getGroupsForGlyph(self, glyphName):
-        """
-        >>> groups = {
-        ...     "public.kern1.A1" : ["A", "B"],
-        ...     "public.kern1.A2" : ["A"],
-        ...     "public.kern2.A3" : ["A"],
-        ...     "public.kern2.A4" : ["A"],
-        ... }
-        >>> obj = MathKerning({}, groups)
-        >>> sorted(obj.getGroupsForGlyph("A"))
-        ['public.kern1.A1', 'public.kern1.A2', 'public.kern2.A3', 'public.kern2.A4']
-        >>> sorted(obj.getGroupsForGlyph("B"))
-        ['public.kern1.A1']
-        """
-        return list(self._groupMap.get(glyphName, []))
-
-    def getGroupContents(self, groupName):
-        """
-        >>> groups = {
-        ...     "public.kern1.A1" : ["A", "B"]
-        ... }
-        >>> obj = MathKerning({}, groups)
-        >>> obj.getGroupContents("public.kern1.A1")
-        ['A', 'B']
-        """
-        return list(self._groups[groupName])
 
     def __contains__(self, pair):
         return pair in self._kerning
@@ -112,39 +93,25 @@ class MathKerning(object):
         """
         if self._kerning.has_key(pair):
             return self._kerning[pair]
-
         side1, side2 = pair
-        potentialSide1 = [side1]
-        potentialSide1.extend(self._groupMap.get(side1, []))
-        potentialSide2 = [side2]
-        potentialSide2.extend(self._groupMap.get(side2, []))
-
-        notClassed = []
-        halfClassed = []
-        fullClassed = []
-        for l in potentialSide1:
-            for r in potentialSide2:
-                if self._kerning.has_key((l, r)):
-                    v = self._kerning[l, r]
-                    if l.startswith("public.kern1.") and r.startswith("public.kern2."):
-                        fullClassed.append((l, r, v))
-                    elif l.startswith("public.kern1.") and not l.startswith("public.kern2.") :
-                        halfClassed.append((l, r, v))
-                    elif not l.startswith("public.kern1.") and r.startswith("public.kern2."):
-                        halfClassed.append((l, r, v))
-                    else:
-                        notClassed.append((l, r, v))
-        if len(notClassed) != 0:
-            return notClassed[0][2]
-        elif len(halfClassed) != 0:
-            halfClassed.sort()
-            return halfClassed[0][2]
-        elif len(fullClassed) != 0:
-            fullClassed.sort()
-            return fullClassed[0][2]
-        # hm, maybe this should raise a key error
-        # instead of returning 0...
-        return 0
+        if side1.startswith(side1Prefix):
+            side1Group = side1
+            side1 = None
+        else:
+            side1Group = self._side1GroupMap.get(side1)
+        if side2.startswith(side2Prefix):
+            side2Group = side2
+            side2 = None
+        else:
+            side2Group = self._side2GroupMap.get(side2)
+        if (side1Group, side2) in self._kerning:
+            return self._kerning[side1Group, side2]
+        elif (side1, side2Group) in self._kerning:
+            return self._kerning[side1, side2Group]
+        elif (side1Group, side2Group) in self._kerning:
+            return self._kerning[side1Group, side2Group]
+        else:
+            return 0
 
     def guessPairType(self, pair):
         """
@@ -160,70 +127,70 @@ class MathKerning(object):
         ... }
         >>> obj = MathKerning(kerning, groups)
         >>> obj.guessPairType(("public.kern1.A", "public.kern2.A"))
-        ('class', 'class')
+        ('group', 'group')
         >>> obj.guessPairType(("A1", "public.kern2.A"))
-        ('exception', 'class')
+        ('exception', 'group')
         >>> obj.guessPairType(("public.kern1.A", "A2"))
-        ('class', 'exception')
+        ('group', 'exception')
         >>> obj.guessPairType(("A3", "A3"))
         ('exception', 'exception')
         >>> obj.guessPairType(("A", "A"))
-        ('single', 'single')
+        ('group', 'group')
         """
         side1, side2 = pair
-        CLASS_TYPE = "class"
-        SINGLE_TYPE = "single"
-        EXCEPTION_TYPE = "exception"
+        if side1.startswith(side1Prefix):
+            side1Group = side1
+        else:
+            side1Group = self._side1GroupMap.get(side1)
+        if side2.startswith(side2Prefix):
+            side2Group = side2
+        else:
+            side2Group = self._side2GroupMap.get(side2)
+        side1Type = side2Type = "glyph"
+        if pair in self:
+            if side1 == side1Group:
+                side1Type = "group"
+            elif side1Group is not None:
+                side1Type = "exception"
+            if side2 == side2Group:
+                side2Type = "group"
+            elif side2Group is not None:
+                side2Type = "exception"
+        elif (side1Group, side2) in self:
+            side1Type = "group"
+            if side2Group is not None:
+                if side2 != side2Group:
+                    side2Type = "exception"
+        elif (side1, side2Group) in self:
+            side2Type = "group"
+            if side1Group is not None:
+                if side1 != side1Group:
+                    side1Type = "exception"
+        else:
+            if side1Group is not None:
+                side1Type = "group"
+            if side2Group is not None:
+                side2Type = "group"
+        return side1Type, side2Type
 
-        side1Type = SINGLE_TYPE
-        side2Type = SINGLE_TYPE
-        # is the side1 a simple class?
-        if side1.startswith("public.kern1."):
-            side1Type = CLASS_TYPE
-        # or is it part of a class?
-        if side2.startswith("public.kern2."):
-            side2Type = CLASS_TYPE
-
-        if self._kerning.has_key(pair):
-            potSide1 = [side1]
-            potSide2 = [side2]
-            if side1Type == SINGLE_TYPE and self._groupMap.has_key(side1):
-                    for groupName in self._groupMap[side1]:
-                        potSide1.append(groupName)
-            if side2Type == SINGLE_TYPE and self._groupMap.has_key(side2):
-                    for groupName in self._groupMap[side2]:
-                        potSide2.append(groupName)
-            hits = []
-            for side1 in potSide1:
-                for side2 in potSide2:
-                    if self._kerning.has_key((side1, side2)):
-                        hits.append((side1, side2))
-            for side1, side2 in hits:
-                if side1Type != CLASS_TYPE:
-                    if side1.startswith("public.kern1."):
-                        side1Type = EXCEPTION_TYPE
-                if side2Type != CLASS_TYPE:
-                    if side2.startswith("public.kern2."):
-                        side2Type = EXCEPTION_TYPE
-        return (side1Type, side2Type)
-
-    def get(self, pair, default=0):
+    def get(self, pair):
         v = self[pair]
-        if v == 0:
-            v = default
         return v
 
     def copy(self):
         k = MathKerning(self._kerning)
-        k._groupMap = deepcopy(self._groupMap)
+        k._side1Groups = deepcopy(self._side1Groups)
+        k._side2Groups = deepcopy(self._side2Groups)
+        k._side1GroupMap = deepcopy(self._side1GroupMap)
+        k._side2GroupMap = deepcopy(self._side2GroupMap)
         return k
 
     def _processMathOne(self, other, funct):
         comboPairs = set(self._kerning.keys()) | set(other._kerning.keys())
         kerning = dict.fromkeys(comboPairs, None)
         for k in comboPairs:
-            v1 = self.get(k, 0)
-            v2 = other.get(k, 0)
+            v1 = self.get(k)
+            v2 = other.get(k)
             v = funct(v1, v2)
             kerning[k] = v
         g1 = self.groups()
@@ -246,7 +213,10 @@ class MathKerning(object):
             v = funct(v, factor)
             kerning[k] = v
         ks = MathKerning(kerning)
-        ks._groupMap = deepcopy(self._groupMap)
+        ks._side1Groups = deepcopy(self._side1Groups)
+        ks._side2Groups = deepcopy(self._side2Groups)
+        ks._side1GroupMap = deepcopy(self._side1GroupMap)
+        ks._side2GroupMap = deepcopy(self._side2GroupMap)
         return ks
 
     def __add__(self, other):
