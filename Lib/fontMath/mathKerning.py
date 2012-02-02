@@ -26,6 +26,10 @@ class MathKerning(object):
         self.update(kerning)
         self.updateGroups(groups)
 
+    # -------
+    # Loading
+    # -------
+
     def update(self, kerning):
         self._kerning = dict(kerning)
 
@@ -46,6 +50,24 @@ class MathKerning(object):
                 self._side2Groups[groupName] = glyphList
                 for glyphName in glyphList:
                     self._side2GroupMap[glyphName] = groupName
+
+    def addTo(self, value):
+        """
+        >>> kerning = {
+        ...     ("A", "A") : 1,
+        ...     ("B", "B") : -1,
+        ... }
+        >>> obj = MathKerning(kerning)
+        >>> obj.addTo(1)
+        >>> sorted(obj.items())
+        [(('A', 'A'), 2), (('B', 'B'), 0)]
+        """
+        for k, v in self._kerning.items():
+            self._kerning[k] = v + value
+
+    # -------------
+    # dict Behavior
+    # -------------
 
     def keys(self):
         return self._kerning.keys()
@@ -108,6 +130,14 @@ class MathKerning(object):
         else:
             return 0
 
+    def get(self, pair):
+        v = self[pair]
+        return v
+
+    # ---------
+    # Pair Type
+    # ---------
+
     def guessPairType(self, pair):
         """
         >>> kerning = {
@@ -168,9 +198,9 @@ class MathKerning(object):
                 side2Type = "group"
         return side1Type, side2Type
 
-    def get(self, pair):
-        v = self[pair]
-        return v
+    # ----
+    # Copy
+    # ----
 
     def copy(self):
         k = MathKerning(self._kerning)
@@ -180,39 +210,11 @@ class MathKerning(object):
         k._side2GroupMap = deepcopy(self._side2GroupMap)
         return k
 
-    def _processMathOne(self, other, funct):
-        comboPairs = set(self._kerning.keys()) | set(other._kerning.keys())
-        kerning = dict.fromkeys(comboPairs, None)
-        for k in comboPairs:
-            v1 = self.get(k)
-            v2 = other.get(k)
-            v = funct(v1, v2)
-            kerning[k] = v
-        g1 = self.groups()
-        g2 = other.groups()
-        if g1 == g2:
-            groups = g1
-        else:
-            comboGroups = set(g1.keys()) | set(g2.keys())
-            groups = dict.fromkeys(comboGroups, None)
-            for groupName in comboGroups:
-                s1 = set(g1.get(groupName, []))
-                s2 = set(g2.get(groupName, []))
-                groups[groupName] = list(s1 | s2)
-        ks = MathKerning(kerning, groups)
-        return ks
+    # ----
+    # Math
+    # ----
 
-    def _processMathTwo(self, factor, funct):
-        kerning = deepcopy(self._kerning)
-        for k, v in self._kerning.items():
-            v = funct(v, factor)
-            kerning[k] = v
-        ks = MathKerning(kerning)
-        ks._side1Groups = deepcopy(self._side1Groups)
-        ks._side2Groups = deepcopy(self._side2Groups)
-        ks._side1GroupMap = deepcopy(self._side1GroupMap)
-        ks._side2GroupMap = deepcopy(self._side2GroupMap)
-        return ks
+    # math with other kerning
 
     def __add__(self, other):
         """
@@ -289,6 +291,30 @@ class MathKerning(object):
         k = self._processMathOne(other, sub)
         k.cleanup()
         return k
+
+    def _processMathOne(self, other, funct):
+        comboPairs = set(self._kerning.keys()) | set(other._kerning.keys())
+        kerning = dict.fromkeys(comboPairs, None)
+        for k in comboPairs:
+            v1 = self.get(k)
+            v2 = other.get(k)
+            v = funct(v1, v2)
+            kerning[k] = v
+        g1 = self.groups()
+        g2 = other.groups()
+        if g1 == g2:
+            groups = g1
+        else:
+            comboGroups = set(g1.keys()) | set(g2.keys())
+            groups = dict.fromkeys(comboGroups, None)
+            for groupName in comboGroups:
+                s1 = set(g1.get(groupName, []))
+                s2 = set(g2.get(groupName, []))
+                groups[groupName] = list(s1 | s2)
+        ks = MathKerning(kerning, groups)
+        return ks
+
+    # math with factor
 
     def __mul__(self, value):
         """
@@ -370,6 +396,22 @@ class MathKerning(object):
         k.cleanup()
         return k
 
+    def _processMathTwo(self, factor, funct):
+        kerning = deepcopy(self._kerning)
+        for k, v in self._kerning.items():
+            v = funct(v, factor)
+            kerning[k] = v
+        ks = MathKerning(kerning)
+        ks._side1Groups = deepcopy(self._side1Groups)
+        ks._side2Groups = deepcopy(self._side2Groups)
+        ks._side1GroupMap = deepcopy(self._side1GroupMap)
+        ks._side2GroupMap = deepcopy(self._side2GroupMap)
+        return ks
+
+    # -------
+    # Cleanup
+    # -------
+
     def round(self, multiple=1):
         """
         >>> kerning = {
@@ -415,19 +457,9 @@ class MathKerning(object):
                 if side1Type != "exception" and side2Type != "exception":
                     del self._kerning[side1, side2]
 
-    def addTo(self, value):
-        """
-        >>> kerning = {
-        ...     ("A", "A") : 1,
-        ...     ("B", "B") : -1,
-        ... }
-        >>> obj = MathKerning(kerning)
-        >>> obj.addTo(1)
-        >>> sorted(obj.items())
-        [(('A', 'A'), 2), (('B', 'B'), 0)]
-        """
-        for k, v in self._kerning.items():
-            self._kerning[k] = v + value
+    # ----------
+    # Extraction
+    # ----------
 
     def extractKerning(self, font):
         font.kerning.clear()
