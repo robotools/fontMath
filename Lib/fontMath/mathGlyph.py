@@ -1,4 +1,3 @@
-import weakref
 from robofab.pens.pointPen import AbstractPointPen
 from robofab.pens.adapterPens import PointToSegmentPen
 from mathFunctions import *
@@ -25,7 +24,7 @@ X for the pt math funcons, always send (x, y) factors instead
   the beginning of the _processMathTwo method.
 
 Questionable stuff:
-- is getRef needed?
+X is getRef needed?
 - nothing is ever set to _structure. should it be?
 - should the compatibilty be a function or pen?
 - the lib import is shallow and modifications to
@@ -40,8 +39,8 @@ Questionable stuff:
   the top level. that shouldn't matter for the
   purposes here.
 - __cmp__ is dubious but harmless i suppose.
-- is generationCount needed?
-- can box become bounds? have both?
+X is generationCount needed?
+X can box become bounds? have both?
 """
 
 
@@ -60,9 +59,6 @@ class MathGlyph(object):
         of incompatibility in this data, only compatible data is processed and
         returned. becuase of this, anchors and components may not be returned
         in the same order as the original.
-
-    If a MathGlyph is created by another glyph that is not another MathGlyph instance,
-    a weakref that points to the original glyph is maintained.
     """
 
     def __init__(self, glyph):
@@ -92,24 +88,6 @@ class MathGlyph(object):
             self.anchors = [dict(anchor) for anchor in glyph.anchors]
             for k, v in glyph.lib.items():
                 self.lib[k] = v
-            # set a weakref for the glyph
-            # ONLY if it is not a MathGlyph.
-            # this could happen as a result
-            # of a MathGlyph.copy()
-            if not isinstance(glyph, MathGlyph):
-                self.getRef = weakref.ref(glyph)
-                self.generationCount = 0
-            else:
-                self.generationCount = glyph.generationCount + 1
-
-    def getRef(self):
-        """
-        return the original glyph that self was built from.
-        this will return None if self was built from
-        another MathGlyph instance
-        """
-        # overriden by weakref.ref if present
-        return None
 
     def __cmp__(self, other):
         flag = False
@@ -133,18 +111,6 @@ class MathGlyph(object):
             flag = True
         return flag
 
-    # ----------
-    # Properties
-    # ----------
-
-    def _get_box(self):
-        from fontTools.pens.boundsPen import BoundsPen
-        bP = BoundsPen(None)
-        self.draw(bP)
-        return bP.bounds
-
-    box = property(_get_box, doc="Bounding rect for self. Returns None is glyph is empty. This DOES NOT measure components.")
-
     # ----
     # Copy
     # ----
@@ -163,14 +129,11 @@ class MathGlyph(object):
         this is used mainly for internal glyph math.
         """
         n = MathGlyph(None)
-        n.generationCount = self.generationCount + 1
-        #
         n.name = self.name
         n.unicodes = self.unicodes
         n.width = self.width
         n.height = self.height
         n.note = self.note
-        #
         for k, v in self.lib.items():
             n.lib[k] = v
         return n
