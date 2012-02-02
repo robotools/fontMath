@@ -23,8 +23,327 @@ X why is divPt here? move all of those to the math funcions
 X for the pt math funcons, always send (x, y) factors instead
   of coercing within the funcion. the coercion can happen at
   the beginning of the _processMathTwo method.
+
+Questionable stuff:
+- is getRef needed?
+- nothing is ever set to _structure. should it be?
+- should the compatibilty be a function or pen?
+- the lib import is shallow and modifications to
+  lower level objects (ie dict) could modify the
+  original object. this probably isn't desirable.
+  deepcopy won't work here since it will try to
+  maintain the original class. may need to write
+  a custom copier. or maybe something like this
+  would be sufficient:
+    self.lib = deepcopy(dict(glyph.lib))
+  the class would be maintained for everything but
+  the top level. that shouldn't matter for the
+  purposes here.
+- __cmp__ is dubious but harmless i suppose.
+- is generationCount needed?
+- can box become bounds? have both?
 """
 
+
+class MathGlyph(object):
+
+    """
+    A very shallow glyph object for rapid math operations.
+
+    This glyph differs from a standard RGlyph in many ways.
+    Most notably "line" segments do not exist. This is done
+    to make contours more compatible.
+
+    Notes about glyph math:
+    -   absolute contour compatibility is required
+    -   absolute comoponent and anchor compatibility is NOT required. in cases
+        of incompatibility in this data, only compatible data is processed and
+        returned. becuase of this, anchors and components may not be returned
+        in the same order as the original.
+
+    If a MathGlyph is created by another glyph that is not another MathGlyph instance,
+    a weakref that points to the original glyph is maintained.
+    """
+
+    def __init__(self, glyph):
+        self._structure = None
+        if glyph is None:
+            self.contours = []
+            self.components = []
+            self.anchors = []
+            self.lib = {}
+            self.name = None
+            self.unicodes = None
+            self.width = None
+            self.height = None
+            self.note = None
+            self.generationCount = 0
+        else:
+            p = MathGlyphPen()
+            glyph.drawPoints(p)
+            self.contours = p.contours
+            self.components = p.components
+            self.lib = {}
+            self.name = glyph.name
+            self.unicodes = glyph.unicodes
+            self.width = glyph.width
+            self.height = glyph.height
+            self.note = glyph.note
+            self.anchors = [dict(anchor) for anchor in glyph.anchors]
+            for k, v in glyph.lib.items():
+                self.lib[k] = v
+            # set a weakref for the glyph
+            # ONLY if it is not a MathGlyph.
+            # this could happen as a result
+            # of a MathGlyph.copy()
+            if not isinstance(glyph, MathGlyph):
+                self.getRef = weakref.ref(glyph)
+                self.generationCount = 0
+            else:
+                self.generationCount = glyph.generationCount + 1
+
+    def getRef(self):
+        """
+        return the original glyph that self was built from.
+        this will return None if self was built from
+        another MathGlyph instance
+        """
+        # overriden by weakref.ref if present
+        return None
+
+    def __cmp__(self, other):
+        flag = False
+        if self.name != other.name:
+            flag = True
+        if self.unicodes != other.unicodes:
+            flag = True
+        if self.width != other.width:
+            flag = True
+        if self.height != other.height:
+            flag = True
+        if self.note != other.note:
+            flag = True
+        if self.lib != other.lib:
+            flag = True
+        if self.contours != other.contours:
+            flag = True
+        if self.components != other.components:
+            flag = True
+        if self.anchors != other.anchors:
+            flag = True
+        return flag
+
+    # ----------
+    # Properties
+    # ----------
+
+    def _get_box(self):
+        from fontTools.pens.boundsPen import BoundsPen
+        bP = BoundsPen(None)
+        self.draw(bP)
+        return bP.bounds
+
+    box = property(_get_box, doc="Bounding rect for self. Returns None is glyph is empty. This DOES NOT measure components.")
+
+    # ----
+    # Copy
+    # ----
+
+    def copy(self):
+        """return a new MathGlyph containing all data in self"""
+        return MathGlyph(self)
+
+    def copyWithoutIterables(self):
+        """
+        return a new MathGlyph containing all data except:
+        contours
+        components
+        anchors
+        
+        this is used mainly for internal glyph math.
+        """
+        n = MathGlyph(None)
+        n.generationCount = self.generationCount + 1
+        #
+        n.name = self.name
+        n.unicodes = self.unicodes
+        n.width = self.width
+        n.height = self.height
+        n.note = self.note
+        #
+        for k, v in self.lib.items():
+            n.lib[k] = v
+        return n
+
+    # ----
+    # Math
+    # ----
+
+    # math with other glyph
+
+    def __add__(self, otherGlyph):
+        copiedGlyph = self.copyWithoutIterables()
+        self._processMathOne(copiedGlyph, otherGlyph, addPt, add)
+        return copiedGlyph
+
+    def __sub__(self, otherGlyph):
+        copiedGlyph = self.copyWithoutIterables()
+        self._processMathOne(copiedGlyph, otherGlyph, subPt, sub)
+        return copiedGlyph
+
+    def _processMathOne(self, copiedGlyph, otherGlyph, ptFunc, func):
+        # width
+        copiedGlyph.width = func(self.width, otherGlyph.width)
+        # height
+        copiedGlyph.height = func(self.height, otherGlyph.height)
+        # contours
+        copiedGlyph.contours = []
+        if len(self.contours) > 0:
+            copiedGlyph.contours = _processMathOneContours(self.contours, otherGlyph.contours, ptFunc)
+        # components
+        copiedGlyph.components = []
+        if len(self.components) > 0:
+            componentPairs = _pairComponents(self.components, other.components)
+            copiedGlyph.components = _processMathOneComponents(componentPairs, ptFunc)
+        # anchors
+        copiedGlyph.anchors = []
+        if len(self.anchors) > 0:
+            anchorTree1 = _anchorTree(self.anchors)
+            anchorTree2 = _anchorTree(otherGlyph.anchors)
+            anchorPairs = _pairAnchors(anchorTree1, anchorTree2)
+            copiedGlyph.anchors = _processMathOneAnchors(anchorPairs, ptFunc)
+
+    # math with factor
+
+    def __mul__(self, factor):
+        if not isinstance(factor, tuple):
+            factor = (factor, factor)
+        copiedGlyph = self.copyWithoutIterables()
+        self._processMathTwo(copiedGlyph, factor, mulPt, mul)
+        return copiedGlyph
+
+    __rmul__ = __mul__
+
+    def __div__(self, factor):
+        if not isinstance(factor, tuple):
+            factor = (factor, factor)
+        copiedGlyph = self.copyWithoutIterables()
+        self._processMathTwo(copiedGlyph, factor, divPt, div)
+        return copiedGlyph
+
+    __rdiv__ = __div__
+
+    def _processMathTwo(self, copiedGlyph, factor, ptFunc, func):
+        # width
+        copiedGlyph.width = func(self.width, factor[0])
+        # height
+        copiedGlyph.height = func(self.height, factor[1])
+        # contours
+        copiedGlyph.contours = []
+        if len(self.contours) > 0:
+            copiedGlyph.contours = _processMathOneContours(self.contours, factors, ptFunc)
+        # components
+        copiedGlyph.components = []
+        if len(self.components) > 0:
+            copiedGlyph.components = _processMathTwoComponents(self.components, factor, ptFunc)
+        # anchors
+        copiedGlyph.anchors = []
+        if len(self.anchors) > 0:
+            copiedGlyph.anchors = _processMathTwoAnchors(anchor, factor, ptFunc)
+
+    # -------
+    # Pen API
+    # -------
+
+    def drawPoints(self, pointPen):
+        """draw self using pointPen"""
+        for contour in self.contours:
+            pointPen.beginPath()
+            for segmentType, pt, smooth, name, identifier in contour:
+                pointPen.addPoint(pt=pt, segmentType=segmentType, smooth=smooth, name=name, identifier=identifier)
+            pointPen.endPath()
+        for baseName, transformation in self.components:
+            pointPen.addComponent(baseName, transformation)
+
+    def draw(self, pen):
+        """draw self using pen"""
+        from robofab.pens.adapterPens import PointToSegmentPen
+        pointPen = PointToSegmentPen(pen)
+        self.drawPoints(pointPen)
+
+    # -------------
+    # Compatibility
+    # -------------
+
+    def _get_structure(self):
+        if self._structure is not None:
+            return self._structure
+        contourStructure = []
+        for contour in self.contours:
+            contourStructure.append([segment[0] for segment in contour])
+        componentStructure = [component["baseName"] for component in self.components]
+        anchorStructure = [anchor["name"] for anchor in self.anchors]
+        return contourStructure, componentStructure, anchorStructure
+
+    structure = property(_get_structure, doc="returns a tuple of (contour structure, component structure, anchor structure)")
+
+    def isCompatible(self, otherGlyph, testContours=True, testComponents=False, testAnchors=False):
+        """
+        returns a True if otherGlyph is compatible with self.
+
+        because absolute compatibility is not required for
+        anchors and components in glyph math operations
+        this method does not test compatibility on that data
+        by default. set the flags to True to test for that data.
+        """
+        other = otherGlyph
+        selfContourStructure, selfComponentStructure, selfAnchorStructure = self.structure
+        otherContourStructure, otherComponentStructure, otherAnchorStructure = other.structure
+        result = True
+        if testContours:
+            if selfContourStructure != otherContourStructure:
+                result = False
+        if testComponents:
+            if selfComponentStructure != otherComponentStructure:
+                result = False
+        if testAnchors:
+            if selfAnchorStructure != otherAnchorStructure:
+                result = False
+        return result
+
+    # ----------
+    # Extraction
+    # ----------
+
+    def extractGlyph(self, glyph, pointPen=None):
+        """
+        "rehydrate" to a glyph. this requires
+        a glyph as an argument. if a point pen other
+        than the type of pen returned by glyph.getPointPen()
+        is required for drawing, send this the needed point pen.
+        """
+        if pointPen is None:
+            pointPen = glyph.getPointPen()
+        glyph.clearContours()
+        glyph.clearComponents()
+        glyph.clearAnchors()
+        glyph.lib.clear()
+        cleanerPen = FilterRedundantPointPen(pointPen)
+        self.drawPoints(cleanerPen)
+        glyph.name = self.name
+        glyph.unicodes = self.unicodes
+        glyph.width = self.width
+        glyph.height = self.height
+        glyph.note = self.note
+        glyph.anchors = self.anchors
+        for k, v in self.lib.items():
+            glyph.lib[k] = v
+        return glyph
+
+
+# ----------
+# Point Pens
+# ----------
 
 class MathGlyphPen(AbstractPointPen):
 
@@ -306,291 +625,6 @@ class _TestPointPen(AbstractPointPen):
                 self._prep(identifier)
             )
         )
-    
-
-
-class MathGlyph(object):
-
-    """
-    A very shallow glyph object for rapid math operations.
-
-    This glyph differs from a standard RGlyph in many ways.
-    Most notably "line" segments do not exist. This is done
-    to make contours more compatible.
-
-    Notes about glyph math:
-    -   absolute contour compatibility is required
-    -   absolute comoponent and anchor compatibility is NOT required. in cases
-        of incompatibility in this data, only compatible data is processed and
-        returned. becuase of this, anchors and components may not be returned
-        in the same order as the original.
-
-    If a MathGlyph is created by another glyph that is not another MathGlyph instance,
-    a weakref that points to the original glyph is maintained.
-    """
-
-    def __init__(self, glyph):
-        self._structure = None
-        if glyph is None:
-            self.contours = []
-            self.components = []
-            self.anchors = []
-            self.lib = {}
-            #
-            self.name = None
-            self.unicodes = None
-            self.width = None
-            self.height = None
-            self.note = None
-            self.generationCount = 0
-        else:
-            p = MathGlyphPen()
-            glyph.drawPoints(p)
-            self.contours = p.contours
-            self.components = p.components
-            self.lib = {}
-            #
-            self.name = glyph.name
-            self.unicodes = glyph.unicodes
-            self.width = glyph.width
-            self.height = glyph.height
-            self.note = glyph.note
-            self.anchors = [dict(anchor) for anchor in glyph.anchors]
-            #
-            for k, v in glyph.lib.items():
-                self.lib[k] = v
-            #
-            # set a weakref for the glyph
-            # ONLY if it is not a MathGlyph.
-            # this could happen as a result
-            # of a MathGlyph.copy()
-            if not isinstance(glyph, MathGlyph):
-                self.getRef = weakref.ref(glyph)
-                self.generationCount = 0
-            else:
-                self.generationCount = glyph.generationCount + 1
-
-    def getRef(self):
-        """
-        return the original glyph that self was built from.
-        this will return None if self was built from
-        another MathGlyph instance
-        """
-        # overriden by weakref.ref if present
-        return None
-
-    def _get_structure(self):
-        if self._structure is not None:
-            return self._structure
-        contourStructure = []
-        for contour in self.contours:
-            contourStructure.append([segment[0] for segment in contour])
-        componentStructure = [component["baseName"] for component in self.components]
-        anchorStructure = [anchor["name"] for anchor in self.anchors]
-        return contourStructure, componentStructure, anchorStructure
-
-    structure = property(_get_structure, doc="returns a tuple of (contour structure, component structure, anchor structure)")
-
-    def _get_box(self):
-        from fontTools.pens.boundsPen import BoundsPen
-        bP = BoundsPen(None)
-        self.draw(bP)
-        return bP.bounds
-
-    box = property(_get_box, doc="Bounding rect for self. Returns None is glyph is empty. This DOES NOT measure components.")
-
-    def copy(self):
-        """return a new MathGlyph containing all data in self"""
-        return MathGlyph(self)
-
-    def copyWithoutIterables(self):
-        """
-        return a new MathGlyph containing all data except:
-        contours
-        components
-        anchors
-        
-        this is used mainly for internal glyph math.
-        """
-        n = MathGlyph(None)
-        n.generationCount = self.generationCount + 1
-        #
-        n.name = self.name
-        n.unicodes = self.unicodes
-        n.width = self.width
-        n.height = self.height
-        n.note = self.note
-        #
-        for k, v in self.lib.items():
-            n.lib[k] = v
-        return n
-
-    # math with other glyph
-
-    def __add__(self, otherGlyph):
-        copiedGlyph = self.copyWithoutIterables()
-        self._processMathOne(copiedGlyph, otherGlyph, addPt, add)
-        return copiedGlyph
-
-    def __sub__(self, otherGlyph):
-        copiedGlyph = self.copyWithoutIterables()
-        self._processMathOne(copiedGlyph, otherGlyph, subPt, sub)
-        return copiedGlyph
-
-    def _processMathOne(self, copiedGlyph, otherGlyph, ptFunc, func):
-        # width
-        copiedGlyph.width = func(self.width, otherGlyph.width)
-        # height
-        copiedGlyph.height = func(self.height, otherGlyph.height)
-        # contours
-        copiedGlyph.contours = []
-        if len(self.contours) > 0:
-            copiedGlyph.contours = _processMathOneContours(self.contours, otherGlyph.contours, ptFunc)
-        # components
-        copiedGlyph.components = []
-        if len(self.components) > 0:
-            componentPairs = _pairComponents(self.components, other.components)
-            copiedGlyph.components = _processMathOneComponents(componentPairs, ptFunc)
-        # anchors
-        copiedGlyph.anchors = []
-        if len(self.anchors) > 0:
-            anchorTree1 = _anchorTree(self.anchors)
-            anchorTree2 = _anchorTree(otherGlyph.anchors)
-            anchorPairs = _pairAnchors(anchorTree1, anchorTree2)
-            copiedGlyph.anchors = _processMathOneAnchors(anchorPairs, ptFunc)
-
-    # math with factor
-
-    def __mul__(self, factor):
-        if not isinstance(factor, tuple):
-            factor = (factor, factor)
-        copiedGlyph = self.copyWithoutIterables()
-        self._processMathTwo(copiedGlyph, factor, mulPt, mul)
-        return copiedGlyph
-
-    __rmul__ = __mul__
-
-    def __div__(self, factor):
-        if not isinstance(factor, tuple):
-            factor = (factor, factor)
-        copiedGlyph = self.copyWithoutIterables()
-        self._processMathTwo(copiedGlyph, factor, divPt, div)
-        return copiedGlyph
-
-    __rdiv__ = __div__
-
-    def _processMathTwo(self, copiedGlyph, factor, ptFunc, func):
-        # width
-        copiedGlyph.width = func(self.width, factor[0])
-        # height
-        copiedGlyph.height = func(self.height, factor[1])
-        # contours
-        copiedGlyph.contours = []
-        if len(self.contours) > 0:
-            copiedGlyph.contours = _processMathOneContours(self.contours, factors, ptFunc)
-        # components
-        copiedGlyph.components = []
-        if len(self.components) > 0:
-            copiedGlyph.components = _processMathTwoComponents(self.components, factor, ptFunc)
-        # anchors
-        copiedGlyph.anchors = []
-        if len(self.anchors) > 0:
-            copiedGlyph.anchors = _processMathTwoAnchors(anchor, factor, ptFunc)
-
-
-
-    def __repr__(self):
-        return "<MathGlyph %s>" % self.name
-
-    def __cmp__(self, other):
-        flag = False
-        if self.name != other.name:
-            flag = True
-        if self.unicodes != other.unicodes:
-            flag = True
-        if self.width != other.width:
-            flag = True
-        if self.height != other.height:
-            flag = True
-        if self.note != other.note:
-            flag = True
-        if self.lib != other.lib:
-            flag = True
-        if self.contours != other.contours:
-            flag = True
-        if self.components != other.components:
-            flag = True
-        if self.anchors != other.anchors:
-            flag = True
-        return flag
-
-    def drawPoints(self, pointPen):
-        """draw self using pointPen"""
-        for contour in self.contours:
-            pointPen.beginPath()
-            for segmentType, pt, smooth, name, identifier in contour:
-                pointPen.addPoint(pt=pt, segmentType=segmentType, smooth=smooth, name=name, identifier=identifier)
-            pointPen.endPath()
-        for baseName, transformation in self.components:
-            pointPen.addComponent(baseName, transformation)
-
-    def draw(self, pen):
-        """draw self using pen"""
-        from robofab.pens.adapterPens import PointToSegmentPen
-        pointPen = PointToSegmentPen(pen)
-        self.drawPoints(pointPen)
-
-    def extractGlyph(self, glyph, pointPen=None):
-        """
-        "rehydrate" to a glyph. this requires
-        a glyph as an argument. if a point pen other
-        than the type of pen returned by glyph.getPointPen()
-        is required for drawing, send this the needed point pen.
-        """
-        if pointPen is None:
-            pointPen = glyph.getPointPen()
-        glyph.clearContours()
-        glyph.clearComponents()
-        glyph.clearAnchors()
-        glyph.lib.clear()
-        #
-        cleanerPen = FilterRedundantPointPen(pointPen)
-        self.drawPoints(cleanerPen)
-        #
-        glyph.name = self.name
-        glyph.unicodes = self.unicodes
-        glyph.width = self.width
-        glyph.height = self.height
-        glyph.note = self.note
-        glyph.anchors = self.anchors
-        #
-        for k, v in self.lib.items():
-            glyph.lib[k] = v
-        return glyph
-
-    def isCompatible(self, otherGlyph, testContours=True, testComponents=False, testAnchors=False):
-        """
-        returns a True if otherGlyph is compatible with self.
-
-        because absolute compatibility is not required for
-        anchors and components in glyph math operations
-        this method does not test compatibility on that data
-        by default. set the flags to True to test for that data.
-        """
-        other = otherGlyph
-        selfContourStructure, selfComponentStructure, selfAnchorStructure = self.structure
-        otherContourStructure, otherComponentStructure, otherAnchorStructure = other.structure
-        result = True
-        if testContours:
-            if selfContourStructure != otherContourStructure:
-                result = False
-        if testComponents:
-            if selfComponentStructure != otherComponentStructure:
-                result = False
-        if testAnchors:
-            if selfAnchorStructure != otherAnchorStructure:
-                result = False
-        return result
 
 
 # -------
