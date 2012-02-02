@@ -483,7 +483,7 @@ class MathGlyph(object):
         # width
         copiedGlyph.width = func(self.width, factor[0])
         # height
-        copiedGlyph.height = func(self.height, factor[0])
+        copiedGlyph.height = func(self.height, factor[1])
         # contours
         copiedGlyph.contours = []
         if len(self.contours) > 0:
@@ -953,6 +953,116 @@ def _processMathTwoComponents(components, factor, func):
         component["transformation"] = (xScale, xyScale, yxScale, yScale, xOffset, yOffset)
         result.append(component)
     return result
+
+# -----
+# Tests
+# -----
+
+# these are tests that don't fit elsewhere
+
+def _setupTestGlyph():
+    glyph = MathGlyph(None)
+    glyph.width = 0
+    glyph.height = 0
+    return glyph
+
+def _testWidth():
+    """
+    add
+    ---
+    >>> glyph1 = _setupTestGlyph()
+    >>> glyph1.width = 1
+    >>> glyph2 = _setupTestGlyph()
+    >>> glyph2.width = 2
+    >>> glyph3 = glyph1 + glyph2
+    >>> glyph3.width
+    3
+
+    sub
+    ---
+    >>> glyph1 = _setupTestGlyph()
+    >>> glyph1.width = 3
+    >>> glyph2 = _setupTestGlyph()
+    >>> glyph2.width = 2
+    >>> glyph3 = glyph1 - glyph2
+    >>> glyph3.width
+    1
+
+    mul
+    ---
+    >>> glyph1 = _setupTestGlyph()
+    >>> glyph1.width = 2
+    >>> glyph2 = glyph1 * 3
+    >>> glyph2.width
+    6
+    >>> glyph1 = _setupTestGlyph()
+    >>> glyph1.width = 2
+    >>> glyph2 = glyph1 * (3, 1)
+    >>> glyph2.width
+    6
+
+    div
+    ---
+    >>> glyph1 = _setupTestGlyph()
+    >>> glyph1.width = 7
+    >>> glyph2 = glyph1 / 2
+    >>> glyph2.width
+    3.5
+    >>> glyph1 = _setupTestGlyph()
+    >>> glyph1.width = 7
+    >>> glyph2 = glyph1 / (2, 1)
+    >>> glyph2.width
+    3.5
+    """
+
+def _testHeight():
+    """
+    add
+    ---
+    >>> glyph1 = _setupTestGlyph()
+    >>> glyph1.height = 1
+    >>> glyph2 = _setupTestGlyph()
+    >>> glyph2.height = 2
+    >>> glyph3 = glyph1 + glyph2
+    >>> glyph3.height
+    3
+
+    sub
+    ---
+    >>> glyph1 = _setupTestGlyph()
+    >>> glyph1.height = 3
+    >>> glyph2 = _setupTestGlyph()
+    >>> glyph2.height = 2
+    >>> glyph3 = glyph1 - glyph2
+    >>> glyph3.height
+    1
+
+    mul
+    ---
+    >>> glyph1 = _setupTestGlyph()
+    >>> glyph1.height = 2
+    >>> glyph2 = glyph1 * 3
+    >>> glyph2.height
+    6
+    >>> glyph1 = _setupTestGlyph()
+    >>> glyph1.height = 2
+    >>> glyph2 = glyph1 * (1, 3)
+    >>> glyph2.height
+    6
+
+    div
+    ---
+    >>> glyph1 = _setupTestGlyph()
+    >>> glyph1.height = 7
+    >>> glyph2 = glyph1 / 2
+    >>> glyph2.height
+    3.5
+    >>> glyph1 = _setupTestGlyph()
+    >>> glyph1.height = 7
+    >>> glyph2 = glyph1 / (1, 2)
+    >>> glyph2.height
+    3.5
+    """
 
 
 if __name__ == "__main__":
