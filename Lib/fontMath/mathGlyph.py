@@ -25,8 +25,8 @@ X for the pt math funcons, always send (x, y) factors instead
 
 Questionable stuff:
 X is getRef needed?
-- nothing is ever set to _structure. should it be?
-- should the compatibilty be a function or pen?
+X nothing is ever set to _structure. should it be?
+X should the compatibilty be a function or pen?
 - the lib import is shallow and modifications to
   lower level objects (ie dict) could modify the
   original object. this probably isn't desirable.
@@ -232,46 +232,6 @@ class MathGlyph(object):
         """draw self using pen"""
         pointPen = PointToSegmentPen(pen)
         self.drawPoints(pointPen)
-
-    # -------------
-    # Compatibility
-    # -------------
-
-    def _get_structure(self):
-        if self._structure is not None:
-            return self._structure
-        contourStructure = []
-        for contour in self.contours:
-            contourStructure.append([segment[0] for segment in contour])
-        componentStructure = [component["baseName"] for component in self.components]
-        anchorStructure = [anchor["name"] for anchor in self.anchors]
-        return contourStructure, componentStructure, anchorStructure
-
-    structure = property(_get_structure, doc="returns a tuple of (contour structure, component structure, anchor structure)")
-
-    def isCompatible(self, otherGlyph, testContours=True, testComponents=False, testAnchors=False):
-        """
-        returns a True if otherGlyph is compatible with self.
-
-        because absolute compatibility is not required for
-        anchors and components in glyph math operations
-        this method does not test compatibility on that data
-        by default. set the flags to True to test for that data.
-        """
-        other = otherGlyph
-        selfContourStructure, selfComponentStructure, selfAnchorStructure = self.structure
-        otherContourStructure, otherComponentStructure, otherAnchorStructure = other.structure
-        result = True
-        if testContours:
-            if selfContourStructure != otherContourStructure:
-                result = False
-        if testComponents:
-            if selfComponentStructure != otherComponentStructure:
-                result = False
-        if testAnchors:
-            if selfAnchorStructure != otherAnchorStructure:
-                result = False
-        return result
 
     # ----------
     # Extraction
