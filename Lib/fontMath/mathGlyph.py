@@ -2,6 +2,7 @@ from copy import deepcopy
 from robofab.pens.pointPen import AbstractPointPen
 from robofab.pens.adapterPens import PointToSegmentPen
 from mathFunctions import *
+from mathGuideline import *
 
 """
 to do:
@@ -13,7 +14,7 @@ X contours
   X identifiers
 X points
   X identifiers
-- guidelines
+X guidelines
 X height
 
 - is there any cruft that can be removed?
@@ -67,6 +68,7 @@ class MathGlyph(object):
             self.contours = []
             self.components = []
             self.anchors = []
+            self.guidelines = []
             self.lib = {}
             self.name = None
             self.unicodes = None
@@ -78,13 +80,14 @@ class MathGlyph(object):
             glyph.drawPoints(p)
             self.contours = p.contours
             self.components = p.components
+            self.anchors = [dict(anchor) for anchor in glyph.anchors]
+            self.guidelines = [_expandGuideline(guideline) for guideline in glyph.guidelines]
             self.lib = {}
             self.name = glyph.name
             self.unicodes = list(glyph.unicodes)
             self.width = glyph.width
             self.height = glyph.height
             self.note = glyph.note
-            self.anchors = [dict(anchor) for anchor in glyph.anchors]
             self.lib = deepcopy(dict(glyph.lib))
 
     def __cmp__(self, other):
@@ -107,6 +110,8 @@ class MathGlyph(object):
             flag = True
         if self.anchors != other.anchors:
             flag = True
+        if self.guidelines != other.guidelines:
+            flag = True
         return flag
 
     # ----
@@ -123,12 +128,14 @@ class MathGlyph(object):
         contours
         components
         anchors
+        guidelines
         
         this is used mainly for internal glyph math.
         """
         n = MathGlyph(None)
         n.name = self.name
-        n.unicodes = list(self.unicodes)
+        if self.unicodes is not None:
+            n.unicodes = list(self.unicodes)
         n.width = self.width
         n.height = self.height
         n.note = self.note
@@ -158,20 +165,25 @@ class MathGlyph(object):
         copiedGlyph.height = func(self.height, otherGlyph.height)
         # contours
         copiedGlyph.contours = []
-        if len(self.contours) > 0:
+        if self.contours:
             copiedGlyph.contours = _processMathOneContours(self.contours, otherGlyph.contours, ptFunc)
         # components
         copiedGlyph.components = []
-        if len(self.components) > 0:
+        if self.components:
             componentPairs = _pairComponents(self.components, other.components)
             copiedGlyph.components = _processMathOneComponents(componentPairs, ptFunc)
         # anchors
         copiedGlyph.anchors = []
-        if len(self.anchors) > 0:
+        if self.anchors:
             anchorTree1 = _anchorTree(self.anchors)
             anchorTree2 = _anchorTree(otherGlyph.anchors)
             anchorPairs = _pairAnchors(anchorTree1, anchorTree2)
             copiedGlyph.anchors = _processMathOneAnchors(anchorPairs, ptFunc)
+        # guidelines
+        copiedGlyph.guidelines = []
+        if self.guidelines:
+            guidelinePairs = _pairGuidelines(self.guidelines, other.guidelines)
+            copiedGlyph.guidelines = _processMathOneGuidelines(guidelinePairs, ptFunc, func)
 
     # math with factor
 
@@ -200,16 +212,20 @@ class MathGlyph(object):
         copiedGlyph.height = func(self.height, factor[1])
         # contours
         copiedGlyph.contours = []
-        if len(self.contours) > 0:
+        if self.contours:
             copiedGlyph.contours = _processMathOneContours(self.contours, factors, ptFunc)
         # components
         copiedGlyph.components = []
-        if len(self.components) > 0:
+        if self.components > 0:
             copiedGlyph.components = _processMathTwoComponents(self.components, factor, ptFunc)
         # anchors
         copiedGlyph.anchors = []
-        if len(self.anchors) > 0:
-            copiedGlyph.anchors = _processMathTwoAnchors(anchor, factor, ptFunc)
+        if self.anchors > 0:
+            copiedGlyph.anchors = _processMathTwoAnchors(self.anchors, factor, ptFunc)
+        # guidelines
+        copiedGlyph.guidelines = []
+        if self.guidelines:
+            copiedGlyph.guidelines = _processMathTwoGuidelines(self.guidelines, factor, func)
 
     # -------
     # Pen API
@@ -246,16 +262,18 @@ class MathGlyph(object):
         glyph.clearContours()
         glyph.clearComponents()
         glyph.clearAnchors()
+        glyph.clearGuidelines()
         glyph.lib.clear()
         cleanerPen = FilterRedundantPointPen(pointPen)
         self.drawPoints(cleanerPen)
+        glyph.anchors = [dict(anchor) for anchor in self.anchors]
+        glyph.guidelines = [_compressGuideline(guideline) for guideline in self.guidelines]
+        glyph.lib = deepcopy(dict(self.lib))
         glyph.name = self.name
         glyph.unicodes = list(self.unicodes)
         glyph.width = self.width
         glyph.height = self.height
         glyph.note = self.note
-        glyph.anchors = self.anchors
-        glyph.lib = deepcopy(dict(self.lib))
         return glyph
 
 

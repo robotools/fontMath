@@ -1,6 +1,14 @@
 import math
 from mathFunctions import *
 
+__all__ = [
+    "_expandGuideline",
+    "_compressGuideline",
+    "_pairGuidelines",
+    "_processMathOneGuidelines",
+    "_processMathTwoGuidelines"
+]
+
 def _expandGuideline(guideline):
     """
     >>> guideline = dict(x=100, y=None, angle=None)
