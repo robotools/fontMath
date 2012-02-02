@@ -9,15 +9,20 @@ X anchors
   - try to preserve ordering?
 X components
   X identifiers
-- contours
-  - identifiers
+X contours
+  X identifiers
 X points
   X identifiers
 - guidelines
 - height
 
 - is there any cruft that can be removed?
-- why is divPt here? move all of those to the math functions and get rid of the robofab dependency.
+- why is divPt here? move all of those to the math functions
+  and get rid of the robofab dependency.
+- FilterRedundantPointPen._flushContour is a mess
+- for the pt math funcitons, always send (x, y) factors instead
+  of coercing within the function. the coercion can happen at
+  the beginning of the _processMathTwo method.
 """
 
 
@@ -56,8 +61,10 @@ class MathGlyphPen(AbstractPointPen):
     ...     (None,    (  0,   0), False, None,     None),
     ...     (None,    (  0, 100), False, None,     None),
     ... ]
-    >>> pen.contours[-1] == expected
+    >>> pen.contours[-1]["points"] == expected
     True
+    >>> pen.contours[-1]["identifier"]
+    'contour 1'
 
     >>> pen = MathGlyphPen()
     >>> pen.beginPath(identifier="contour 1")
@@ -88,63 +95,64 @@ class MathGlyphPen(AbstractPointPen):
     ...     (None,    ( 25,   0), False, None,     None),
     ...     (None,    (  0,  25), False, None,     None),
     ... ]
-    >>> pen.contours[-1] == expected
+    >>> pen.contours[-1]["points"] == expected
     True
+    >>> pen.contours[-1]["identifier"]
+    'contour 1'
     """
 
     def __init__(self):
         self.contours = []
         self.components = []
+        self._contourIdentifier = None
         self._points = []
 
     def _flushContour(self):
+        """
+        This normalizes the contour so that:
+        - there are no line segments. in their place will be
+          curve segments with the off curves positioned on top
+          of the previous on curve and the new curve on curve.
+        - the contour starts with an on curve
+        """
+        self.contours.append(
+            dict(identifier=self._contourIdentifier, points=[])
+        )
+        contourPoints = self.contours[-1]["points"]
         points = self._points
-        self.contours.append([])
-        prevOnCurve = None
-        offCurves = []
-        # deal with the first point
-        segmentType, pt, smooth, name, identifier = points[0]
-        # if it is an offcurve, add it to the offcurve list
-        if segmentType is None:
-            offCurves.append((segmentType, pt, smooth, name, identifier))
-        # if it is a line, change the type to curve and add it to the contour
-        # create offcurves corresponding with the last oncurve and
-        # this point and add them to the points list
-        elif segmentType == "line":
-            prevOnCurve = pt
-            self.contours[-1].append(("curve", pt, False, name, identifier))
-            lastPoint = points[-1][1]
-            points.append((None, lastPoint, False, None, None))
-            points.append((None, pt, False, None, None))
-        # a move, curve or qcurve. simple append the data.
-        else:
-            self.contours[-1].append((segmentType, pt, smooth, name, identifier))
-            prevOnCurve = pt
-        # now go through the rest of the points
-        for segmentType, pt, smooth, name, identifier in points[1:]:
-            # store the off curves
-            if segmentType is None:
-                offCurves.append((segmentType, pt, smooth, name, identifier))
-                continue
-            # make off curve corresponding the the previous
-            # on curve an dthis point
+        # move offcurves at the beginning of the contour to the end
+        haveOnCurve = False
+        for point in points:
+            if point[0] is not None:
+                haveOnCurve = True
+                break
+        if haveOnCurve:
+            while 1:
+                if points[0][0] is None:
+                    point = points.pop(0)
+                    points.append(point)
+                else:
+                    break
+        # convert lines to curves
+        holdingOffCurves = []
+        for index, point in enumerate(points):
+            segmentType = point[0]
             if segmentType == "line":
-                segmentType = "curve"
-                offCurves.append((None, prevOnCurve, False, None, None))
-                offCurves.append((None, pt, False, None, None))
-            # add the offcurves to the contour
-            for offCurve in offCurves:
-                self.contours[-1].append(offCurve)
-            # add the oncurve to the contour
-            self.contours[-1].append((segmentType, pt, smooth, name, identifier))
-            # reset the stored data
-            prevOnCurve = pt
-            offCurves = []
-        # catch offcurves that belong to the first
-        if len(offCurves) != 0:
-            self.contours[-1].extend(offCurves)
+                pt, smooth, name, identifier = point[1:]
+                prevPt = points[index - 1][1]
+                if index == 0:
+                    holdingOffCurves.append((None, prevPt, False, None, None))
+                    holdingOffCurves.append((None, pt, False, None, None))
+                else:
+                    contourPoints.append((None, prevPt, False, None, None))
+                    contourPoints.append((None, pt, False, None, None))
+                contourPoints.append(("curve", pt, False, name, identifier))
+            else:
+                contourPoints.append(point)
+        contourPoints.extend(holdingOffCurves)
 
     def beginPath(self, identifier=None):
+        self._contourIdentifier = identifier
         self._points = []
 
     def addPoint(self, pt, segmentType=None, smooth=False, name=None, identifier=None, **kwargs):
@@ -164,6 +172,35 @@ class FilterRedundantPointPen(AbstractPointPen):
         self._points = []
 
     def _flushContour(self):
+        """
+        >>> points = [
+        ...     ("curve", (  0, 100), False, "name 1", "point 1"),
+        ...     (None,    (  0, 100), False, None,     None),
+        ...     (None,    (100, 100), False, None,     None),
+        ...     ("curve", (100, 100), False, "name 2", "point 2"),
+        ...     (None,    (100, 100), False, None,     None),
+        ...     (None,    (100,   0), False, None,     None),
+        ...     ("curve", (100,   0), False, "name 3", "point 3"),
+        ...     (None,    (100,   0), False, None,     None),
+        ...     (None,    (  0,   0), False, None,     None),
+        ...     ("curve", (  0,   0), False, "name 4", "point 4"),
+        ...     (None,    (  0,   0), False, None,     None),
+        ...     (None,    (  0, 100), False, None,     None),
+        ... ]
+        >>> testPen = _TestPointPen()
+        >>> filterPen = FilterRedundantPointPen(testPen)
+        >>> filterPen.beginPath(identifier="contour 1")
+        >>> for segmentType, pt, smooth, name, identifier in points:
+        ...     filterPen.addPoint(pt, segmentType=segmentType, smooth=smooth, name=name, identifier=identifier)
+        >>> filterPen.endPath()
+        >>> testPen.dump()
+        beginPath(identifier="contour 1")
+        addPoint((0, 100), segmentType="line", smooth=False, name="name 1", identifier="point 1")
+        addPoint((100, 100), segmentType="line", smooth=False, name="name 2", identifier="point 2")
+        addPoint((100, 0), segmentType="line", smooth=False, name="name 3", identifier="point 3")
+        addPoint((0, 0), segmentType="line", smooth=False, name="name 4", identifier="point 4")
+        endPath()
+        """
         points = self._points
         prevOnCurve = None
         offCurves = []
@@ -198,7 +235,7 @@ class FilterRedundantPointPen(AbstractPointPen):
             # add the point to the contour
             pointsToDraw.append((pt, segmentType, smooth, name, identifier))
             prevOnCurve = pt
-        for pt, segmentType, smooth, name in points[1:]:
+        for pt, segmentType, smooth, name, identifier in points[1:]:
             # store offcurves
             if segmentType is None:
                 offCurves.append((pt, segmentType, smooth, name, identifier))
@@ -223,14 +260,14 @@ class FilterRedundantPointPen(AbstractPointPen):
             for offCurve in offCurves:
                 pointsToDraw.append(offCurve)
         # draw to the pen
-        for pt, segmentType, smooth, name in pointsToDraw:
+        for pt, segmentType, smooth, name, identifier in pointsToDraw:
             self._pen.addPoint(pt, segmentType, smooth=smooth, name=name, identifier=identifier)
 
-    def beginPath(self):
+    def beginPath(self, identifier=None, **kwargs):
         self._points = []
-        self._pen.beginPath()
+        self._pen.beginPath(identifier=identifier)
 
-    def addPoint(self, pt, segmentType=None, smooth=False, name=None, **kwargs):
+    def addPoint(self, pt, segmentType=None, smooth=False, name=None, identifier=None, **kwargs):
         self._points.append((pt, segmentType, smooth, name, identifier))
 
     def endPath(self):
@@ -239,6 +276,46 @@ class FilterRedundantPointPen(AbstractPointPen):
 
     def addComponent(self, baseGlyph, transformation, identifier=None, **kwargs):
         self._pen.addComponent(baseGlyph, transformation, identifier)
+
+
+class _TestPointPen(AbstractPointPen):
+
+    def __init__(self):
+        self._text = []
+
+    def dump(self):
+        for line in self._text:
+            print line
+
+    def _prep(self, i):
+        if isinstance(i, basestring):
+            i = "\"%s\"" % i
+        return str(i)
+
+    def beginPath(self, identifier=None, **kwargs):
+        self._text.append("beginPath(identifier=%s)" % self._prep(identifier))
+
+    def addPoint(self, pt, segmentType=None, smooth=False, name=None, identifier=None, **kwargs):
+        self._text.append("addPoint(%s, segmentType=%s, smooth=%s, name=%s, identifier=%s)" % (
+                self._prep(pt),
+                self._prep(segmentType),
+                self._prep(smooth),
+                self._prep(name),
+                self._prep(identifier)
+            )
+        )
+
+    def endPath(self):
+        self._text.append("endPath()")
+
+    def addComponent(self, baseGlyph, transformation, identifier=None, **kwargs):
+        self._text.append("addComponent(baseGlyph=%s, transformation=%s, identifier=%s)" % (
+                self._prep(baseGlyph),
+                self._prep(transformation),
+                self._prep(identifier)
+            )
+        )
+    
 
 
 class MathGlyph(object):
@@ -523,47 +600,53 @@ class MathGlyph(object):
 
 def _processMathOneContours(contours1, contours2, funct):
     """
-    >>> contours1 = [[
-    ...     ("line", (1, 3), False, "test", "1")
-    ... ]]
-    >>> contours2 = [[
-    ...     (None, (4, 6), True, None, None)
-    ... ]]
-    >>> expected = [[
-    ...     ("line", (5, 9), False, "test", "1")
-    ... ]]
+    >>> contours1 = [
+    ...     dict(identifier="contour 1", points=[("line", (1, 3), False, "test", "1")])
+    ... ]
+    >>> contours2 = [
+    ...     dict(identifier=None, points=[(None, (4, 6), True, None, None)])
+    ... ]
+    >>> expected = [
+    ...     dict(identifier="contour 1", points=[("line", (5, 9), False, "test", "1")])
+    ... ]
     >>> _processMathOneContours(contours1, contours2, addPt) == expected
     True
     """
     result = []
     for index, contour1 in enumerate(contours1):
-        result.append([])
-        contour2 = contours2[index]
-        for index, point in enumerate(contour1):
+        contourIdentifier = contour1["identifier"]
+        points1 = contour1["points"]
+        points2 = contours2[index]["points"]
+        resultPoints = []
+        for index, point in enumerate(points1):
             segmentType, pt1, smooth, name, identifier = point
-            pt2 = contour2[index][1]
+            pt2 = points2[index][1]
             pt = funct(pt1, pt2)
-            result[-1].append((segmentType, pt, smooth, name, identifier))
+            resultPoints.append((segmentType, pt, smooth, name, identifier))
+        result.append(dict(identifier=contourIdentifier, points=resultPoints))
     return result
 
 def _processMathTwoContours(contours, factor, funct):
     """
-    >>> contours = [[
-    ...     ("line", (1, 3), False, "test", "1")
-    ... ]]
-    >>> expected = [[
-    ...     ("line", (2, 4.5), False, "test", "1")
-    ... ]]
+    >>> contours = [
+    ...     dict(identifier="contour 1", points=[("line", (1, 3), False, "test", "1")])
+    ... ]
+    >>> expected = [
+    ...     dict(identifier="contour 1", points=[("line", (2, 4.5), False, "test", "1")])
+    ... ]
     >>> _processMathTwoContours(contours, (2, 1.5), mulPt) == expected
     True
     """
     result = []
     for contour in contours:
-        result.append([])
-        for point in contour:
+        contourIdentifier = contour["identifier"]
+        points = contour["points"]
+        resultPoints = []
+        for point in points:
             segmentType, pt, smooth, name, identifier = point
             pt = funct(pt, factor)
-            result[-1].append((segmentType, pt, smooth, name, identifier))
+            resultPoints.append((segmentType, pt, smooth, name, identifier))
+        result.append(dict(identifier=contourIdentifier, points=resultPoints))
     return result
 
 # anchors
