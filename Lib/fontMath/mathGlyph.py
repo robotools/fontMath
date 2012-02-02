@@ -1,7 +1,7 @@
 import pprint
 import weakref
 from robofab.pens.pointPen import BasePointToSegmentPen, AbstractPointPen
-from robofab.objects.objectsBase import addPt, subPt, mulPt, BaseGlyph
+from mathFunctions import *
 
 """
 to do:
@@ -17,22 +17,13 @@ X points
 - height
 
 - is there any cruft that can be removed?
-- why is divPt here? move all of those to the math functions
+X why is divPt here? move all of those to the math functions
   and get rid of the robofab dependency.
 - FilterRedundantPointPen._flushContour is a mess
-- for the pt math funcitons, always send (x, y) factors instead
+X for the pt math functons, always send (x, y) factors instead
   of coercing within the function. the coercion can happen at
   the beginning of the _processMathTwo method.
 """
-
-
-def divPt(pt, factor):
-    if not isinstance(factor, tuple):
-        f1 = factor
-        f2 = factor
-    else:
-        f1, f2 = factor
-    return pt[0] / f1, pt[1] / f2
 
 
 class MathGlyphPen(AbstractPointPen):
