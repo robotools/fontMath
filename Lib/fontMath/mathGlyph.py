@@ -1,6 +1,6 @@
-import pprint
 import weakref
-from robofab.pens.pointPen import BasePointToSegmentPen, AbstractPointPen
+from robofab.pens.pointPen import AbstractPointPen
+from robofab.pens.adapterPens import PointToSegmentPen
 from mathFunctions import *
 
 """
@@ -267,7 +267,6 @@ class MathGlyph(object):
 
     def draw(self, pen):
         """draw self using pen"""
-        from robofab.pens.adapterPens import PointToSegmentPen
         pointPen = PointToSegmentPen(pen)
         self.drawPoints(pointPen)
 
