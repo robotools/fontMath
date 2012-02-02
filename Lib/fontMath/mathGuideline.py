@@ -1,4 +1,3 @@
-import math
 from mathFunctions import *
 
 __all__ = [
@@ -277,16 +276,8 @@ def _processMathTwoGuidelines(guidelines, factor, func):
         guideline = dict(guideline)
         guideline["x"] = func(guideline["x"], factor[0])
         guideline["y"] = func(guideline["y"], factor[1])
-        if factor[0] != factor[1]:
-            angle = guideline["angle"]
-            rangle = math.radians(angle)
-            x = math.cos(rangle)
-            y = math.sin(rangle)
-            guideline["angle"] = math.degrees(
-                math.atan2(
-                    func(y, factor[1]), func(x, factor[0])
-                )
-            )
+        angle = guideline["angle"]
+        guideline["angle"] = factorAngle(angle, factor, func)
         result.append(guideline)
     return result
 

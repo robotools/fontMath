@@ -1,4 +1,5 @@
-from mathFunctions import add, sub, mul, div
+from mathFunctions import *
+from mathGuideline import *
 
 
 class MathInfo(object):
@@ -7,6 +8,12 @@ class MathInfo(object):
         for attr in _infoAttrs.keys():
             if hasattr(infoObject, attr):
                 setattr(self, attr, getattr(infoObject, attr))
+        if isinstance(infoObject, MathInfo):
+            self.guidelines = [dict(guideline) for guideline in infoObject.guidelines]
+        elif infoObject.guidelines is not None:
+            self.guidelines = [_expandGuideline(guideline) for guideline in infoObject.guidelines]
+        else:
+            self.guidelines = []
 
     # ----
     # Copy
@@ -30,6 +37,8 @@ class MathInfo(object):
         >>> written = {}
         >>> expected = {}
         >>> for attr, value in _testData.items():
+        ...     if value is None:
+        ...         continue
         ...     written[attr] = getattr(info3, attr)
         ...     if isinstance(value, list):
         ...         expectedValue = [v + v for v in value]
@@ -40,7 +49,7 @@ class MathInfo(object):
         True
         """
         copiedInfo = self.copy()
-        self._processMathOne(copiedInfo, otherInfo, add)
+        self._processMathOne(copiedInfo, otherInfo, addPt, add)
         return copiedInfo
 
     def __sub__(self, otherInfo):
@@ -51,6 +60,8 @@ class MathInfo(object):
         >>> written = {}
         >>> expected = {}
         >>> for attr, value in _testData.items():
+        ...     if value is None:
+        ...         continue
         ...     written[attr] = getattr(info3, attr)
         ...     if isinstance(value, list):
         ...         expectedValue = [v - v for v in value]
@@ -61,11 +72,11 @@ class MathInfo(object):
         True
         """
         copiedInfo = self.copy()
-        self._processMathOne(copiedInfo, otherInfo, sub)
+        self._processMathOne(copiedInfo, otherInfo, subPt, sub)
         return copiedInfo
 
-    def _processMathOne(self, copiedInfo, otherInfo, funct):
-        # used by: __add__, __sub__
+    def _processMathOne(self, copiedInfo, otherInfo, ptFunc, func):
+        # basic attributes
         for attr in _infoAttrs.keys():
             a = None
             b = None
@@ -76,27 +87,33 @@ class MathInfo(object):
                 b = getattr(otherInfo, attr)
             if a is not None and b is not None:
                 if isinstance(a, (list, tuple)):
-                    v = self._processMathOneNumberList(a, b, funct)
+                    v = self._processMathOneNumberList(a, b, func)
                 else:
-                    v = self._processMathOneNumber(a, b, funct)
+                    v = self._processMathOneNumber(a, b, func)
             elif a is not None and b is None:
                 v = a
             elif b is not None and a is None:
                 v = b
             if v is not None:
                 setattr(copiedInfo, attr, v)
+        # special attributes
         self._processPostscriptWeightName(copiedInfo)
+        # guidelines
+        copiedInfo.guidelines = []
+        if self.guidelines:
+            guidelinePairs = _pairGuidelines(self.guidelines, otherInfo.guidelines)
+            copiedInfo.guidelines = _processMathOneGuidelines(guidelinePairs, ptFunc, func)
 
-    def _processMathOneNumber(self, a, b, funct):
-        return funct(a, b)
+    def _processMathOneNumber(self, a, b, func):
+        return func(a, b)
 
-    def _processMathOneNumberList(self, a, b, funct):
+    def _processMathOneNumberList(self, a, b, func):
         if len(a) != len(b):
             return None
         v = []
         for index, aItem in enumerate(a):
             bItem = b[index]
-            v.append(funct(aItem, bItem))
+            v.append(func(aItem, bItem))
         return v
 
     # math with factor
@@ -108,6 +125,8 @@ class MathInfo(object):
         >>> written = {}
         >>> expected = {}
         >>> for attr, value in _testData.items():
+        ...     if value is None:
+        ...         continue
         ...     written[attr] = getattr(info2, attr)
         ...     if isinstance(value, list):
         ...         expectedValue = [v * 2.5 for v in value]
@@ -117,8 +136,8 @@ class MathInfo(object):
         >>> sorted(expected) == sorted(written)
         True
         """
-        if isinstance(factor, tuple):
-            factor = factor[0]
+        if not isinstance(factor, tuple):
+            factor = (factor, factor)
         copiedInfo = self.copy()
         self._processMathTwo(copiedInfo, factor, mul)
         return copiedInfo
@@ -132,6 +151,8 @@ class MathInfo(object):
         >>> written = {}
         >>> expected = {}
         >>> for attr, value in _testData.items():
+        ...     if value is None:
+        ...         continue
         ...     written[attr] = getattr(info2, attr)
         ...     if isinstance(value, list):
         ...         expectedValue = [v / 2 for v in value]
@@ -141,34 +162,45 @@ class MathInfo(object):
         >>> sorted(expected) == sorted(written)
         True
         """
-        if isinstance(factor, tuple):
-            factor = factor[0]
+        if not isinstance(factor, tuple):
+            factor = (factor, factor)
         copiedInfo = self.copy()
         self._processMathTwo(copiedInfo, factor, div)
         return copiedInfo
 
     __rdiv__ = __div__
 
-    def _processMathTwo(self, copiedInfo, factor, funct):
-        # used by: __mul__, __div__
-        for attr in _infoAttrs.keys():
+    def _processMathTwo(self, copiedInfo, factor, func):
+        # basic attributes
+        for attr, (formatter, factorIndex) in _infoAttrs.items():
             if hasattr(copiedInfo, attr):
                 v = getattr(copiedInfo, attr)
                 if v is not None and factor is not None:
-                    if isinstance(v, (list, tuple)):
-                        v = self._processMathTwoNumberList(v, factor, funct)
+                    if factorIndex == 3:
+                        v = self._processMathTwoAngle(v, factor, func)
                     else:
-                        v = self._processMathTwoNumber(v, factor, funct)
+                        if isinstance(v, (list, tuple)):
+                            v = self._processMathTwoNumberList(v, factor[factorIndex], func)
+                        else:
+                            v = self._processMathTwoNumber(v, factor[factorIndex], func)
                 else:
                     v = None
                 setattr(copiedInfo, attr, v)
+        # special attributes
         self._processPostscriptWeightName(copiedInfo)
+        # guidelines
+        copiedInfo.guidelines = []
+        if self.guidelines:
+            copiedInfo.guidelines = _processMathTwoGuidelines(self.guidelines, factor, func)
 
-    def _processMathTwoNumber(self, v, factor, funct):
-        return funct(v, factor)
+    def _processMathTwoNumber(self, v, factor, func):
+        return func(v, factor)
 
-    def _processMathTwoNumberList(self, v, factor, funct):
-        return [funct(i, factor) for i in v]
+    def _processMathTwoNumberList(self, v, factor, func):
+        return [func(i, factor) for i in v]
+
+    def _processMathTwoAngle(self, angle, factor, func):
+        return factorAngle(angle, factor, func)
 
     # special attributes
 
@@ -234,6 +266,8 @@ class MathInfo(object):
         >>> written = {}
         >>> expected = {}
         >>> for attr, value in _testData.items():
+        ...     if value is None:
+        ...         continue
         ...     written[attr] = getattr(info2, attr)
         ...     if isinstance(value, list):
         ...         expectedValue = [int(round(v * 2.5)) for v in value]
@@ -245,13 +279,14 @@ class MathInfo(object):
         >>> sorted(expected) == sorted(written)
         True
         """
-        for attr, formatter in _infoAttrs.items() + [("postscriptWeightName", None)]:
+        for attr, (formatter, factorIndex) in _infoAttrs.items():
             if hasattr(self, attr):
                 v = getattr(self, attr)
                 if v is not None:
                     if formatter is not None:
                         v = formatter(v)
                 setattr(otherInfoObject, attr, v)
+        otherInfoObject.postscriptWeightName = self.postscriptWeightName
 
 
 # ----------
@@ -296,61 +331,65 @@ def _openTypeOS2WeightClassFormatter(value):
     return value
 
 _infoAttrs = dict(
-    unitsPerEm=_nonNegativeNumberFormatter,
-    descender=_numberFormatter,
-    xHeight=_numberFormatter,
-    capHeight=_numberFormatter,
-    ascender=_numberFormatter,
-    italicAngle=_numberFormatter,
+    # these are structured as:
+    #   attribute name = (formatter funcion, factor direction)
+    # where factor direction 0 = x, 1 = y and 3 = x, y (for angles)
 
-    openTypeHeadLowestRecPPEM=_nonNegativeNumberFormatter,
+    unitsPerEm=(_nonNegativeNumberFormatter, 1),
+    descender=(_numberFormatter, 1),
+    xHeight=(_numberFormatter, 1),
+    capHeight=(_numberFormatter, 1),
+    ascender=(_numberFormatter, 1),
+    italicAngle=(_numberFormatter, 3),
 
-    openTypeHheaAscender=_numberFormatter,
-    openTypeHheaDescender=_numberFormatter,
-    openTypeHheaLineGap=_numberFormatter,
-    openTypeHheaCaretSlopeRise=_integerFormatter,
-    openTypeHheaCaretSlopeRun=_integerFormatter,
-    openTypeHheaCaretOffset=_numberFormatter,
+    openTypeHeadLowestRecPPEM=(_nonNegativeNumberFormatter, 1),
 
-    openTypeOS2WidthClass=_openTypeOS2WidthClassFormatter,
-    openTypeOS2WeightClass=_openTypeOS2WeightClassFormatter,
-    openTypeOS2TypoAscender=_numberFormatter,
-    openTypeOS2TypoDescender=_numberFormatter,
-    openTypeOS2TypoLineGap=_numberFormatter,
-    openTypeOS2WinAscent=_nonNegativeNumberFormatter,
-    openTypeOS2WinDescent=_nonNegativeNumberFormatter,
-    openTypeOS2SubscriptXSize=_numberFormatter,
-    openTypeOS2SubscriptYSize=_numberFormatter,
-    openTypeOS2SubscriptXOffset=_numberFormatter,
-    openTypeOS2SubscriptYOffset=_numberFormatter,
-    openTypeOS2SuperscriptXSize=_numberFormatter,
-    openTypeOS2SuperscriptYSize=_numberFormatter,
-    openTypeOS2SuperscriptXOffset=_numberFormatter,
-    openTypeOS2SuperscriptYOffset=_numberFormatter,
-    openTypeOS2StrikeoutSize=_numberFormatter,
-    openTypeOS2StrikeoutPosition=_numberFormatter,
+    openTypeHheaAscender=(_numberFormatter, 1),
+    openTypeHheaDescender=(_numberFormatter, 1),
+    openTypeHheaLineGap=(_numberFormatter, 1),
+    openTypeHheaCaretSlopeRise=(_integerFormatter, 1),
+    openTypeHheaCaretSlopeRun=(_integerFormatter, 1),
+    openTypeHheaCaretOffset=(_numberFormatter, 1),
 
-    openTypeVheaVertTypoAscender=_numberFormatter,
-    openTypeVheaVertTypoDescender=_numberFormatter,
-    openTypeVheaVertTypoLineGap=_numberFormatter,
-    openTypeVheaCaretSlopeRise=_integerFormatter,
-    openTypeVheaCaretSlopeRun=_integerFormatter,
-    openTypeVheaCaretOffset=_numberFormatter,
+    openTypeOS2WidthClass=(_openTypeOS2WidthClassFormatter, 0),
+    openTypeOS2WeightClass=(_openTypeOS2WeightClassFormatter, 0),
+    openTypeOS2TypoAscender=(_numberFormatter, 1),
+    openTypeOS2TypoDescender=(_numberFormatter, 1),
+    openTypeOS2TypoLineGap=(_numberFormatter, 1),
+    openTypeOS2WinAscent=(_nonNegativeNumberFormatter, 1),
+    openTypeOS2WinDescent=(_nonNegativeNumberFormatter, 1),
+    openTypeOS2SubscriptXSize=(_numberFormatter, 0),
+    openTypeOS2SubscriptYSize=(_numberFormatter, 1),
+    openTypeOS2SubscriptXOffset=(_numberFormatter, 0),
+    openTypeOS2SubscriptYOffset=(_numberFormatter, 1),
+    openTypeOS2SuperscriptXSize=(_numberFormatter, 0),
+    openTypeOS2SuperscriptYSize=(_numberFormatter, 1),
+    openTypeOS2SuperscriptXOffset=(_numberFormatter, 0),
+    openTypeOS2SuperscriptYOffset=(_numberFormatter, 1),
+    openTypeOS2StrikeoutSize=(_numberFormatter, 1),
+    openTypeOS2StrikeoutPosition=(_numberFormatter, 1),
 
-    postscriptSlantAngle=_numberFormatter,
-    postscriptUnderlineThickness=_numberFormatter,
-    postscriptUnderlinePosition=_numberFormatter,
-    postscriptBlueValues=_numberListFormatter,
-    postscriptOtherBlues=_numberListFormatter,
-    postscriptFamilyBlues=_numberListFormatter,
-    postscriptFamilyOtherBlues=_numberListFormatter,
-    postscriptStemSnapH=_numberListFormatter,
-    postscriptStemSnapV=_numberListFormatter,
-    postscriptBlueFuzz=_numberFormatter,
-    postscriptBlueShift=_numberFormatter,
-    postscriptBlueScale=_floatFormatter,
-    postscriptDefaultWidthX=_numberFormatter,
-    postscriptNominalWidthX=_numberFormatter,
+    openTypeVheaVertTypoAscender=(_numberFormatter, 1),
+    openTypeVheaVertTypoDescender=(_numberFormatter, 1),
+    openTypeVheaVertTypoLineGap=(_numberFormatter, 1),
+    openTypeVheaCaretSlopeRise=(_integerFormatter, 1),
+    openTypeVheaCaretSlopeRun=(_integerFormatter, 1),
+    openTypeVheaCaretOffset=(_numberFormatter, 1),
+
+    postscriptSlantAngle=(_numberFormatter, 3),
+    postscriptUnderlineThickness=(_numberFormatter, 1),
+    postscriptUnderlinePosition=(_numberFormatter, 1),
+    postscriptBlueValues=(_numberListFormatter, 1),
+    postscriptOtherBlues=(_numberListFormatter, 1),
+    postscriptFamilyBlues=(_numberListFormatter, 1),
+    postscriptFamilyOtherBlues=(_numberListFormatter, 1),
+    postscriptStemSnapH=(_numberListFormatter, 0),
+    postscriptStemSnapV=(_numberListFormatter, 1),
+    postscriptBlueFuzz=(_numberFormatter, 1),
+    postscriptBlueShift=(_numberFormatter, 1),
+    postscriptBlueScale=(_floatFormatter, 1),
+    postscriptDefaultWidthX=(_numberFormatter, 0),
+    postscriptNominalWidthX=(_numberFormatter, 0),
     # this will be handled in a special way
     # postscriptWeightName=unicode
 )
@@ -427,7 +466,9 @@ _testData = dict(
     postscriptBlueShift=7,
     postscriptBlueScale=0.039625,
     postscriptDefaultWidthX=400,
-    postscriptNominalWidthX=400
+    postscriptNominalWidthX=400,
+    # guidelines
+    guidelines=None
 )
 
 class _TestInfoObject(object):
