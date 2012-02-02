@@ -219,12 +219,12 @@ class MathGlyph(object):
     def drawPoints(self, pointPen):
         """draw self using pointPen"""
         for contour in self.contours:
-            pointPen.beginPath()
-            for segmentType, pt, smooth, name, identifier in contour:
+            pointPen.beginPath(identifier=contour["identifier"])
+            for segmentType, pt, smooth, name, identifier in contour["points"]:
                 pointPen.addPoint(pt=pt, segmentType=segmentType, smooth=smooth, name=name, identifier=identifier)
             pointPen.endPath()
-        for baseName, transformation in self.components:
-            pointPen.addComponent(baseName, transformation)
+        for component in self.components:
+            pointPen.addComponent(component["baseName"], component["transformation"], identifier=component["identifier"])
 
     def draw(self, pen):
         """draw self using pen"""
@@ -1017,7 +1017,6 @@ def _testHeight():
     >>> glyph2.height
     3.5
     """
-
 
 if __name__ == "__main__":
     import doctest
