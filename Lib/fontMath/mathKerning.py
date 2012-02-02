@@ -27,12 +27,7 @@ class MathKerning(object):
         self.updateGroups(groups)
 
     def update(self, kerning):
-        from robofab.objects.objectsBase import BaseKerning
-        if isinstance(kerning, BaseKerning):
-            kerning = kerning.asDict()
-        else:
-            kerning = deepcopy(kerning)
-        self._kerning = kerning
+        self._kerning = dict(kerning)
 
     def updateGroups(self, groups):
         self._groups = {}
