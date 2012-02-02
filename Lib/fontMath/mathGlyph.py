@@ -1,3 +1,4 @@
+from copy import deepcopy
 from robofab.pens.pointPen import AbstractPointPen
 from robofab.pens.adapterPens import PointToSegmentPen
 from mathFunctions import *
@@ -27,7 +28,7 @@ Questionable stuff:
 X is getRef needed?
 X nothing is ever set to _structure. should it be?
 X should the compatibilty be a function or pen?
-- the lib import is shallow and modifications to
+X the lib import is shallow and modifications to
   lower level objects (ie dict) could modify the
   original object. this probably isn't desirable.
   deepcopy won't work here since it will try to
@@ -79,13 +80,12 @@ class MathGlyph(object):
             self.components = p.components
             self.lib = {}
             self.name = glyph.name
-            self.unicodes = glyph.unicodes
+            self.unicodes = list(glyph.unicodes)
             self.width = glyph.width
             self.height = glyph.height
             self.note = glyph.note
             self.anchors = [dict(anchor) for anchor in glyph.anchors]
-            for k, v in glyph.lib.items():
-                self.lib[k] = v
+            self.lib = deepcopy(dict(glyph.lib))
 
     def __cmp__(self, other):
         flag = False
@@ -128,12 +128,11 @@ class MathGlyph(object):
         """
         n = MathGlyph(None)
         n.name = self.name
-        n.unicodes = self.unicodes
+        n.unicodes = list(self.unicodes)
         n.width = self.width
         n.height = self.height
         n.note = self.note
-        for k, v in self.lib.items():
-            n.lib[k] = v
+        n.lib = deepcopy(dict(self.lib))
         return n
 
     # ----
@@ -251,13 +250,12 @@ class MathGlyph(object):
         cleanerPen = FilterRedundantPointPen(pointPen)
         self.drawPoints(cleanerPen)
         glyph.name = self.name
-        glyph.unicodes = self.unicodes
+        glyph.unicodes = list(self.unicodes)
         glyph.width = self.width
         glyph.height = self.height
         glyph.note = self.note
         glyph.anchors = self.anchors
-        for k, v in self.lib.items():
-            glyph.lib[k] = v
+        glyph.lib = deepcopy(dict(self.lib))
         return glyph
 
 
