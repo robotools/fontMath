@@ -62,7 +62,6 @@ class MathGlyph(object):
     """
 
     def __init__(self, glyph):
-        self._structure = None
         if glyph is None:
             self.contours = []
             self.components = []
@@ -73,7 +72,6 @@ class MathGlyph(object):
             self.width = None
             self.height = None
             self.note = None
-            self.generationCount = 0
         else:
             p = MathGlyphPen()
             glyph.drawPoints(p)
