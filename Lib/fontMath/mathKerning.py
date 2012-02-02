@@ -316,7 +316,7 @@ class MathKerning(object):
 
     # math with factor
 
-    def __mul__(self, value):
+    def __mul__(self, factor):
         """
         >>> kerning = {
         ...     ("A", "A") : 0,
@@ -332,11 +332,13 @@ class MathKerning(object):
         >>> sorted(obj.items())
         [(('B', 'B'), 2), (('C2', 'public.kern2.C'), 0), (('public.kern1.C', 'public.kern2.C'), 4)]
         """
-        k = self._processMathTwo(value, mul)
+        if isinstance(factor, tuple):
+            factor = factor[0]
+        k = self._processMathTwo(factor, mul)
         k.cleanup()
         return k
 
-    def __rmul__(self, value):
+    def __rmul__(self, factor):
         """
         >>> kerning = {
         ...     ("A", "A") : 0,
@@ -352,11 +354,13 @@ class MathKerning(object):
         >>> sorted(obj.items())
         [(('B', 'B'), 2), (('C2', 'public.kern2.C'), 0), (('public.kern1.C', 'public.kern2.C'), 4)]
         """
-        k = self._processMathTwo(value, mul)
+        if isinstance(factor, tuple):
+            factor = factor[0]
+        k = self._processMathTwo(factor, mul)
         k.cleanup()
         return k
 
-    def __div__(self, value):
+    def __div__(self, factor):
         """
         >>> kerning = {
         ...     ("A", "A") : 0,
@@ -372,11 +376,13 @@ class MathKerning(object):
         >>> sorted(obj.items())
         [(('B', 'B'), 2), (('C2', 'public.kern2.C'), 0), (('public.kern1.C', 'public.kern2.C'), 2)]
         """
-        k = self._processMathTwo(value, div)
+        if isinstance(factor, tuple):
+            factor = factor[0]
+        k = self._processMathTwo(factor, div)
         k.cleanup()
         return k
 
-    def __rdiv__(self, value):
+    def __rdiv__(self, factor):
         """
         >>> kerning = {
         ...     ("A", "A") : 0,
@@ -392,7 +398,9 @@ class MathKerning(object):
         >>> sorted(obj.items())
         [(('B', 'B'), 2), (('C2', 'public.kern2.C'), 0), (('public.kern1.C', 'public.kern2.C'), 2)]
         """
-        k = self._processMathTwo(value, div)
+        if isinstance(factor, tuple):
+            factor = factor[0]
+        k = self._processMathTwo(factor, div)
         k.cleanup()
         return k
 
