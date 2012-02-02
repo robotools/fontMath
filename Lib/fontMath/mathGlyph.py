@@ -14,14 +14,14 @@ X contours
 X points
   X identifiers
 - guidelines
-- height
+X height
 
 - is there any cruft that can be removed?
-X why is divPt here? move all of those to the math functions
+X why is divPt here? move all of those to the math funcions
   and get rid of the robofab dependency.
 - FilterRedundantPointPen._flushContour is a mess
-X for the pt math functons, always send (x, y) factors instead
-  of coercing within the function. the coercion can happen at
+X for the pt math funcons, always send (x, y) factors instead
+  of coercing within the funcion. the coercion can happen at
   the beginning of the _processMathTwo method.
 """
 
@@ -340,6 +340,7 @@ class MathGlyph(object):
             self.name = None
             self.unicodes = None
             self.width = None
+            self.height = None
             self.note = None
             self.generationCount = 0
         else:
@@ -352,6 +353,7 @@ class MathGlyph(object):
             self.name = glyph.name
             self.unicodes = glyph.unicodes
             self.width = glyph.width
+            self.height = glyph.height
             self.note = glyph.note
             self.anchors = [dict(anchor) for anchor in glyph.anchors]
             #
@@ -416,6 +418,7 @@ class MathGlyph(object):
         n.name = self.name
         n.unicodes = self.unicodes
         n.width = self.width
+        n.height = self.height
         n.note = self.note
         #
         for k, v in self.lib.items():
@@ -426,33 +429,35 @@ class MathGlyph(object):
 
     def __add__(self, otherGlyph):
         copiedGlyph = self.copyWithoutIterables()
-        self._processMathOne(copiedGlyph, otherGlyph, addPt)
-        copiedGlyph.width = self.width + otherGlyph.width
+        self._processMathOne(copiedGlyph, otherGlyph, addPt, add)
         return copiedGlyph
 
     def __sub__(self, otherGlyph):
         copiedGlyph = self.copyWithoutIterables()
-        self._processMathOne(copiedGlyph, otherGlyph, subPt)
-        copiedGlyph.width = self.width - otherGlyph.width
+        self._processMathOne(copiedGlyph, otherGlyph, subPt, sub)
         return copiedGlyph
 
-    def _processMathOne(self, copiedGlyph, otherGlyph, funct):
+    def _processMathOne(self, copiedGlyph, otherGlyph, ptFunc, func):
+        # width
+        copiedGlyph.width = func(self.width, otherGlyph.width)
+        # height
+        copiedGlyph.height = func(self.height, otherGlyph.height)
         # contours
         copiedGlyph.contours = []
         if len(self.contours) > 0:
-            copiedGlyph.contours = _processMathOneContours(self.contours, otherGlyph.contours, funct)
+            copiedGlyph.contours = _processMathOneContours(self.contours, otherGlyph.contours, ptFunc)
+        # components
+        copiedGlyph.components = []
+        if len(self.components) > 0:
+            componentPairs = _pairComponents(self.components, other.components)
+            copiedGlyph.components = _processMathOneComponents(componentPairs, ptFunc)
         # anchors
         copiedGlyph.anchors = []
         if len(self.anchors) > 0:
             anchorTree1 = _anchorTree(self.anchors)
             anchorTree2 = _anchorTree(otherGlyph.anchors)
             anchorPairs = _pairAnchors(anchorTree1, anchorTree2)
-            copiedGlyph.anchors = _processMathOneAnchors(anchorPairs)
-        # components
-        copiedGlyph.components = []
-        if len(self.components) > 0:
-            componentPairs = _pairComponents(self.components, other.components)
-            copiedGlyph.components = _processMathOneComponents(componentPairs)
+            copiedGlyph.anchors = _processMathOneAnchors(anchorPairs, ptFunc)
 
     # math with factor
 
@@ -460,8 +465,7 @@ class MathGlyph(object):
         if not isinstance(factor, tuple):
             factor = (factor, factor)
         copiedGlyph = self.copyWithoutIterables()
-        self._processMathTwo(copiedGlyph, factor, mulPt)
-        copiedGlyph.width = self.width * factor[0]
+        self._processMathTwo(copiedGlyph, factor, mulPt, mul)
         return copiedGlyph
 
     __rmul__ = __mul__
@@ -470,25 +474,28 @@ class MathGlyph(object):
         if not isinstance(factor, tuple):
             factor = (factor, factor)
         copiedGlyph = self.copyWithoutIterables()
-        self._processMathTwo(copiedGlyph, factor, divPt)
-        copiedGlyph.width = self.width / factor[0]
+        self._processMathTwo(copiedGlyph, factor, divPt, div)
         return copiedGlyph
 
     __rdiv__ = __div__
 
-    def _processMathTwo(self, copiedGlyph, factor, funct):
+    def _processMathTwo(self, copiedGlyph, factor, ptFunc, func):
+        # width
+        copiedGlyph.width = func(self.width, factor[0])
+        # height
+        copiedGlyph.height = func(self.height, factor[0])
         # contours
         copiedGlyph.contours = []
         if len(self.contours) > 0:
-            copiedGlyph.contours = _processMathOneContours(self.contours, factors, funct)
-        # anchors
-        copiedGlyph.anchors = []
-        if len(self.anchors) > 0:
-            copiedGlyph.anchors = _processMathTwoAnchors(anchor, factor, funct)
+            copiedGlyph.contours = _processMathOneContours(self.contours, factors, ptFunc)
         # components
         copiedGlyph.components = []
         if len(self.components) > 0:
-            copiedGlyph.components = _processMathTwoComponents(self.components, factor, funct)
+            copiedGlyph.components = _processMathTwoComponents(self.components, factor, ptFunc)
+        # anchors
+        copiedGlyph.anchors = []
+        if len(self.anchors) > 0:
+            copiedGlyph.anchors = _processMathTwoAnchors(anchor, factor, ptFunc)
 
 
 
@@ -502,6 +509,8 @@ class MathGlyph(object):
         if self.unicodes != other.unicodes:
             flag = True
         if self.width != other.width:
+            flag = True
+        if self.height != other.height:
             flag = True
         if self.note != other.note:
             flag = True
@@ -551,6 +560,7 @@ class MathGlyph(object):
         glyph.name = self.name
         glyph.unicodes = self.unicodes
         glyph.width = self.width
+        glyph.height = self.height
         glyph.note = self.note
         glyph.anchors = self.anchors
         #
@@ -589,7 +599,7 @@ class MathGlyph(object):
 
 # contours
 
-def _processMathOneContours(contours1, contours2, funct):
+def _processMathOneContours(contours1, contours2, func):
     """
     >>> contours1 = [
     ...     dict(identifier="contour 1", points=[("line", (1, 3), False, "test", "1")])
@@ -612,12 +622,12 @@ def _processMathOneContours(contours1, contours2, funct):
         for index, point in enumerate(points1):
             segmentType, pt1, smooth, name, identifier = point
             pt2 = points2[index][1]
-            pt = funct(pt1, pt2)
+            pt = func(pt1, pt2)
             resultPoints.append((segmentType, pt, smooth, name, identifier))
         result.append(dict(identifier=contourIdentifier, points=resultPoints))
     return result
 
-def _processMathTwoContours(contours, factor, funct):
+def _processMathTwoContours(contours, factor, func):
     """
     >>> contours = [
     ...     dict(identifier="contour 1", points=[("line", (1, 3), False, "test", "1")])
@@ -635,7 +645,7 @@ def _processMathTwoContours(contours, factor, funct):
         resultPoints = []
         for point in points:
             segmentType, pt, smooth, name, identifier = point
-            pt = funct(pt, factor)
+            pt = func(pt, factor)
             resultPoints.append((segmentType, pt, smooth, name, identifier))
         result.append(dict(identifier=contourIdentifier, points=resultPoints))
     return result
@@ -772,7 +782,7 @@ def _pairAnchors(anchorDict1, anchorDict2):
                 break
     return pairs
 
-def _processMathOneAnchors(anchorPairs, funct):
+def _processMathOneAnchors(anchorPairs, func):
     """
     >>> anchorPairs = [
     ...     (
@@ -791,11 +801,11 @@ def _processMathOneAnchors(anchorPairs, funct):
         anchor = dict(anchor1)
         pt1 = (anchor1["x"], anchor1["y"])
         pt2 = (anchor2["x"], anchor2["y"])
-        anchor["x"], anchor["y"] = funct(pt1, pt2)
+        anchor["x"], anchor["y"] = func(pt1, pt2)
         result.append(anchor)
     return result
 
-def _processMathTwoAnchors(anchors, factor, funct):
+def _processMathTwoAnchors(anchors, factor, func):
     """
     >>> anchors = [
     ...     dict(x=100, y=-100, name="foo", identifier="1", color="0,0,0,0")
@@ -810,7 +820,7 @@ def _processMathTwoAnchors(anchors, factor, funct):
     for anchor in anchors:
         anchor = dict(anchor)
         pt = (anchor["x"], anchor["y"])
-        anchor["x"], anchor["y"] = funct(pt, factor)
+        anchor["x"], anchor["y"] = func(pt, factor)
         result.append(anchor)
     return result
 
@@ -896,7 +906,7 @@ def _pairComponents(components1, components2):
                 break
     return pairs
 
-def _processMathOneComponents(componentPairs, funct):
+def _processMathOneComponents(componentPairs, func):
     """
     >>> components = [
     ...    (
@@ -915,14 +925,14 @@ def _processMathOneComponents(componentPairs, funct):
         component = dict(component1)
         xScale1, xyScale1, yxScale1, yScale1, xOffset1, yOffset1 = component1["transformation"]
         xScale2, xyScale2, yxScale2, yScale2, xOffset2, yOffset2 = component2["transformation"]
-        xScale, yScale = funct((xScale1, yScale1), (xScale2, yScale2))
-        xyScale, yxScale = funct((xyScale1, yxScale1), (xyScale2, yxScale2))
-        xOffset, yOffset = funct((xOffset1, yOffset1), (xOffset2, yOffset2))
+        xScale, yScale = func((xScale1, yScale1), (xScale2, yScale2))
+        xyScale, yxScale = func((xyScale1, yxScale1), (xyScale2, yxScale2))
+        xOffset, yOffset = func((xOffset1, yOffset1), (xOffset2, yOffset2))
         component["transformation"] = (xScale, xyScale, yxScale, yScale, xOffset, yOffset)
         result.append(component)
     return result
 
-def _processMathTwoComponents(components, factor, funct):
+def _processMathTwoComponents(components, factor, func):
     """
     >>> components = [
     ...     dict(baseGlyph="A", transformation=(1, 2, 3, 4, 5, 6), identifier="1"),
@@ -937,9 +947,9 @@ def _processMathTwoComponents(components, factor, funct):
     for component in components:
         component = dict(component)
         xScale, xyScale, yxScale, yScale, xOffset, yOffset = component["transformation"]
-        xScale, yScale = funct((xScale, yScale), factor)
-        xyScale, yxScale = funct((xyScale, yxScale), factor)
-        xOffset, yOffset = funct((xOffset, yOffset), factor)
+        xScale, yScale = func((xScale, yScale), factor)
+        xyScale, yxScale = func((xyScale, yxScale), factor)
+        xOffset, yOffset = func((xOffset, yOffset), factor)
         component["transformation"] = (xScale, xyScale, yxScale, yScale, xOffset, yOffset)
         result.append(component)
     return result
