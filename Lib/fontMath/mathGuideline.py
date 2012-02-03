@@ -19,8 +19,8 @@ def _expandGuideline(guideline):
     {'y': 100, 'x': 0, 'angle': 0}
     """
     guideline = dict(guideline)
-    x = guideline["x"]
-    y = guideline["y"]
+    x = guideline.get("x")
+    y = guideline.get("y")
     # horizontal
     if x is None:
         guideline["x"] = 0
@@ -222,7 +222,7 @@ def _findPair(guidelines1, guidelines2, pairs, attrs):
     for guideline1 in guidelines1:
         match = None
         for guideline2 in guidelines2:
-            attrMatch = False not in [guideline1[attr] == guideline2[attr] for attr in attrs]
+            attrMatch = False not in [guideline1.get(attr) == guideline2.get(attr) for attr in attrs]
             if attrMatch:
                 match = guideline2
                 break
