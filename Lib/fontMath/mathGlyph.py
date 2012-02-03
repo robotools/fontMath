@@ -16,6 +16,7 @@ X points
   X identifiers
 X guidelines
 X height
+X image
 
 - is there any cruft that can be removed?
 X why is divPt here? move all of those to the math funcions
@@ -24,6 +25,7 @@ X why is divPt here? move all of those to the math funcions
 X for the pt math funcons, always send (x, y) factors instead
   of coercing within the funcion. the coercion can happen at
   the beginning of the _processMathTwo method.
+  - try list comprehensions in the point math for speed
 
 Questionable stuff:
 X is getRef needed?
@@ -69,6 +71,7 @@ class MathGlyph(object):
             self.components = []
             self.anchors = []
             self.guidelines = []
+            self.image = _expandImage(None)
             self.lib = {}
             self.name = None
             self.unicodes = None
@@ -82,13 +85,13 @@ class MathGlyph(object):
             self.components = p.components
             self.anchors = [dict(anchor) for anchor in glyph.anchors]
             self.guidelines = [_expandGuideline(guideline) for guideline in glyph.guidelines]
-            self.lib = {}
+            self.image = _expandImage(glyph.image)
+            self.lib = deepcopy(dict(glyph.lib))
             self.name = glyph.name
             self.unicodes = list(glyph.unicodes)
             self.width = glyph.width
             self.height = glyph.height
             self.note = glyph.note
-            self.lib = deepcopy(dict(glyph.lib))
 
     def __cmp__(self, other):
         flag = False
@@ -112,6 +115,8 @@ class MathGlyph(object):
             flag = True
         if self.guidelines != other.guidelines:
             flag = True
+        if self.image != other.image:
+            flag = True
         return flag
 
     # ----
@@ -122,7 +127,7 @@ class MathGlyph(object):
         """return a new MathGlyph containing all data in self"""
         return MathGlyph(self)
 
-    def copyWithoutIterables(self):
+    def copyWithoutMathSubObjects(self):
         """
         return a new MathGlyph containing all data except:
         contours
@@ -149,12 +154,12 @@ class MathGlyph(object):
     # math with other glyph
 
     def __add__(self, otherGlyph):
-        copiedGlyph = self.copyWithoutIterables()
+        copiedGlyph = self.copyWithoutMathSubObjects()
         self._processMathOne(copiedGlyph, otherGlyph, addPt, add)
         return copiedGlyph
 
     def __sub__(self, otherGlyph):
-        copiedGlyph = self.copyWithoutIterables()
+        copiedGlyph = self.copyWithoutMathSubObjects()
         self._processMathOne(copiedGlyph, otherGlyph, subPt, sub)
         return copiedGlyph
 
@@ -170,7 +175,7 @@ class MathGlyph(object):
         # components
         copiedGlyph.components = []
         if self.components:
-            componentPairs = _pairComponents(self.components, other.components)
+            componentPairs = _pairComponents(self.components, otherGlyph.components)
             copiedGlyph.components = _processMathOneComponents(componentPairs, ptFunc)
         # anchors
         copiedGlyph.anchors = []
@@ -182,15 +187,20 @@ class MathGlyph(object):
         # guidelines
         copiedGlyph.guidelines = []
         if self.guidelines:
-            guidelinePairs = _pairGuidelines(self.guidelines, other.guidelines)
+            guidelinePairs = _pairGuidelines(self.guidelines, otherGlyph.guidelines)
             copiedGlyph.guidelines = _processMathOneGuidelines(guidelinePairs, ptFunc, func)
+        # image
+        copiedGlyph.image = _expandImage(None)
+        imagePair = _pairImages(self.image, otherGlyph.image)
+        if imagePair:
+            copiedGlyph.image = _processMathOneImage(imagePair, ptFunc)
 
     # math with factor
 
     def __mul__(self, factor):
         if not isinstance(factor, tuple):
             factor = (factor, factor)
-        copiedGlyph = self.copyWithoutIterables()
+        copiedGlyph = self.copyWithoutMathSubObjects()
         self._processMathTwo(copiedGlyph, factor, mulPt, mul)
         return copiedGlyph
 
@@ -199,7 +209,7 @@ class MathGlyph(object):
     def __div__(self, factor):
         if not isinstance(factor, tuple):
             factor = (factor, factor)
-        copiedGlyph = self.copyWithoutIterables()
+        copiedGlyph = self.copyWithoutMathSubObjects()
         self._processMathTwo(copiedGlyph, factor, divPt, div)
         return copiedGlyph
 
@@ -213,19 +223,21 @@ class MathGlyph(object):
         # contours
         copiedGlyph.contours = []
         if self.contours:
-            copiedGlyph.contours = _processMathOneContours(self.contours, factors, ptFunc)
+            copiedGlyph.contours = _processMathTwoContours(self.contours, factor, ptFunc)
         # components
         copiedGlyph.components = []
-        if self.components > 0:
+        if self.components:
             copiedGlyph.components = _processMathTwoComponents(self.components, factor, ptFunc)
         # anchors
         copiedGlyph.anchors = []
-        if self.anchors > 0:
+        if self.anchors:
             copiedGlyph.anchors = _processMathTwoAnchors(self.anchors, factor, ptFunc)
         # guidelines
         copiedGlyph.guidelines = []
         if self.guidelines:
             copiedGlyph.guidelines = _processMathTwoGuidelines(self.guidelines, factor, func)
+        # image
+        copiedGlyph.image = _processMathTwoImage(self.image, factor, ptFunc)
 
     # -------
     # Pen API
@@ -239,7 +251,7 @@ class MathGlyph(object):
                 pointPen.addPoint(pt=pt, segmentType=segmentType, smooth=smooth, name=name, identifier=identifier)
             pointPen.endPath()
         for component in self.components:
-            pointPen.addComponent(component["baseName"], component["transformation"], identifier=component["identifier"])
+            pointPen.addComponent(component["baseGlyph"], component["transformation"], identifier=component["identifier"])
 
     def draw(self, pen):
         """draw self using pen"""
@@ -268,6 +280,7 @@ class MathGlyph(object):
         self.drawPoints(cleanerPen)
         glyph.anchors = [dict(anchor) for anchor in self.anchors]
         glyph.guidelines = [_compressGuideline(guideline) for guideline in self.guidelines]
+        glyph.image = _compressImage(self.image)
         glyph.lib = deepcopy(dict(self.lib))
         glyph.name = self.name
         glyph.unicodes = list(self.unicodes)
@@ -893,12 +906,7 @@ def _processMathOneComponents(componentPairs, func):
     result = []
     for component1, component2 in componentPairs:
         component = dict(component1)
-        xScale1, xyScale1, yxScale1, yScale1, xOffset1, yOffset1 = component1["transformation"]
-        xScale2, xyScale2, yxScale2, yScale2, xOffset2, yOffset2 = component2["transformation"]
-        xScale, yScale = func((xScale1, yScale1), (xScale2, yScale2))
-        xyScale, yxScale = func((xyScale1, yxScale1), (xyScale2, yxScale2))
-        xOffset, yOffset = func((xOffset1, yOffset1), (xOffset2, yOffset2))
-        component["transformation"] = (xScale, xyScale, yxScale, yScale, xOffset, yOffset)
+        component["transformation"] = _processMathOneTransformation(component1["transformation"], component2["transformation"], func)
         result.append(component)
     return result
 
@@ -916,13 +924,125 @@ def _processMathTwoComponents(components, factor, func):
     result = []
     for component in components:
         component = dict(component)
-        xScale, xyScale, yxScale, yScale, xOffset, yOffset = component["transformation"]
-        xScale, yScale = func((xScale, yScale), factor)
-        xyScale, yxScale = func((xyScale, yxScale), factor)
-        xOffset, yOffset = func((xOffset, yOffset), factor)
-        component["transformation"] = (xScale, xyScale, yxScale, yScale, xOffset, yOffset)
+        component["transformation"] = _processMathTwoTransformation(component["transformation"], factor, func)
         result.append(component)
     return result
+
+# image
+
+_imageTransformationKeys = "xScale xyScale yxScale yScale xOffset yOffset".split(" ")
+_defaultImageTransformation = (1, 0, 0, 1, 0, 0)
+_defaultImageTransformationDict = {}
+for key, value in zip(_imageTransformationKeys, _defaultImageTransformation):
+    _defaultImageTransformationDict[key] = value
+
+def _expandImage(image):
+    """
+    >>> _expandImage(None) == dict(fileName=None, transformation=(1, 0, 0, 1, 0, 0), color=None)
+    True
+    >>> _expandImage(dict(fileName="foo")) == dict(fileName="foo", transformation=(1, 0, 0, 1, 0, 0), color=None)
+    True
+    """
+    if image is None:
+        fileName = None
+        transformation = _defaultImageTransformation
+        color = None
+    else:
+        fileName = image["fileName"]
+        color = image.get("color")
+        transformation = tuple([
+            image.get(key, _defaultImageTransformationDict[key])
+            for key in _imageTransformationKeys
+        ])
+    return dict(fileName=fileName, transformation=transformation, color=color)
+
+def _compressImage(image):
+    """
+    >>> expected = dict(fileName="foo", color=None, xScale=1, xyScale=0, yxScale=0, yScale=1, xOffset=0, yOffset=0)
+    >>> _compressImage(dict(fileName="foo", transformation=(1, 0, 0, 1, 0, 0), color=None)) == expected
+    True
+    """
+    fileName = image["fileName"]
+    transformation = image["transformation"]
+    color = image["color"]
+    if fileName is None:
+        return
+    image = dict(fileName=fileName, color=color)
+    for index, key in enumerate(_imageTransformationKeys):
+        image[key] = transformation[index]
+    return image
+
+def _pairImages(image1, image2):
+    """
+    >>> image1 = dict(fileName="foo", transformation=(1, 0, 0, 1, 0, 0), color=None)
+    >>> image2 = dict(fileName="foo", transformation=(2, 0, 0, 2, 0, 0), color="0,0,0,0")
+    >>> _pairImages(image1, image2) == (image1, image2)
+    True
+
+    >>> image1 = dict(fileName="foo", transformation=(1, 0, 0, 1, 0, 0), color=None)
+    >>> image2 = dict(fileName="bar", transformation=(1, 0, 0, 1, 0, 0), color=None)
+    >>> _pairImages(image1, image2) == ()
+    True
+    """
+    if image1["fileName"] != image2["fileName"]:
+        return ()
+    return (image1, image2)
+
+def _processMathOneImage(imagePair, func):
+    """
+    >>> image1 = dict(fileName="foo", transformation=( 1,  3,  5,  7,  9, 11), color="0,0,0,0")
+    >>> image2 = dict(fileName="bar", transformation=(12, 14, 16, 18, 20, 22), color=None)
+    >>> expected = dict(fileName="foo", transformation=(13, 17, 21, 25, 29, 33), color="0,0,0,0")
+    >>> _processMathOneImage((image1, image2), addPt) == expected
+    True
+    """
+    image1, image2 = imagePair
+    fileName = image1["fileName"]
+    color = image1["color"]
+    transformation = _processMathOneTransformation(image1["transformation"], image2["transformation"], func)
+    return dict(fileName=fileName, transformation=transformation, color=color)
+
+def _processMathTwoImage(image, factor, func):
+    """
+    >>> image = dict(fileName="foo", transformation=(1, 2, 3, 4, 5, 6), color="0,0,0,0")
+    >>> expected = dict(fileName="foo", transformation=(2, 4, 4.5, 6, 10, 9), color="0,0,0,0")
+    >>> _processMathTwoImage(image, (2, 1.5), mulPt) == expected
+    True
+    """
+    fileName = image["fileName"]
+    color = image["color"]
+    transformation = _processMathTwoTransformation(image["transformation"], factor, func)
+    return dict(fileName=fileName, transformation=transformation, color=color)
+
+# transformations
+
+def _processMathOneTransformation(transformation1, transformation2, func):
+    """
+    >>> transformation1 = ( 1,  3,  5,  7,  9, 11)
+    >>> transformation2 = (12, 14, 16, 18, 20, 22)
+    >>> expected = (13, 17, 21, 25, 29, 33)
+    >>> _processMathOneTransformation(transformation1, transformation2, addPt) == expected
+    True
+    """
+    xScale1, xyScale1, yxScale1, yScale1, xOffset1, yOffset1 = transformation1
+    xScale2, xyScale2, yxScale2, yScale2, xOffset2, yOffset2 = transformation2
+    xScale, yScale = func((xScale1, yScale1), (xScale2, yScale2))
+    xyScale, yxScale = func((xyScale1, yxScale1), (xyScale2, yxScale2))
+    xOffset, yOffset = func((xOffset1, yOffset1), (xOffset2, yOffset2))
+    return (xScale, xyScale, yxScale, yScale, xOffset, yOffset)
+
+def _processMathTwoTransformation(transformation, factor, func):
+    """
+    >>> transformation = (1, 2, 3, 4, 5, 6)
+    >>> expected = (2, 4, 4.5, 6, 10, 9)
+    >>> _processMathTwoTransformation(transformation, (2, 1.5), mulPt) == expected
+    True
+    """
+    xScale, xyScale, yxScale, yScale, xOffset, yOffset = transformation
+    xScale, yScale = func((xScale, yScale), factor)
+    xyScale, yxScale = func((xyScale, yxScale), factor)
+    xOffset, yOffset = func((xOffset, yOffset), factor)
+    return (xScale, xyScale, yxScale, yScale, xOffset, yOffset)
 
 # -----
 # Tests
