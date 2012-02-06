@@ -1,7 +1,13 @@
 """
-These objects perform math similar to the RoboFab RGlyph object math.
-The biggest difference is that this is significantly faster. This also
-supports math on kerning and info objects.
+A set of fast glyph and font objects for math operations.
+
+This was inspired, and is more or less a clone, of Erik van Blokland's
+brilliant glyph math in RoboFab.
 """
+
+from mathGlyph import MathGlyph
+from mathInfo import MathInfo
+from mathKerning import MathKerning
+
 
 version = "0.2"

@@ -4,48 +4,50 @@ from robofab.pens.adapterPens import PointToSegmentPen
 from mathFunctions import *
 from mathGuideline import *
 
-"""
-to do:
-X anchors
-  - try to preserve ordering?
-X components
-  X identifiers
-X contours
-  X identifiers
-X points
-  X identifiers
-X guidelines
-X height
-X image
-
-- is there any cruft that can be removed?
-X why is divPt here? move all of those to the math funcions
-  and get rid of the robofab dependency.
-- FilterRedundantPointPen._flushContour is a mess
-X for the pt math funcons, always send (x, y) factors instead
-  of coercing within the funcion. the coercion can happen at
-  the beginning of the _processMathTwo method.
-  - try list comprehensions in the point math for speed
-
-Questionable stuff:
-X is getRef needed?
-X nothing is ever set to _structure. should it be?
-X should the compatibilty be a function or pen?
-X the lib import is shallow and modifications to
-  lower level objects (ie dict) could modify the
-  original object. this probably isn't desirable.
-  deepcopy won't work here since it will try to
-  maintain the original class. may need to write
-  a custom copier. or maybe something like this
-  would be sufficient:
-    self.lib = deepcopy(dict(glyph.lib))
-  the class would be maintained for everything but
-  the top level. that shouldn't matter for the
-  purposes here.
-- __cmp__ is dubious but harmless i suppose.
-X is generationCount needed?
-X can box become bounds? have both?
-"""
+# ------------------
+# UFO 3 branch notes
+# ------------------
+#
+# to do:
+# X anchors
+#   - try to preserve ordering?
+# X components
+#   X identifiers
+# X contours
+#   X identifiers
+# X points
+#   X identifiers
+# X guidelines
+# X height
+# X image
+#
+# - is there any cruft that can be removed?
+# X why is divPt here? move all of those to the math funcions
+#   and get rid of the robofab dependency.
+# - FilterRedundantPointPen._flushContour is a mess
+# X for the pt math funcons, always send (x, y) factors instead
+#   of coercing within the funcion. the coercion can happen at
+#   the beginning of the _processMathTwo method.
+#   - try list comprehensions in the point math for speed
+#
+# Questionable stuff:
+# X is getRef needed?
+# X nothing is ever set to _structure. should it be?
+# X should the compatibilty be a function or pen?
+# X the lib import is shallow and modifications to
+#   lower level objects (ie dict) could modify the
+#   original object. this probably isn't desirable.
+#   deepcopy won't work here since it will try to
+#   maintain the original class. may need to write
+#   a custom copier. or maybe something like this
+#   would be sufficient:
+#     self.lib = deepcopy(dict(glyph.lib))
+#   the class would be maintained for everything but
+#   the top level. that shouldn't matter for the
+#   purposes here.
+# - __cmp__ is dubious but harmless i suppose.
+# X is generationCount needed?
+# X can box become bounds? have both?
 
 
 class MathGlyph(object):
@@ -53,16 +55,12 @@ class MathGlyph(object):
     """
     A very shallow glyph object for rapid math operations.
 
-    This glyph differs from a standard RGlyph in many ways.
-    Most notably "line" segments do not exist. This is done
-    to make contours more compatible.
-
     Notes about glyph math:
     -   absolute contour compatibility is required
-    -   absolute comoponent and anchor compatibility is NOT required. in cases
-        of incompatibility in this data, only compatible data is processed and
-        returned. becuase of this, anchors and components may not be returned
-        in the same order as the original.
+    -   absolute component, anchor, guideline and image compatibility is NOT required.
+        in cases of incompatibility in this data, only compatible data is processed and
+        returned. becuase of this, anchors and components may not be returned in the
+        same order as the original.
     """
 
     def __init__(self, glyph):
