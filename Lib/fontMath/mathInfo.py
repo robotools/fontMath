@@ -310,6 +310,12 @@ def _nonNegativeNumberFormatter(value):
         return 0
     return value
 
+def _nonNegativeIntegerFormatter(value):
+    value = _integerFormatter(value)
+    if value < 0:
+        return 0
+    return value
+
 def _integerListFormatter(value):
     return [_integerFormatter(v) for v in value]
 
@@ -342,39 +348,39 @@ _infoAttrs = dict(
     ascender=(_numberFormatter, 1),
     italicAngle=(_numberFormatter, 3),
 
-    openTypeHeadLowestRecPPEM=(_nonNegativeNumberFormatter, 1),
+    openTypeHeadLowestRecPPEM=(_nonNegativeIntegerFormatter, 1),
 
-    openTypeHheaAscender=(_numberFormatter, 1),
-    openTypeHheaDescender=(_numberFormatter, 1),
-    openTypeHheaLineGap=(_numberFormatter, 1),
+    openTypeHheaAscender=(_integerFormatter, 1),
+    openTypeHheaDescender=(_integerFormatter, 1),
+    openTypeHheaLineGap=(_integerFormatter, 1),
     openTypeHheaCaretSlopeRise=(_integerFormatter, 1),
     openTypeHheaCaretSlopeRun=(_integerFormatter, 1),
-    openTypeHheaCaretOffset=(_numberFormatter, 1),
+    openTypeHheaCaretOffset=(_integerFormatter, 1),
 
     openTypeOS2WidthClass=(_openTypeOS2WidthClassFormatter, 0),
     openTypeOS2WeightClass=(_openTypeOS2WeightClassFormatter, 0),
-    openTypeOS2TypoAscender=(_numberFormatter, 1),
-    openTypeOS2TypoDescender=(_numberFormatter, 1),
-    openTypeOS2TypoLineGap=(_numberFormatter, 1),
-    openTypeOS2WinAscent=(_nonNegativeNumberFormatter, 1),
-    openTypeOS2WinDescent=(_nonNegativeNumberFormatter, 1),
-    openTypeOS2SubscriptXSize=(_numberFormatter, 0),
-    openTypeOS2SubscriptYSize=(_numberFormatter, 1),
-    openTypeOS2SubscriptXOffset=(_numberFormatter, 0),
-    openTypeOS2SubscriptYOffset=(_numberFormatter, 1),
-    openTypeOS2SuperscriptXSize=(_numberFormatter, 0),
-    openTypeOS2SuperscriptYSize=(_numberFormatter, 1),
-    openTypeOS2SuperscriptXOffset=(_numberFormatter, 0),
-    openTypeOS2SuperscriptYOffset=(_numberFormatter, 1),
-    openTypeOS2StrikeoutSize=(_numberFormatter, 1),
-    openTypeOS2StrikeoutPosition=(_numberFormatter, 1),
+    openTypeOS2TypoAscender=(_integerFormatter, 1),
+    openTypeOS2TypoDescender=(_integerFormatter, 1),
+    openTypeOS2TypoLineGap=(_integerFormatter, 1),
+    openTypeOS2WinAscent=(_nonNegativeIntegerFormatter, 1),
+    openTypeOS2WinDescent=(_nonNegativeIntegerFormatter, 1),
+    openTypeOS2SubscriptXSize=(_integerFormatter, 0),
+    openTypeOS2SubscriptYSize=(_integerFormatter, 1),
+    openTypeOS2SubscriptXOffset=(_integerFormatter, 0),
+    openTypeOS2SubscriptYOffset=(_integerFormatter, 1),
+    openTypeOS2SuperscriptXSize=(_integerFormatter, 0),
+    openTypeOS2SuperscriptYSize=(_integerFormatter, 1),
+    openTypeOS2SuperscriptXOffset=(_integerFormatter, 0),
+    openTypeOS2SuperscriptYOffset=(_integerFormatter, 1),
+    openTypeOS2StrikeoutSize=(_integerFormatter, 1),
+    openTypeOS2StrikeoutPosition=(_integerFormatter, 1),
 
-    openTypeVheaVertTypoAscender=(_numberFormatter, 1),
-    openTypeVheaVertTypoDescender=(_numberFormatter, 1),
-    openTypeVheaVertTypoLineGap=(_numberFormatter, 1),
+    openTypeVheaVertTypoAscender=(_integerFormatter, 1),
+    openTypeVheaVertTypoDescender=(_integerFormatter, 1),
+    openTypeVheaVertTypoLineGap=(_integerFormatter, 1),
     openTypeVheaCaretSlopeRise=(_integerFormatter, 1),
     openTypeVheaCaretSlopeRun=(_integerFormatter, 1),
-    openTypeVheaCaretOffset=(_numberFormatter, 1),
+    openTypeVheaCaretOffset=(_integerFormatter, 1),
 
     postscriptSlantAngle=(_numberFormatter, 3),
     postscriptUnderlineThickness=(_numberFormatter, 1),
