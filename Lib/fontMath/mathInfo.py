@@ -338,7 +338,7 @@ def _openTypeOS2WeightClassFormatter(value):
 
 _infoAttrs = dict(
     # these are structured as:
-    #   attribute name = (formatter funcion, factor direction)
+    #   attribute name = (formatter function, factor direction)
     # where factor direction 0 = x, 1 = y and 3 = x, y (for angles)
 
     unitsPerEm=(_nonNegativeNumberFormatter, 1),
