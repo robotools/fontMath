@@ -286,7 +286,8 @@ class MathInfo(object):
                     if formatter is not None:
                         v = formatter(v)
                 setattr(otherInfoObject, attr, v)
-        otherInfoObject.postscriptWeightName = self.postscriptWeightName
+        if hasattr(self, "postscriptWeightName"):
+            otherInfoObject.postscriptWeightName = self.postscriptWeightName
 
 
 # ----------
