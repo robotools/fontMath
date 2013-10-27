@@ -236,6 +236,38 @@ class MathGlyph(object):
             copiedGlyph.guidelines = _processMathTwoGuidelines(self.guidelines, factor, func)
         # image
         copiedGlyph.image = _processMathTwoImage(self.image, factor, ptFunc)
+        
+    # -------
+    # Additional math
+    # -------
+    def round(self):
+        """round the geometry."""
+        for contour in self.contours:
+            roundedPoints = []
+            for segmentType, pt, smooth, name, identifier in contour["points"]:
+                roundedPoints.append((segmentType, (int(round(pt[0])), int(round(pt[1]))), smooth, name, identifier))
+            contour["points"] = roundedPoints
+        for component in self.components:
+            a,b,c,d,e,f = component['transformation']
+            component['transformation'] = a, b, c, d,int(round(e)), int(round(f))
+        # misc
+        self.width = int(round(self.width))
+        self.height = int(round(self.height))
+        # guidelines
+        roundedGuidelines = []
+        for guideline in self.guidelines:
+            guideline['x'] = int(round(guideline['x']))
+            guideline['y'] = int(round(guideline['y']))
+            roundedGuidelines.append(guideline)
+        self.guidelines = roundedGuidelines
+        # anchors
+        roundedAnchors = []
+        for anchor in self.anchors:
+            anchor['x'] = int(round(anchor['x']))
+            anchor['y'] = int(round(anchor['y']))
+            roundedAnchors.append(anchor)
+        self.anchors = roundedAnchors
+        
 
     # -------
     # Pen API
