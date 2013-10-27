@@ -252,6 +252,41 @@ class MathInfo(object):
                 v = 900
             name = _postscriptWeightNameOptions[v]
         copiedInfo.postscriptWeightName = name
+    
+    # ----------
+    # More math
+    # ----------
+    
+    def round(self):
+        """
+        """
+        copiedInfo = self.copy()
+        self._processRound(copiedInfo)
+        return copiedInfo
+
+    def _processRound(self, copiedInfo):
+        # basic attributes
+        for attr, (formatter, factorIndex) in _infoAttrs.items():
+            if hasattr(copiedInfo, attr):
+                v = getattr(copiedInfo, attr)
+                if v is not None:
+                    if factorIndex == 3:
+                        v = int(round(v))
+                    else:
+                        if isinstance(v, (list, tuple)):
+                            v = [int(round(a)) for a in v]
+                        else:
+                            v = int(round(v))
+                else:
+                    v = None
+                setattr(copiedInfo, attr, v)
+
+        # special attributes
+        self._processPostscriptWeightName(copiedInfo)
+        # guidelines
+        copiedInfo.guidelines = []
+        if self.guidelines:
+            copiedInfo.guidelines = _processMathTwoGuidelines(self.guidelines, factor, func)
 
     # ----------
     # Extraction

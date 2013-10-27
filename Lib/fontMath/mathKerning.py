@@ -416,6 +416,15 @@ class MathKerning(object):
         ks._side2GroupMap = deepcopy(self._side2GroupMap)
         return ks
 
+    # ----
+    # More math
+    # ----
+    
+    def round(self):
+        """round the kerning data"""
+        for pair, value in self.items:
+            self[pair] = int(round(value))
+
     # -------
     # Cleanup
     # -------

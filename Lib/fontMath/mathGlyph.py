@@ -49,6 +49,12 @@ from mathGuideline import *
 # X is generationCount needed?
 # X can box become bounds? have both?
 
+def _rndFlt(n, digits=None):
+    """round floats"""
+    if digits is None:
+        return int(round(n))
+    return round(n, digits)
+
 
 class MathGlyph(object):
 
@@ -235,38 +241,52 @@ class MathGlyph(object):
         if self.guidelines:
             copiedGlyph.guidelines = _processMathTwoGuidelines(self.guidelines, factor, func)
         # image
-        copiedGlyph.image = _processMathTwoImage(self.image, factor, ptFunc)
+        if self.image:
+            copiedGlyph.image = _processMathTwoImage(self.image, factor, func)
         
     # -------
     # Additional math
     # -------
-    def round(self):
+    def round(self, digits=None):
         """round the geometry."""
-        for contour in self.contours:
-            roundedPoints = []
-            for segmentType, pt, smooth, name, identifier in contour["points"]:
-                roundedPoints.append((segmentType, (int(round(pt[0])), int(round(pt[1]))), smooth, name, identifier))
-            contour["points"] = roundedPoints
-        for component in self.components:
-            a,b,c,d,e,f = component['transformation']
-            component['transformation'] = a, b, c, d,int(round(e)), int(round(f))
+
+        copiedGlyph = self.copyWithoutMathSubObjects()
         # misc
-        self.width = int(round(self.width))
-        self.height = int(round(self.height))
+        copiedGlyph.width = _rndFlt(self.width, digits)
+        copiedGlyph.height = _rndFlt(self.height, digits)
+        # contours
+        copiedGlyph.contours = []
+        if self.contours:
+            for contour in copiedGlyph.contours:
+                roundedPoints = []
+                for segmentType, pt, smooth, name, identifier in contour["points"]:
+                    roundedPoints.append((segmentType, (_rndFlt(pt[0],digits), _rndFlt(pt[1],digits), smooth, name, identifier)))
+                contour["points"] = roundedPoints
+                copiedGlyph.contours.append(contour)
+        # components
+        copiedGlyph.components = []
+        if self.components:
+            for component in self.components:
+                a,b,c,d,e,f = component['transformation']
+                component['transformation'] = a, b, c, d, _rndFlt(e,digits), _rndFlt(f,digits)
+                copiedGlyph.components.append(component)
         # guidelines
-        roundedGuidelines = []
+        copiedGlyph.guidelines = []
         for guideline in self.guidelines:
-            guideline['x'] = int(round(guideline['x']))
-            guideline['y'] = int(round(guideline['y']))
-            roundedGuidelines.append(guideline)
-        self.guidelines = roundedGuidelines
+            guideline['x'] = _rndFlt(guideline['x'], digits)
+            guideline['y'] = _rndFlt(guideline['y'], digits)
+            copiedGlyph.guidelines.append(guideline)
         # anchors
-        roundedAnchors = []
+        copiedGlyph.anchors = []
         for anchor in self.anchors:
-            anchor['x'] = int(round(anchor['x']))
-            anchor['y'] = int(round(anchor['y']))
-            roundedAnchors.append(anchor)
-        self.anchors = roundedAnchors
+            anchor['x'] = _rndFlt(anchor['x'], digits)
+            anchor['y'] = _rndFlt(anchor['y'], digits)
+            copiedGlyph.anchors.append(anchor)
+        # image
+        copiedGlyph.image = None
+        if self.image:
+            copiedGlyph.image = _processMathTwoImage(self.image, factor, ptFunc)
+        return copiedGlyph
         
 
     # -------
@@ -1044,6 +1064,19 @@ def _processMathTwoImage(image, factor, func):
     transformation = _processMathTwoTransformation(image["transformation"], factor, func)
     return dict(fileName=fileName, transformation=transformation, color=color)
 
+def _roundImage(image, digits=None):
+    """
+    >>> image = dict(fileName="foo", transformation=(1, 2, 3, 4, 4.99, 6.01), color="0,0,0,0")
+    >>> expected = dict(fileName="foo", transformation=(1, 2, 3, 4, 5, 6), color="0,0,0,0")
+    >>> _roundImage(image) == expected
+    True
+    """
+    fileName = image["fileName"]
+    color = image["color"]
+    transformation = _roundTransformation(image["transformation"], digits)
+    return dict(fileName=fileName, transformation=transformation, color=color)
+    
+
 # transformations
 
 def _processMathOneTransformation(transformation1, transformation2, func):
@@ -1073,6 +1106,16 @@ def _processMathTwoTransformation(transformation, factor, func):
     xyScale, yxScale = func((xyScale, yxScale), factor)
     xOffset, yOffset = func((xOffset, yOffset), factor)
     return (xScale, xyScale, yxScale, yScale, xOffset, yOffset)
+
+def _roundTransformation(transformation, digits=None):
+    """
+    >>> transformation = (1, 2, 3, 4, 4.99, 6.01)
+    >>> expected = (1, 2, 3, 4, 5, 6)
+    >>> _roundTransformation(transformation) == expected
+    True
+    """
+    xScale, xyScale, yxScale, yScale, xOffset, yOffset = transformation
+    return (xScale, xyScale, yxScale, yScale, _rndFlt(xOffset, digits), _rndFlt(yOffset, digits))
 
 # -----
 # Tests
