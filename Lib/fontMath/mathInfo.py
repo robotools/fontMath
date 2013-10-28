@@ -295,7 +295,7 @@ class MathInfo(object):
                         v = int(round(v))
                     else:
                         if isinstance(v, (list, tuple)):
-                            v = [_roundNumber(a) for a in v]
+                            v = [_roundNumber(a, digits) for a in v]
                         else:
                             v = _roundNumber(v, digits)
                 else:

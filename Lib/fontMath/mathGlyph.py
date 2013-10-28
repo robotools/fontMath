@@ -1080,7 +1080,6 @@ def _processMathTwoTransformation(transformation, factor, func):
     
 # rounding
 
-
 def _roundContours(contours, digits=None):
     """
     >>> contour = [
@@ -1120,6 +1119,7 @@ def _roundImage(image, digits=None):
     >>> _roundImage(image) == expected
     True
     """
+    image = dict(image)
     fileName = image["fileName"]
     color = image["color"]
     transformation = _roundTransformation(image["transformation"], digits)
