@@ -257,14 +257,35 @@ class MathInfo(object):
     # More math
     # ----------
     
-    def round(self):
+    def round(self, digits=None):
         """
+        >>> m = _TestInfoObject()
+        >>> m.ascender = 699.99
+        >>> m.descender = -199.99
+        >>> m.xHeight = 399.66
+        >>> info = MathInfo(m)
+        >>> info = info.round()
+        >>> info.ascender
+        700
+        >>> info.descender
+        -200
+        >>> info.xHeight
+        400
+        >>> written = {}
+        >>> expected = {}
+        >>> for attr, value in _testData.items():
+        ...     if value is None:
+        ...         continue
+        ...     written[attr] = getattr(info, attr)
+        ...     if isinstance(value, list):
+        ...         expectedValue = [_roundNumber(v) for v in value]
+        ...     else:
+        ...         expectedValue = _roundNumber(value)
+        ...     expected[attr] = expectedValue
+        >>> sorted(expected) == sorted(written)
+        True
         """
         copiedInfo = self.copy()
-        self._processRound(copiedInfo)
-        return copiedInfo
-
-    def _processRound(self, copiedInfo):
         # basic attributes
         for attr, (formatter, factorIndex) in _infoAttrs.items():
             if hasattr(copiedInfo, attr):
@@ -274,19 +295,19 @@ class MathInfo(object):
                         v = int(round(v))
                     else:
                         if isinstance(v, (list, tuple)):
-                            v = [int(round(a)) for a in v]
+                            v = [_roundNumber(a) for a in v]
                         else:
-                            v = int(round(v))
+                            v = _roundNumber(v, digits)
                 else:
                     v = None
                 setattr(copiedInfo, attr, v)
-
         # special attributes
         self._processPostscriptWeightName(copiedInfo)
         # guidelines
         copiedInfo.guidelines = []
         if self.guidelines:
-            copiedInfo.guidelines = _processMathTwoGuidelines(self.guidelines, factor, func)
+            copiedInfo.guidelines = _roundGuidelines(self.guidelines, digits)
+        return copiedInfo
 
     # ----------
     # Extraction
