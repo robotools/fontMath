@@ -294,7 +294,7 @@ class MathGlyph(object):
     # Extraction
     # ----------
 
-    def extractGlyph(self, glyph, pointPen=None):
+    def extractGlyph(self, glyph, pointPen=None, onlyGeometry=False):
         """
         "rehydrate" to a glyph. this requires
         a glyph as an argument. if a point pen other
@@ -314,11 +314,12 @@ class MathGlyph(object):
         glyph.guidelines = [_compressGuideline(guideline) for guideline in self.guidelines]
         glyph.image = _compressImage(self.image)
         glyph.lib = deepcopy(dict(self.lib))
-        glyph.name = self.name
-        glyph.unicodes = list(self.unicodes)
         glyph.width = self.width
         glyph.height = self.height
         glyph.note = self.note
+        if not onlyGeometry:
+            glyph.name = self.name
+            glyph.unicodes = list(self.unicodes)
         return glyph
 
 
