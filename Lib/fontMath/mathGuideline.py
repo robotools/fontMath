@@ -280,6 +280,28 @@ def _processMathTwoGuidelines(guidelines, factor, func):
         guideline["angle"] = factorAngle(angle, factor, func)
         result.append(guideline)
     return result
+    
+def _roundGuidelines(guidelines, digits=None):
+    """
+    >>> guidelines = [
+    ...     dict(x=1.99, y=3.01, angle=5, name="test", identifier="1", color="0,0,0,0")
+    ... ]
+    >>> expected = [
+    ...     dict(x=2, y=3, angle=5, name="test", identifier="1", color="0,0,0,0")
+    ... ]
+    >>> result = _roundGuidelines(guidelines)
+    >>> result == expected
+    True
+    """
+    results = []
+    for guideline in guidelines:
+        guideline = dict(guideline)
+        guideline['x'] = _roundNumber(guideline['x'], digits)
+        guideline['y'] = _roundNumber(guideline['y'], digits)
+        results.append(guideline)
+    return results
+
+
 
 if __name__ == "__main__":
     import doctest

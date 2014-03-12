@@ -416,17 +416,17 @@ class MathKerning(object):
         ks._side2GroupMap = deepcopy(self._side2GroupMap)
         return ks
 
-    # -------
-    # Cleanup
-    # -------
-
+    # ----
+    # More math
+    # ----
+    
     def round(self, multiple=1):
         """
         >>> kerning = {
-        ...     ("A", "A") : 2,
+        ...     ("A", "A") : 1.99,
         ...     ("B", "B") : 4,
         ...     ("C", "C") : 7,
-        ...     ("D", "D") : 9,
+        ...     ("D", "D") : 9.01,
         ... }
         >>> obj = MathKerning(kerning)
         >>> obj.round(5)
@@ -436,6 +436,10 @@ class MathKerning(object):
         multiple = float(multiple)
         for k, v in self._kerning.items():
             self._kerning[k] = int(round(int(round(v / multiple)) * multiple))
+
+    # -------
+    # Cleanup
+    # -------
 
     def cleanup(self):
         """

@@ -252,6 +252,62 @@ class MathInfo(object):
                 v = 900
             name = _postscriptWeightNameOptions[v]
         copiedInfo.postscriptWeightName = name
+    
+    # ----------
+    # More math
+    # ----------
+    
+    def round(self, digits=None):
+        """
+        >>> m = _TestInfoObject()
+        >>> m.ascender = 699.99
+        >>> m.descender = -199.99
+        >>> m.xHeight = 399.66
+        >>> info = MathInfo(m)
+        >>> info = info.round()
+        >>> info.ascender
+        700
+        >>> info.descender
+        -200
+        >>> info.xHeight
+        400
+        >>> written = {}
+        >>> expected = {}
+        >>> for attr, value in _testData.items():
+        ...     if value is None:
+        ...         continue
+        ...     written[attr] = getattr(info, attr)
+        ...     if isinstance(value, list):
+        ...         expectedValue = [_roundNumber(v) for v in value]
+        ...     else:
+        ...         expectedValue = _roundNumber(value)
+        ...     expected[attr] = expectedValue
+        >>> sorted(expected) == sorted(written)
+        True
+        """
+        copiedInfo = self.copy()
+        # basic attributes
+        for attr, (formatter, factorIndex) in _infoAttrs.items():
+            if hasattr(copiedInfo, attr):
+                v = getattr(copiedInfo, attr)
+                if v is not None:
+                    if factorIndex == 3:
+                        v = int(round(v))
+                    else:
+                        if isinstance(v, (list, tuple)):
+                            v = [_roundNumber(a, digits) for a in v]
+                        else:
+                            v = _roundNumber(v, digits)
+                else:
+                    v = None
+                setattr(copiedInfo, attr, v)
+        # special attributes
+        self._processPostscriptWeightName(copiedInfo)
+        # guidelines
+        copiedInfo.guidelines = []
+        if self.guidelines:
+            copiedInfo.guidelines = _roundGuidelines(self.guidelines, digits)
+        return copiedInfo
 
     # ----------
     # Extraction
@@ -286,7 +342,8 @@ class MathInfo(object):
                     if formatter is not None:
                         v = formatter(v)
                 setattr(otherInfoObject, attr, v)
-        otherInfoObject.postscriptWeightName = self.postscriptWeightName
+        if hasattr(self, "postscriptWeightName"):
+            otherInfoObject.postscriptWeightName = self.postscriptWeightName
 
 
 # ----------
@@ -338,7 +395,7 @@ def _openTypeOS2WeightClassFormatter(value):
 
 _infoAttrs = dict(
     # these are structured as:
-    #   attribute name = (formatter funcion, factor direction)
+    #   attribute name = (formatter function, factor direction)
     # where factor direction 0 = x, 1 = y and 3 = x, y (for angles)
 
     unitsPerEm=(_nonNegativeNumberFormatter, 1),
