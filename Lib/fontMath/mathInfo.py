@@ -285,9 +285,12 @@ class MathInfo(object):
         >>> sorted(expected) == sorted(written)
         True
         """
+        excludeFromRounding = ['postscriptBlueScale']
         copiedInfo = self.copy()
         # basic attributes
         for attr, (formatter, factorIndex) in _infoAttrs.items():
+            if attr in excludeFromRounding:
+                continue
             if hasattr(copiedInfo, attr):
                 v = getattr(copiedInfo, attr)
                 if v is not None:
