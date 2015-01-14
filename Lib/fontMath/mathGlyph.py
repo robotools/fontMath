@@ -363,10 +363,10 @@ class MathGlyphPen(AbstractPointPen):
     >>> pen.addPoint((  0,  50), "curve", smooth=False, name="name 1", identifier="point 1")
     >>> pen.addPoint((  0,  75), None)
     >>> pen.addPoint(( 25, 100), None)
-    >>> pen.addPoint(( 50, 100), "curve", smooth=False, name="name 2", identifier="point 2")
+    >>> pen.addPoint(( 50, 100), "line", smooth=True, name="name 2", identifier="point 2")
     >>> pen.addPoint(( 75, 100), None)
     >>> pen.addPoint((100,  75), None)
-    >>> pen.addPoint((100,  50), "curve", smooth=False, name="name 3", identifier="point 3")
+    >>> pen.addPoint((100,  50), "curve", smooth=True, name="name 3", identifier="point 3")
     >>> pen.addPoint((100,  25), None)
     >>> pen.addPoint(( 75,   0), None)
     >>> pen.addPoint(( 50,   0), "curve", smooth=False, name="name 4", identifier="point 4")
@@ -377,10 +377,10 @@ class MathGlyphPen(AbstractPointPen):
     ...     ("curve", (  0,  50), False, "name 1", "point 1"),
     ...     (None,    (  0,  75), False, None,     None),
     ...     (None,    ( 25, 100), False, None,     None),
-    ...     ("curve", ( 50, 100), False, "name 2", "point 2"),
+    ...     ("curve", ( 50, 100), True, "name 2", "point 2"),
     ...     (None,    ( 75, 100), False, None,     None),
     ...     (None,    (100,  75), False, None,     None),
-    ...     ("curve", (100,  50), False, "name 3", "point 3"),
+    ...     ("curve", (100,  50), True, "name 3", "point 3"),
     ...     (None,    (100,  25), False, None,     None),
     ...     (None,    ( 75,   0), False, None,     None),
     ...     ("curve", ( 50,   0), False, "name 4", "point 4"),
@@ -438,7 +438,7 @@ class MathGlyphPen(AbstractPointPen):
                 else:
                     contourPoints.append((None, prevPt, False, None, None))
                     contourPoints.append((None, pt, False, None, None))
-                contourPoints.append(("curve", pt, False, name, identifier))
+                contourPoints.append(("curve", pt, smooth, name, identifier))
             else:
                 contourPoints.append(point)
         contourPoints.extend(holdingOffCurves)
@@ -1084,10 +1084,12 @@ def _processMathTwoTransformation(transformation, factor, func):
 def _roundContours(contours, digits=None):
     """
     >>> contour = [
-    ...     dict(identifier="contour 1", points=[("line", (0.55, 3.1), False, "test", "1")])
+    ...     dict(identifier="contour 1", points=[("line", (0.55, 3.1), False, "test", "1")]),
+    ...     dict(identifier="contour 1", points=[("line", (0.55, 3.1), True, "test", "1")])
     ... ]
     >>> expected = [
-    ...     dict(identifier="contour 1", points=[("line", (1, 3), False, "test", "1")])
+    ...     dict(identifier="contour 1", points=[("line", (1, 3), False, "test", "1")]),
+    ...     dict(identifier="contour 1", points=[("line", (1, 3), True, "test", "1")])
     ... ]
     >>> _roundContours(contour) == expected
     True
