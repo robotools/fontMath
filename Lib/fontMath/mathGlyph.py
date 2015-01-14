@@ -43,7 +43,7 @@ class MathGlyphPen(AbstractPointPen):
             # this point and add them to the points list
             elif segmentType == "line":
                 prevOnCurve = pt
-                self.contours[-1].append(("curve", pt, False, name))
+                self.contours[-1].append(("curve", pt, smooth, name))
                 lastPoint = points[-1][1]
                 points.append((None, lastPoint, False, None))
                 points.append((None, pt, False, None))
