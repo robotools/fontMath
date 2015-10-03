@@ -5,7 +5,7 @@ from distutils.core import setup
 try:
     import robofab
 except:
-    print "*** Warning: defcon requires RoboFab, see:"
+    print "*** Warning: fontMath requires RoboFab, see:"
     print "    robofab.com"
 
 
