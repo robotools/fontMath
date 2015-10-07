@@ -25,18 +25,33 @@ def sub(v1, v2):
     return v1 - v2
 
 def subPt(pt1, pt2):
+    """
+    >>> pt1, pt2 = (20, 230), (50, 40)
+    >>> subPt(pt1, pt2)
+    (-30, 190)
+    """
     return pt1[0] - pt2[0], pt1[1] - pt2[1]
 
 def mul(v, f):
     return v * f
 
 def mulPt(pt1, (f1, f2)):
+    """
+    >>> pt1, f1, f2 = (15, 25), 2, 3
+    >>> mulPt(pt1, (f1, f2))
+    (30, 75)
+    """
     return pt1[0] * f1, pt1[1] * f2
 
 def div(v, f):
     return v / f
 
 def divPt(pt, (f1, f2)):
+    """
+    >>> pt1, f1, f2 = (15, 75), 2, 3
+    >>> divPt(pt1, (f1, f2))
+    (7.5, 25.0)
+    """
     return pt[0] / f1, pt[1] / f2
 
 def factorAngle(angle, (f1, f2), func):
