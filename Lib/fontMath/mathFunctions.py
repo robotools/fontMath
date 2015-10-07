@@ -1,1 +1,88 @@
-from __future__ import divisionimport math__all__ = [    "add",    "addPt",    "sub",    "subPt",    "mul",    "mulPt",    "div",    "divPt",    "factorAngle",    "_roundNumber",    ]def add(v1, v2):    return v1 + v2def addPt(pt1, pt2):	return pt1[0] + pt2[0], pt1[1] + pt2[1]def sub(v1, v2):    return v1 - v2def subPt(pt1, pt2):	return pt1[0] - pt2[0], pt1[1] - pt2[1]def mul(v, f):    return v * fdef mulPt(pt1, (f1, f2)):	return pt1[0] * f1, pt1[1] * f2def div(v, f):    return v / fdef divPt(pt, (f1, f2)):    return pt[0] / f1, pt[1] / f2def factorAngle(angle, (f1, f2), func):    rangle = math.radians(angle)    x = math.cos(rangle)    y = math.sin(rangle)    return math.degrees(        math.atan2(            func(y, f2), func(x, f1)        )    )    def _roundNumber(n, digits=None):    """    round to integer:    >>> _roundNumber(0)    0    >>> _roundNumber(0.1)    0    >>> _roundNumber(0.99)    1    >>> _roundNumber(0.499)    0    >>> _roundNumber(0.5)    1    >>> _roundNumber(-0.499)    0    >>> _roundNumber(-0.5)    -1    round to float with specified decimals:    >>> _roundNumber(0.3333, None)    0    >>> _roundNumber(0.3333, 0)    0.0    >>> _roundNumber(0.3333, 1)    0.3    >>> _roundNumber(0.3333, 2)    0.33    >>> _roundNumber(0.3333, 3)    0.333    """    if digits is None:        return int(round(n))    return round(n, digits)if __name__ == "__main__":    import doctest    doctest.testmod()
+from __future__ import division
+import math
+
+__all__ = [
+    "add",
+    "addPt",
+    "sub",
+    "subPt",
+    "mul",
+    "mulPt",
+    "div",
+    "divPt",
+    "factorAngle",
+    "_roundNumber",
+
+]
+
+def add(v1, v2):
+    return v1 + v2
+
+def addPt(pt1, pt2):
+	return pt1[0] + pt2[0], pt1[1] + pt2[1]
+
+def sub(v1, v2):
+    return v1 - v2
+
+def subPt(pt1, pt2):
+	return pt1[0] - pt2[0], pt1[1] - pt2[1]
+
+def mul(v, f):
+    return v * f
+
+def mulPt(pt1, (f1, f2)):
+	return pt1[0] * f1, pt1[1] * f2
+
+def div(v, f):
+    return v / f
+
+def divPt(pt, (f1, f2)):
+    return pt[0] / f1, pt[1] / f2
+
+def factorAngle(angle, (f1, f2), func):
+    rangle = math.radians(angle)
+    x = math.cos(rangle)
+    y = math.sin(rangle)
+    return math.degrees(
+        math.atan2(
+            func(y, f2), func(x, f1)
+        )
+    )
+
+def _roundNumber(n, digits=None):
+    """
+    round to integer:
+    >>> _roundNumber(0)
+    0
+    >>> _roundNumber(0.1)
+    0
+    >>> _roundNumber(0.99)
+    1
+    >>> _roundNumber(0.499)
+    0
+    >>> _roundNumber(0.5)
+    1
+    >>> _roundNumber(-0.499)
+    0
+    >>> _roundNumber(-0.5)
+    -1
+
+    round to float with specified decimals:
+    >>> _roundNumber(0.3333, None)
+    0
+    >>> _roundNumber(0.3333, 0)
+    0.0
+    >>> _roundNumber(0.3333, 1)
+    0.3
+    >>> _roundNumber(0.3333, 2)
+    0.33
+    >>> _roundNumber(0.3333, 3)
+    0.333
+    """
+    if digits is None:
+        return int(round(n))
+    return round(n, digits)
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
