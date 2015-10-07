@@ -68,16 +68,16 @@ def _roundNumber(n, digits=None):
     -1
 
     round to float with specified decimals:
-    >>> _roundNumber(0.3333, None)
-    0
-    >>> _roundNumber(0.3333, 0)
-    0.0
-    >>> _roundNumber(0.3333, 1)
-    0.3
-    >>> _roundNumber(0.3333, 2)
-    0.33
-    >>> _roundNumber(0.3333, 3)
-    0.333
+    >>> _roundNumber(0.3333, None) == 0
+    True
+    >>> _roundNumber(0.3333, 0) == 0.0
+    True
+    >>> _roundNumber(0.3333, 1) == 0.3
+    True
+    >>> _roundNumber(0.3333, 2) == 0.33
+    True
+    >>> _roundNumber(0.3333, 3) == 0.333
+    True
     """
     if digits is None:
         return int(round(n))
