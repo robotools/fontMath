@@ -102,6 +102,12 @@ class MathKerning(object):
         4
         >>> obj["X", "X"]
         0
+        >>> obj["A3", "public.kern2.A"]
+        1
+        >>> sorted(obj.keys())[1]
+        ('A3', 'A3')
+        >>> sorted(obj.values())[3]
+        4
         """
         if self._kerning.has_key(pair):
             return self._kerning[pair]
@@ -140,10 +146,18 @@ class MathKerning(object):
         ...     ("A1", "public.kern2.A") : 2,
         ...     ("public.kern1.A", "A2") : 3,
         ...     ("A3", "A3") : 4,
+        ...     ("public.kern1.B", "public.kern2.B") : 5,
+        ...     ("public.kern1.B", "B") : 6,
+        ...     ("public.kern1.C", "public.kern2.C") : 7,
+        ...     ("C", "public.kern2.C") : 8,
         ... }
         >>> groups = {
         ... "public.kern1.A" : ["A", "A1", "A2", "A3"],
         ... "public.kern2.A" : ["A", "A1", "A2", "A3"],
+        ... "public.kern1.B" : ["B"],
+        ... "public.kern2.B" : ["B"],
+        ... "public.kern1.C" : ["C"],
+        ... "public.kern2.C" : ["C"],
         ... }
         >>> obj = MathKerning(kerning, groups)
         >>> obj.guessPairType(("public.kern1.A", "public.kern2.A"))
@@ -156,6 +170,10 @@ class MathKerning(object):
         ('exception', 'exception')
         >>> obj.guessPairType(("A", "A"))
         ('group', 'group')
+        >>> obj.guessPairType(("B", "B"))
+        ('group', 'exception')
+        >>> obj.guessPairType(("C", "C"))
+        ('exception', 'group')
         """
         side1, side2 = pair
         if side1.startswith(side1Prefix):
@@ -198,6 +216,24 @@ class MathKerning(object):
     # ----
 
     def copy(self):
+        """
+        >>> kerning1 = {
+        ...     ("A", "A") : 1,
+        ...     ("B", "B") : 1,
+        ...     ("NotIn2", "NotIn2") : 1,
+        ...     ("public.kern1.NotIn2", "C") : 1,
+        ...     ("public.kern1.D", "public.kern2.D") : 1,
+        ... }
+        >>> groups1 = {
+        ...     "public.kern1.NotIn1" : ["C"],
+        ...     "public.kern1.D" : ["D", "H"],
+        ...     "public.kern2.D" : ["D", "H"],
+        ... }
+        >>> obj1 = MathKerning(kerning1, groups1)
+        >>> obj2 = obj1.copy()
+        >>> sorted(obj1.items()) == sorted(obj2.items())
+        True
+        """
         k = MathKerning(self._kerning)
         k._side1Groups = deepcopy(self._side1Groups)
         k._side2Groups = deepcopy(self._side2Groups)
@@ -234,6 +270,38 @@ class MathKerning(object):
         ... }
         >>> groups2 = {
         ...     "public.kern1.NotIn2" : ["C"],
+        ...     "public.kern1.D" : ["D", "H"],
+        ...     "public.kern2.D" : ["D", "H"],
+        ... }
+        >>> obj = MathKerning(kerning1, groups1) + MathKerning(kerning2, groups2)
+        >>> sorted(obj.items())
+        [(('B', 'B'), 2), (('NotIn1', 'NotIn1'), 1), (('NotIn2', 'NotIn2'), 1), (('public.kern1.D', 'public.kern2.D'), 2), (('public.kern1.NotIn1', 'C'), 1), (('public.kern1.NotIn2', 'C'), 1)]
+        >>> sorted(obj.groups()["public.kern1.D"])
+        ['D', 'H']
+        >>> sorted(obj.groups()["public.kern2.D"])
+        ['D', 'H']
+
+        groups1 = groups2
+        -----------------
+        >>> kerning1 = {
+        ...     ("A", "A") : 1,
+        ...     ("B", "B") : 1,
+        ...     ("NotIn2", "NotIn2") : 1,
+        ...     ("public.kern1.NotIn2", "C") : 1,
+        ...     ("public.kern1.D", "public.kern2.D") : 1,
+        ... }
+        >>> groups1 = {
+        ...     "public.kern1.D" : ["D", "H"],
+        ...     "public.kern2.D" : ["D", "H"],
+        ... }
+        >>> kerning2 = {
+        ...     ("A", "A") : -1,
+        ...     ("B", "B") : 1,
+        ...     ("NotIn1", "NotIn1") : 1,
+        ...     ("public.kern1.NotIn1", "C") : 1,
+        ...     ("public.kern1.D", "public.kern2.D") : 1,
+        ... }
+        >>> groups2 = {
         ...     "public.kern1.D" : ["D", "H"],
         ...     "public.kern2.D" : ["D", "H"],
         ... }
@@ -326,6 +394,12 @@ class MathKerning(object):
         >>> obj = MathKerning(kerning, groups) * 2
         >>> sorted(obj.items())
         [(('B', 'B'), 2), (('C2', 'public.kern2.C'), 0), (('public.kern1.C', 'public.kern2.C'), 4)]
+
+        tuple factor
+        ------------
+        >>> obj = MathKerning(kerning, groups) * (3, 2)
+        >>> sorted(obj.items())
+        [(('B', 'B'), 3), (('C2', 'public.kern2.C'), 0), (('public.kern1.C', 'public.kern2.C'), 6)]
         """
         if isinstance(factor, tuple):
             factor = factor[0]
@@ -348,6 +422,12 @@ class MathKerning(object):
         >>> obj = 2 * MathKerning(kerning, groups)
         >>> sorted(obj.items())
         [(('B', 'B'), 2), (('C2', 'public.kern2.C'), 0), (('public.kern1.C', 'public.kern2.C'), 4)]
+
+        tuple factor
+        ------------
+        >>> obj = (3, 2) * MathKerning(kerning, groups)
+        >>> sorted(obj.items())
+        [(('B', 'B'), 3), (('C2', 'public.kern2.C'), 0), (('public.kern1.C', 'public.kern2.C'), 6)]
         """
         if isinstance(factor, tuple):
             factor = factor[0]
@@ -370,6 +450,12 @@ class MathKerning(object):
         >>> obj = MathKerning(kerning, groups) / 2
         >>> sorted(obj.items())
         [(('B', 'B'), 2), (('C2', 'public.kern2.C'), 0), (('public.kern1.C', 'public.kern2.C'), 2)]
+
+        tuple factor
+        ------------
+        >>> obj = MathKerning(kerning, groups) / (4, 2)
+        >>> sorted(obj.items())
+        [(('B', 'B'), 1), (('C2', 'public.kern2.C'), 0), (('public.kern1.C', 'public.kern2.C'), 1)]
         """
         if isinstance(factor, tuple):
             factor = factor[0]
@@ -392,6 +478,12 @@ class MathKerning(object):
         >>> obj = 2 / MathKerning(kerning, groups)
         >>> sorted(obj.items())
         [(('B', 'B'), 2), (('C2', 'public.kern2.C'), 0), (('public.kern1.C', 'public.kern2.C'), 2)]
+
+        tuple factor
+        ------------
+        >>> obj = (4, 2) / MathKerning(kerning, groups)
+        >>> sorted(obj.items())
+        [(('B', 'B'), 1), (('C2', 'public.kern2.C'), 0), (('public.kern1.C', 'public.kern2.C'), 1)]
         """
         if isinstance(factor, tuple):
             factor = factor[0]
@@ -411,10 +503,10 @@ class MathKerning(object):
         ks._side2GroupMap = deepcopy(self._side2GroupMap)
         return ks
 
-    # ----
+    # ---------
     # More math
-    # ----
-    
+    # ---------
+
     def round(self, multiple=1):
         """
         >>> kerning = {
@@ -469,6 +561,32 @@ class MathKerning(object):
     # ----------
 
     def extractKerning(self, font):
+        """
+        >>> kerning = {
+        ...     ("A", "A") : 0,
+        ...     ("B", "B") : 1,
+        ...     ("C", "public.kern2.C") : 0,
+        ...     ("public.kern1.C", "public.kern2.C") : 1,
+        ...     ("D", "D") : 1.0,
+        ...     ("E", "E") : 1.2,
+        ... }
+        >>> groups = {
+        ...     "public.kern1.C" : ["C", "C1"],
+        ...     "public.kern2.C" : ["C", "C1"]
+        ... }
+        >>> from robofab.world import RFont
+        >>> font = RFont()
+        >>> font.kerning.asDict() == {}
+        True
+        >>> font.groups.items() == []
+        True
+        >>> obj = MathKerning(kerning, groups)
+        >>> obj.extractKerning(font)
+        >>> sorted(font.kerning.asDict().items())
+        [(('B', 'B'), 1), (('D', 'D'), 1), (('E', 'E'), 1), (('public.kern1.C', 'public.kern2.C'), 1)]
+        >>> sorted(font.groups.items())
+        [('public.kern1.C', ['C', 'C1']), ('public.kern2.C', ['C', 'C1'])]
+        """
         font.kerning.clear()
         font.kerning.update(self._kerning)
         font.groups.update(self.groups())
