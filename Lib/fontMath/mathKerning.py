@@ -10,11 +10,6 @@ this map is then used to lookup kerning values.
 from copy import deepcopy
 from mathFunctions import add, sub, mul, div
 
-try:
-    set
-except NameError:
-    from sets import Set as set
-
 
 side1Prefix = "public.kern1."
 side2Prefix = "public.kern2."
