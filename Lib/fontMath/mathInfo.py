@@ -47,6 +47,44 @@ class MathInfo(object):
         ...     expected[attr] = expectedValue
         >>> sorted(expected) == sorted(written)
         True
+
+        data subset (1st operand)
+        -------------------------
+        >>> info1 = MathInfo(_TestInfoObject(_testDataSubset))
+        >>> info2 = MathInfo(_TestInfoObject())
+        >>> info3 = info1 + info2
+        >>> written = {}
+        >>> expected = {}
+        >>> for attr, value in _testData.items():
+        ...     if value is None:
+        ...         continue
+        ...     written[attr] = getattr(info3, attr)
+        ...     if isinstance(value, list):
+        ...         expectedValue = [v + v for v in value]
+        ...     else:
+        ...         expectedValue = value + value
+        ...     expected[attr] = expectedValue
+        >>> sorted(expected) == sorted(written)
+        True
+
+        data subset (2nd operand)
+        -------------------------
+        >>> info1 = MathInfo(_TestInfoObject())
+        >>> info2 = MathInfo(_TestInfoObject(_testDataSubset))
+        >>> info3 = info1 + info2
+        >>> written = {}
+        >>> expected = {}
+        >>> for attr, value in _testData.items():
+        ...     if value is None:
+        ...         continue
+        ...     written[attr] = getattr(info3, attr)
+        ...     if isinstance(value, list):
+        ...         expectedValue = [v + v for v in value]
+        ...     else:
+        ...         expectedValue = value + value
+        ...     expected[attr] = expectedValue
+        >>> sorted(expected) == sorted(written)
+        True
         """
         copiedInfo = self.copy()
         self._processMathOne(copiedInfo, otherInfo, addPt, add)
@@ -129,6 +167,27 @@ class MathInfo(object):
         ...         continue
         ...     written[attr] = getattr(info2, attr)
         ...     if isinstance(value, list):
+        ...         expectedValue = [v * 2.5 for v in value]
+        ...     else:
+        ...         expectedValue = value * 2.5
+        ...     expected[attr] = expectedValue
+        >>> sorted(expected) == sorted(written)
+        True
+
+        data subset
+        -----------
+        >>> info1 = MathInfo(_TestInfoObject(_testDataSubset))
+        >>> info2 = info1 * 2.5
+        >>> written = {}
+        >>> expected = {}
+        >>> for attr, value in _testDataSubset.items():
+        ...     if value is None:
+        ...         continue
+        ...     written[attr] = getattr(info2, attr)
+        ...     if attr == 'guidelines':
+        ...         guidelines = [_expandGuideline(guideline) for guideline in value]
+        ...         expectedValue = _processMathTwoGuidelines(guidelines, (2.5, 2.5), mul)
+        ...     elif isinstance(value, list):
         ...         expectedValue = [v * 2.5 for v in value]
         ...     else:
         ...         expectedValue = value * 2.5
@@ -252,17 +311,20 @@ class MathInfo(object):
                 v = 900
             name = _postscriptWeightNameOptions[v]
         copiedInfo.postscriptWeightName = name
-    
+
     # ----------
     # More math
     # ----------
-    
+
     def round(self, digits=None):
         """
         >>> m = _TestInfoObject()
         >>> m.ascender = 699.99
         >>> m.descender = -199.99
         >>> m.xHeight = 399.66
+        >>> m.postscriptSlantAngle = None
+        >>> m.postscriptStemSnapH = [80.1, 90.2]
+        >>> m.guidelines = [{'y': 100.99, 'x': None, 'angle': None, 'name': 'bar'}]
         >>> info = MathInfo(m)
         >>> info = info.round()
         >>> info.ascender
@@ -271,6 +333,11 @@ class MathInfo(object):
         -200
         >>> info.xHeight
         400
+        >>> info.postscriptSlantAngle
+        >>> info.postscriptStemSnapH
+        [80, 90]
+        >>> info.guidelines
+        [{'y': 101, 'x': 0, 'angle': 0, 'name': 'bar'}]
         >>> written = {}
         >>> expected = {}
         >>> for attr, value in _testData.items():
@@ -366,6 +433,10 @@ def _floatFormatter(value):
     return float(value)
 
 def _nonNegativeNumberFormatter(value):
+    """
+    >>> _nonNegativeNumberFormatter(-10)
+    0
+    """
     if value < 0:
         return 0
     return value
@@ -377,12 +448,28 @@ def _nonNegativeIntegerFormatter(value):
     return value
 
 def _integerListFormatter(value):
+    """
+    >>> _integerListFormatter([.9, 40.3, 16.0001])
+    [1, 40, 16]
+    """
     return [_integerFormatter(v) for v in value]
 
 def _numberListFormatter(value):
     return [_numberFormatter(v) for v in value]
 
 def _openTypeOS2WidthClassFormatter(value):
+    """
+    >>> _openTypeOS2WidthClassFormatter(-2)
+    1
+    >>> _openTypeOS2WidthClassFormatter(0)
+    1
+    >>> _openTypeOS2WidthClassFormatter(5.4)
+    5
+    >>> _openTypeOS2WidthClassFormatter(9.6)
+    9
+    >>> _openTypeOS2WidthClassFormatter(12)
+    9
+    """
     value = int(round(value))
     if value > 9:
         value = 9
@@ -391,6 +478,18 @@ def _openTypeOS2WidthClassFormatter(value):
     return value
 
 def _openTypeOS2WeightClassFormatter(value):
+    """
+    >>> _openTypeOS2WeightClassFormatter(-20)
+    0
+    >>> _openTypeOS2WeightClassFormatter(0)
+    0
+    >>> _openTypeOS2WeightClassFormatter(50.4)
+    50
+    >>> _openTypeOS2WeightClassFormatter(90.6)
+    91
+    >>> _openTypeOS2WeightClassFormatter(120)
+    120
+    """
     value = int(round(value))
     if value < 0:
         value = 0
