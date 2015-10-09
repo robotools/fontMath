@@ -5,7 +5,8 @@ __all__ = [
     "_compressGuideline",
     "_pairGuidelines",
     "_processMathOneGuidelines",
-    "_processMathTwoGuidelines"
+    "_processMathTwoGuidelines",
+    "_roundGuidelines"
 ]
 
 def _expandGuideline(guideline):
@@ -62,7 +63,7 @@ def _compressGuideline(guideline):
         guideline["y"] = None
         guideline["angle"] = None
     return guideline
-    
+
 def _pairGuidelines(guidelines1, guidelines2):
     """
     name + identifier + (x, y, angle)
@@ -280,7 +281,7 @@ def _processMathTwoGuidelines(guidelines, factor, func):
         guideline["angle"] = factorAngle(angle, factor, func)
         result.append(guideline)
     return result
-    
+
 def _roundGuidelines(guidelines, digits=None):
     """
     >>> guidelines = [
