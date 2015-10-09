@@ -537,10 +537,21 @@ _testData = dict(
     guidelines=None
 )
 
+_testDataSubset = dict(
+    # generic
+    unitsPerEm=1000,
+    descender=-200,
+    xHeight=None,
+    # postscript
+    postscriptBlueValues=[-10, 0, 400, 410, 650],
+    # guidelines
+    guidelines=[{'y': 100, 'x': None, 'angle': None, 'name': 'bar', 'identifier': '2'}]
+)
+
 class _TestInfoObject(object):
 
-    def __init__(self):
-        for attr, value in _testData.items():
+    def __init__(self, data=_testData):
+        for attr, value in data.items():
             setattr(self, attr, value)
 
 
