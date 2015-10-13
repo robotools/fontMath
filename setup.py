@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-
+from __future__ import print_function
 from distutils.core import setup
 
 try:
     import robofab
-except:
-    print "*** Warning: fontMath requires RoboFab, see:"
-    print "    robofab.com"
+except ImportError:
+    print("*** Warning: fontMath requires RoboFab, see:")
+    print("    robofab.com")
 
 
 setup(name="fontMath",
