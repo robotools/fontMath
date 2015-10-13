@@ -296,8 +296,11 @@ class MathTransform(object):
         vy2 /= d2
         
         return (vx1, vy1), (vx2, vy2)
-    
-    def compose(self, (translateX, translateY), (scaleX, scaleY), (angle1, angle2)):
+
+    def compose(self, translate, scale, angle):
+        translateX, translateY = translate
+        scaleX, scaleY = scale
+        angle1, angle2 = angle
         matrix = self.transformClass()
         matrix = matrix.translate(translateX, translateY)
         matrix = matrix.rotate(angle2)
