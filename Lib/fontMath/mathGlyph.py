@@ -2,6 +2,12 @@ import weakref
 from robofab.pens.pointPen import BasePointToSegmentPen, AbstractPointPen
 from robofab.objects.objectsBase import addPt, subPt, mulPt, BaseGlyph
 
+# Python3 doesn't have xrange
+try:
+    range = xrange
+except NameError:
+    pass
+
 
 def divPt(pt, scalar):
     if not isinstance(scalar, tuple):
@@ -103,9 +109,9 @@ class FilterRedundantPointPen(AbstractPointPen):
         else:
             prevOnCurve = None
             offCurves = []
-            
+
             pointsToDraw = []
-            
+
             # deal with the first point
             pt, segmentType, smooth, name = points[0]
             # if it is an offcurve, add it to the offcurve list
@@ -117,7 +123,7 @@ class FilterRedundantPointPen(AbstractPointPen):
                     # gather preceding off curves
                     testOffCurves = []
                     lastPoint = None
-                    for i in xrange(len(points)):
+                    for i in range(len(points)):
                         i = -i - 1
                         testPoint = points[i]
                         testSegmentType = testPoint[1]
@@ -275,7 +281,7 @@ class MathGlyph(object):
         contours
         components
         anchors
-        
+
         this is used mainly for internal glyph math.
         """
         n = MathGlyph(None)
@@ -296,21 +302,21 @@ class MathGlyph(object):
         # adapted from robofab.objects.objectsBase.RGlyph._anchorCompare
         selfAnchors = {}
         for pt, name in self.anchors:
-            if not selfAnchors.has_key(name):
+            if name not in selfAnchors:
                 selfAnchors[name] = []
             selfAnchors[name].append(pt)
         otherAnchors = {}
         for pt, name in other.anchors:
-            if not otherAnchors.has_key(name):
+            if name not in otherAnchors:
                 otherAnchors[name] = []
             otherAnchors[name].append(pt)
         compatAnchors = set(selfAnchors.keys()) & set(otherAnchors.keys())
         finalSelfAnchors = {}
         finalOtherAnchors = {}
         for name in compatAnchors:
-            if not finalSelfAnchors.has_key(name):
+            if name not in finalSelfAnchors:
                 finalSelfAnchors[name] = []
-            if not finalOtherAnchors.has_key(name):
+            if name not in finalOtherAnchors:
                 finalOtherAnchors[name] = []
             selfList = selfAnchors[name]
             otherList = otherAnchors[name]
@@ -330,21 +336,21 @@ class MathGlyph(object):
         #
         selfComponents = {}
         for baseName, transformation in self.components:
-            if not selfComponents.has_key(baseName):
+            if baseName not in selfComponents:
                 selfComponents[baseName] = []
             selfComponents[baseName].append(transformation)
         otherComponents = {}
         for baseName, transformation in other.components:
-            if not otherComponents.has_key(baseName):
+            if baseName not in otherComponents:
                 otherComponents[baseName] = []
             otherComponents[baseName].append(transformation)
         compatComponents = set(selfComponents.keys()) & set(otherComponents.keys())
         finalSelfComponents = {}
         finalOtherComponents = {}
         for baseName in compatComponents:
-            if not finalSelfComponents.has_key(baseName):
+            if baseName not in finalSelfComponents:
                 finalSelfComponents[baseName] = []
-            if not finalOtherComponents.has_key(baseName):
+            if baseName not in finalOtherComponents:
                 finalOtherComponents[baseName] = []
             selfList = selfComponents[baseName]
             otherList = otherComponents[baseName]
@@ -556,4 +562,3 @@ class MathGlyph(object):
             if selfAnchorStructure != otherAnchorStructure:
                 result = False
         return result
-
