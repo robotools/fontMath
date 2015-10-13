@@ -1,8 +1,9 @@
+from __future__ import print_function, absolute_import
 from copy import deepcopy
 from robofab.pens.pointPen import AbstractPointPen
 from robofab.pens.adapterPens import PointToSegmentPen
-from mathFunctions import *
-from mathGuideline import *
+from fontMath.mathFunctions import *
+from fontMath.mathGuideline import *
 
 # ------------------
 # UFO 3 branch notes
@@ -49,6 +50,11 @@ from mathGuideline import *
 # X is generationCount needed?
 # X can box become bounds? have both?
 
+try:
+    basestring, xrange
+    range = xrange
+except NameError:
+    basestring = str
 
 
 class MathGlyph(object):
@@ -212,7 +218,11 @@ class MathGlyph(object):
         self._processMathTwo(copiedGlyph, factor, divPt, div)
         return copiedGlyph
 
+    __truediv__ = __div__
+
     __rdiv__ = __div__
+
+    __rtruediv__ = __rdiv__
 
     def _processMathTwo(self, copiedGlyph, factor, ptFunc, func):
         # width
@@ -510,7 +520,7 @@ class FilterRedundantPointPen(AbstractPointPen):
                 # gather preceding off curves
                 testOffCurves = []
                 lastPoint = None
-                for i in xrange(len(points)):
+                for i in range(len(points)):
                     i = -i - 1
                     testPoint = points[i]
                     testSegmentType = testPoint[1]
@@ -577,7 +587,7 @@ class _TestPointPen(AbstractPointPen):
 
     def dump(self):
         for line in self._text:
-            print line
+            print(line)
 
     def _prep(self, i):
         if isinstance(i, basestring):

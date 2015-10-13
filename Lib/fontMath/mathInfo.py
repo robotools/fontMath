@@ -1,5 +1,6 @@
-from mathFunctions import *
-from mathGuideline import *
+from __future__ import division, absolute_import
+from fontMath.mathFunctions import *
+from fontMath.mathGuideline import *
 
 
 class MathInfo(object):
@@ -227,7 +228,11 @@ class MathInfo(object):
         self._processMathTwo(copiedInfo, factor, div)
         return copiedInfo
 
+    __truediv__ = __div__
+
     __rdiv__ = __div__
+
+    __rtruediv__ = __rdiv__
 
     def _processMathTwo(self, copiedInfo, factor, func):
         # basic attributes
@@ -343,8 +348,8 @@ class MathInfo(object):
         >>> info.postscriptSlantAngle
         >>> info.postscriptStemSnapH
         [80, 90]
-        >>> info.guidelines
-        [{'y': 101, 'x': 0, 'angle': 0, 'name': 'bar'}]
+        >>> [sorted(gl.items()) for gl in info.guidelines]
+        [[('angle', 0), ('name', 'bar'), ('x', 0), ('y', 101)]]
         >>> written = {}
         >>> expected = {}
         >>> for attr, value in _testData.items():

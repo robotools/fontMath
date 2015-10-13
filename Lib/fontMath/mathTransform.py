@@ -1,3 +1,4 @@
+from __future__ import print_function
 import math
 from fontTools.misc.transform import Transform
 
@@ -58,7 +59,7 @@ class ShallowTransform(object):
         newOffset = self.offset[0]-other.offset[0],self.offset[1]-other.offset[1] 
         newScale = self.scale[0]-other.scale[0],self.scale[1]-other.scale[1]
 
-        newRotation = self.rotation[0]-other.rotation[0],self.rotation[01]-other.rotation[1]
+        newRotation = self.rotation[0]-other.rotation[0],self.rotation[1]-other.rotation[1]
         return self.__class__(newOffset, newScale, newRotation)
     
     def __mul__(self, factor):
@@ -80,7 +81,7 @@ class ShallowTransform(object):
         else:
             fx, fy = float(factor)
         if fx==0 or fy==0:
-            raise ZeroDivisionError, fx, fy
+            raise ZeroDivisionError((fx, fy))
         newOffset = self.offset[0]/fx,self.offset[1]/fy
         newScale = self.scale[0]/fx,self.scale[1]/fy
         newRotation = self.rotation[0]/fx,self.rotation[1]/fy
@@ -371,7 +372,7 @@ if __name__ == "__main__":
                   ]
     transforms.reverse()
     for m1, m2 in transforms:
-        print m1, m2
+        print(m1, m2)
 
     def interpolateValue(data1, data2, value):
         return data1 * (1 - value) + data2 * value
@@ -404,10 +405,10 @@ if __name__ == "__main__":
         m = matrixToMathTransform(t1)
         t2 = mathTransformToMatrix(m)
         if not sum([round(t1[i]-t2[i],precision) for i in range(len(t1))]) == 0:
-            print "testWrapUnWrap", t1, t2
-    
+            print("testWrapUnWrap", t1, t2)
+
     for p in range(5,16):
-        print "testWrapUnWrap with precision", p
+        print("testWrapUnWrap with precision", p)
         for i in range(1000):
             testWrapUnWrap(p)
     
@@ -426,5 +427,5 @@ if __name__ == "__main__":
             results.append(r)
         if not results[0]==results[1]:
             # minor rounding errors can occur.
-            print "\t", results[0]
-            print "\t", results[1]
+            print("\t", results[0])
+            print("\t", results[1])

@@ -1,3 +1,7 @@
+from __future__ import division, absolute_import
+from copy import deepcopy
+from fontMath.mathFunctions import add, sub, mul, div
+
 """
 An object that serves kerning data from a
 class kerning dictionary.
@@ -6,9 +10,6 @@ It scans a group dictionary and stores
 a mapping of glyph to group relationships.
 this map is then used to lookup kerning values.
 """
-
-from copy import deepcopy
-from mathFunctions import add, sub, mul, div
 
 
 side1Prefix = "public.kern1."
@@ -109,7 +110,7 @@ class MathKerning(object):
         >>> sorted(obj.values())[3]
         4
         """
-        if self._kerning.has_key(pair):
+        if pair in self._kerning:
             return self._kerning[pair]
         side1, side2 = pair
         if side1.startswith(side1Prefix):
@@ -463,6 +464,8 @@ class MathKerning(object):
         k.cleanup()
         return k
 
+    __truediv__ = __div__
+
     def __rdiv__(self, factor):
         """
         >>> kerning = {
@@ -490,6 +493,8 @@ class MathKerning(object):
         k = self._processMathTwo(factor, div)
         k.cleanup()
         return k
+
+    __rtruediv__ = __rdiv__
 
     def _processMathTwo(self, factor, funct):
         kerning = deepcopy(self._kerning)
@@ -547,7 +552,7 @@ class MathKerning(object):
         >>> sorted(obj.items())
         [(('B', 'B'), 1), (('C', 'public.kern2.C'), 0), (('D', 'D'), 1), (('E', 'E'), 1.2), (('public.kern1.C', 'public.kern2.C'), 1)]
         """
-        for (side1, side2), v in self._kerning.items():
+        for (side1, side2), v in list(self._kerning.items()):
             if int(v) == v:
                 v = int(v)
                 self._kerning[side1, side2] = v
@@ -578,7 +583,7 @@ class MathKerning(object):
         >>> font = RFont()
         >>> font.kerning.asDict() == {}
         True
-        >>> font.groups.items() == []
+        >>> list(font.groups.items()) == []
         True
         >>> obj = MathKerning(kerning, groups)
         >>> obj.extractKerning(font)
