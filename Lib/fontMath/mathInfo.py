@@ -304,6 +304,13 @@ class MathInfo(object):
         name = None
         if hasattr(copiedInfo, "openTypeOS2WeightClass") and copiedInfo.openTypeOS2WeightClass is not None:
             v = copiedInfo.openTypeOS2WeightClass
+            v = v * .01
+            # Python3 rounds halves to nearest even integer
+            # but Python2 rounds halves up.
+            if round(0.5) != 1 and v % 1 == .5 and not int(v) % 2:
+                v = int((round(v) + 1) * 100)
+            else:
+                v = int(round(v) * 100)
             v = int(round(v * .01) * 100)
             if v < 100:
                 v = 100

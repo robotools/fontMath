@@ -97,9 +97,16 @@ def _roundNumber(n, digits=None):
     >>> _roundNumber(0.3333, 3) == 0.333
     True
     """
-    if digits is None:
-        return int(round(n))
-    return round(n, digits)
+    # Python3 rounds halves to nearest even integer but Python2 rounds
+    # halves up in positives and down in negatives
+    if round(0.5) != 1 and n % 1 == .5 and not int(n) % 2:
+        if digits is None:
+            return int((round(n) + (abs(n) / n) * 1))
+        return int((round(n) + 1, digits))
+    else:
+        if digits is None:
+            return int(round(n))
+        return round(n, digits)
 
 if __name__ == "__main__":
     import doctest
