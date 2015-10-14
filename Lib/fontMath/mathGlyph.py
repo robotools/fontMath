@@ -371,9 +371,7 @@ class MathGlyphPen(AbstractPointPen):
     >>> pen = MathGlyphPen()
     >>> pen.beginPath(identifier="contour 1")
     >>> pen.addPoint((  0,  50), "curve", smooth=False, name="name 1", identifier="point 1")
-    >>> pen.addPoint((  0,  75), None)
-    >>> pen.addPoint(( 25, 100), None)
-    >>> pen.addPoint(( 50, 100), "line", smooth=True, name="name 2", identifier="point 2")
+    >>> pen.addPoint(( 50, 100), "line", smooth=False, name="name 2", identifier="point 2")
     >>> pen.addPoint(( 75, 100), None)
     >>> pen.addPoint((100,  75), None)
     >>> pen.addPoint((100,  50), "curve", smooth=True, name="name 3", identifier="point 3")
@@ -385,9 +383,9 @@ class MathGlyphPen(AbstractPointPen):
     >>> pen.endPath()
     >>> expected = [
     ...     ("curve", (  0,  50), False, "name 1", "point 1"),
-    ...     (None,    (  0,  75), False, None,     None),
-    ...     (None,    ( 25, 100), False, None,     None),
-    ...     ("curve", ( 50, 100), True, "name 2", "point 2"),
+    ...     (None,    (  0,  50), False, None,     None),
+    ...     (None,    ( 50, 100), False, None,     None),
+    ...     ("curve", ( 50, 100), False, "name 2", "point 2"),
     ...     (None,    ( 75, 100), False, None,     None),
     ...     (None,    (100,  75), False, None,     None),
     ...     ("curve", (100,  50), True, "name 3", "point 3"),
