@@ -12,12 +12,12 @@ __all__ = [
 def _expandGuideline(guideline):
     """
     >>> guideline = dict(x=100, y=None, angle=None)
-    >>> _expandGuideline(guideline)
-    {'y': 0, 'x': 100, 'angle': 90}
+    >>> sorted(_expandGuideline(guideline).items())
+    [('angle', 90), ('x', 100), ('y', 0)]
 
     >>> guideline = dict(y=100, x=None, angle=None)
-    >>> _expandGuideline(guideline)
-    {'y': 100, 'x': 0, 'angle': 0}
+    >>> sorted(_expandGuideline(guideline).items())
+    [('angle', 0), ('x', 0), ('y', 100)]
     """
     guideline = dict(guideline)
     x = guideline.get("x")
@@ -35,20 +35,20 @@ def _expandGuideline(guideline):
 def _compressGuideline(guideline):
     """
     >>> guideline = dict(x=100, y=0, angle=90)
-    >>> _compressGuideline(guideline)
-    {'y': None, 'x': 100, 'angle': None}
+    >>> sorted(_compressGuideline(guideline).items())
+    [('angle', None), ('x', 100), ('y', None)]
 
     >>> guideline = dict(x=100, y=0, angle=270)
-    >>> _compressGuideline(guideline)
-    {'y': None, 'x': 100, 'angle': None}
+    >>> sorted(_compressGuideline(guideline).items())
+    [('angle', None), ('x', 100), ('y', None)]
 
     >>> guideline = dict(y=100, x=0, angle=0)
-    >>> _compressGuideline(guideline)
-    {'y': 100, 'x': None, 'angle': None}
+    >>> sorted(_compressGuideline(guideline).items())
+    [('angle', None), ('x', None), ('y', 100)]
 
     >>> guideline = dict(y=100, x=0, angle=180)
-    >>> _compressGuideline(guideline)
-    {'y': 100, 'x': None, 'angle': None}
+    >>> sorted(_compressGuideline(guideline).items())
+    [('angle', None), ('x', None), ('y', 100)]
     """
     guideline = dict(guideline)
     x = guideline["x"]

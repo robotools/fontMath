@@ -35,26 +35,29 @@ def subPt(pt1, pt2):
 def mul(v, f):
     return v * f
 
-def mulPt(pt1, (f1, f2)):
+def mulPt(pt1, f):
     """
     >>> pt1, f1, f2 = (15, 25), 2, 3
     >>> mulPt(pt1, (f1, f2))
     (30, 75)
     """
+    (f1, f2) = f
     return pt1[0] * f1, pt1[1] * f2
 
 def div(v, f):
     return v / f
 
-def divPt(pt, (f1, f2)):
+def divPt(pt, f):
     """
     >>> pt1, f1, f2 = (15, 75), 2, 3
     >>> divPt(pt1, (f1, f2))
     (7.5, 25.0)
     """
+    (f1, f2) = f
     return pt[0] / f1, pt[1] / f2
 
-def factorAngle(angle, (f1, f2), func):
+def factorAngle(angle, f, func):
+    (f1, f2) = f
     rangle = math.radians(angle)
     x = math.cos(rangle)
     y = math.sin(rangle)
@@ -94,9 +97,16 @@ def _roundNumber(n, digits=None):
     >>> _roundNumber(0.3333, 3) == 0.333
     True
     """
-    if digits is None:
-        return int(round(n))
-    return round(n, digits)
+    # Python3 rounds halves to nearest even integer but Python2 rounds
+    # halves up in positives and down in negatives
+    if round(0.5) != 1 and n % 1 == .5 and not int(n) % 2:
+        if digits is None:
+            return int((round(n) + (abs(n) / n) * 1))
+        return int((round(n) + 1, digits))
+    else:
+        if digits is None:
+            return int(round(n))
+        return round(n, digits)
 
 if __name__ == "__main__":
     import doctest

@@ -1,5 +1,6 @@
-from mathFunctions import *
-from mathGuideline import *
+from __future__ import division, absolute_import
+from fontMath.mathFunctions import *
+from fontMath.mathGuideline import *
 
 
 class MathInfo(object):
@@ -227,7 +228,11 @@ class MathInfo(object):
         self._processMathTwo(copiedInfo, factor, div)
         return copiedInfo
 
+    __truediv__ = __div__
+
     __rdiv__ = __div__
+
+    __rtruediv__ = __rdiv__
 
     def _processMathTwo(self, copiedInfo, factor, func):
         # basic attributes
@@ -304,6 +309,13 @@ class MathInfo(object):
         name = None
         if hasattr(copiedInfo, "openTypeOS2WeightClass") and copiedInfo.openTypeOS2WeightClass is not None:
             v = copiedInfo.openTypeOS2WeightClass
+            v = v * .01
+            # Python3 rounds halves to nearest even integer
+            # but Python2 rounds halves up.
+            if round(0.5) != 1 and v % 1 == .5 and not int(v) % 2:
+                v = int((round(v) + 1) * 100)
+            else:
+                v = int(round(v) * 100)
             v = int(round(v * .01) * 100)
             if v < 100:
                 v = 100
@@ -336,8 +348,8 @@ class MathInfo(object):
         >>> info.postscriptSlantAngle
         >>> info.postscriptStemSnapH
         [80, 90]
-        >>> info.guidelines
-        [{'y': 101, 'x': 0, 'angle': 0, 'name': 'bar'}]
+        >>> [sorted(gl.items()) for gl in info.guidelines]
+        [[('angle', 0), ('name', 'bar'), ('x', 0), ('y', 101)]]
         >>> written = {}
         >>> expected = {}
         >>> for attr, value in _testData.items():
