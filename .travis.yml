@@ -1,0 +1,33 @@
+language: python
+sudo: required
+python:
+  - "2.6"
+  - "2.7"
+before_install:
+  - git clone https://github.com/typesupply/defcon.git --branch ufo3
+  - git clone https://github.com/robofab-developers/robofab.git --branch ufo3k
+  #- git clone https://github.com/behdad/fonttools.git
+  - git clone https://github.com/xen/fonttools2.git
+install:
+  - cd defcon; python setup.py install; cd ..
+  - cd robofab; python install.py; cd ..
+  #- cd fonttools; python setup.py install; cd ..
+  - cd fonttools2; python setup.py install; cd ..
+  # fontMath
+  - python setup.py install
+  - pip install coveralls
+script:
+  - cd Lib/fontMath
+  - python mathFunctions.py | tee /dev/stderr | grep "\*\*\*Test Failed\*\*\*"; if [[ ${PIPESTATUS[2]} == "0" ]]; then exit 1 ; fi
+  #- python mathGlyph.py     | tee /dev/stderr | grep "\*\*\*Test Failed\*\*\*"; if [[ ${PIPESTATUS[2]} == "0" ]]; then exit 1 ; fi
+  - python mathGuideline.py | tee /dev/stderr | grep "\*\*\*Test Failed\*\*\*"; if [[ ${PIPESTATUS[2]} == "0" ]]; then exit 1 ; fi
+  - python mathInfo.py      | tee /dev/stderr | grep "\*\*\*Test Failed\*\*\*"; if [[ ${PIPESTATUS[2]} == "0" ]]; then exit 1 ; fi
+  - python mathKerning.py   | tee /dev/stderr | grep "\*\*\*Test Failed\*\*\*"; if [[ ${PIPESTATUS[2]} == "0" ]]; then exit 1 ; fi
+  - coverage run --parallel-mode mathFunctions.py
+  - coverage run --parallel-mode --source=mathGlyph.py mathGlyph.py
+  - coverage run --parallel-mode mathGuideline.py
+  - coverage run --parallel-mode mathInfo.py
+  - coverage run --parallel-mode --source=mathKerning.py mathKerning.py
+after_success:
+  - coverage combine
+  - coveralls
