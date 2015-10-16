@@ -19,7 +19,7 @@ install:
 script:
   - cd Lib/fontMath
   - python mathFunctions.py | tee /dev/stderr | grep "\*\*\*Test Failed\*\*\*"; if [[ ${PIPESTATUS[2]} == "0" ]]; then exit 1 ; fi
-  #- python mathGlyph.py     | tee /dev/stderr | grep "\*\*\*Test Failed\*\*\*"; if [[ ${PIPESTATUS[2]} == "0" ]]; then exit 1 ; fi
+  - python mathGlyph.py     | tee /dev/stderr | grep "\*\*\*Test Failed\*\*\*"; if [[ ${PIPESTATUS[2]} == "0" ]]; then exit 1 ; fi
   - python mathGuideline.py | tee /dev/stderr | grep "\*\*\*Test Failed\*\*\*"; if [[ ${PIPESTATUS[2]} == "0" ]]; then exit 1 ; fi
   - python mathInfo.py      | tee /dev/stderr | grep "\*\*\*Test Failed\*\*\*"; if [[ ${PIPESTATUS[2]} == "0" ]]; then exit 1 ; fi
   - python mathKerning.py   | tee /dev/stderr | grep "\*\*\*Test Failed\*\*\*"; if [[ ${PIPESTATUS[2]} == "0" ]]; then exit 1 ; fi
