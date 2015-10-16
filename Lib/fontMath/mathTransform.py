@@ -329,103 +329,137 @@ class MathTransform(object):
         angle2 = self._interpolate(self.angle2, other.angle2, y)
         return self.compose((translateX, translateY), (scaleX, scaleY), (angle1, angle2))
 
-if __name__ == "__main__":
-    """ In this test various complex transformations are interpolated using 3 different methods.
-            - straight lineair interpolation, the way glyphMath does it now.
-            - using the MathTransform interpolation method.
-            - using the ShallowTransform with an initial decompose and final compose.
+# ----
+# Test
+# ----
+
+_testData = [
+    (
+    Transform().rotate(math.radians(0)),
+    Transform().rotate(math.radians(90))
+    ),
+
+    (
+    Transform().skew(math.radians(60), math.radians(10)),
+    Transform().rotate(math.radians(90))
+    ),
+
+    (
+    Transform().scale(.3, 1.3),
+    Transform().rotate(math.radians(90))
+    ),
+
+    (
+    Transform().scale(.3, 1.3).rotate(math.radians(-15)),
+    Transform().rotate(math.radians(90)).scale(.7, .3)
+    ),
+
+    (
+    Transform().translate(250, 250).rotate(math.radians(-15)).translate(-250, -250),
+    Transform().translate(0, 400).rotate(math.radians(80)).translate(-100, 0).rotate(math.radians(80)),
+    ),
+
+    (
+    Transform().skew(math.radians(50)).scale(1.5).rotate(math.radians(60)),
+    Transform().rotate(math.radians(90))
+    ),
+]
+
+def _testTransforms(_testData):
     """
-    from random import random
+    >>> for m1, m2 in _testData:
+    ...     m1, m2
+    (<Transform [1 0 0 1 0 0]>, <Transform [0 1 -1 0 0 0]>)
+    (<Transform [1 0.176327 1.73205 1 0 0]>, <Transform [0 1 -1 0 0 0]>)
+    (<Transform [0.3 0 0 1.3 0 0]>, <Transform [0 1 -1 0 0 0]>)
+    (<Transform [0.289778 -0.336465 0.0776457 1.2557 0 0]>, <Transform [0 0.7 -0.3 0 0 0]>)
+    (<Transform [0.965926 -0.258819 0.258819 0.965926 -56.1862 73.2233]>, <Transform [-0.939693 0.34202 -0.34202 -0.939693 -17.3648 301.519]>)
+    (<Transform [2.29813 1.29904 -0.405223 0.75 0 0]>, <Transform [0 1 -1 0 0 0]>)
+    """
 
-    transforms = [
-                    (
-                    Transform().rotate(math.radians(0)),
-                    Transform().rotate(math.radians(90))
-                    ),
+class FontMathWarning(Exception): pass
 
-                    (
-                    Transform().skew(math.radians(60), math.radians(10)),
-                    Transform().rotate(math.radians(90))
-                    ),
+def _interpolateValue(data1, data2, value):
+    return data1 * (1 - value) + data2 * value
 
-                    (
-                    Transform().scale(.3, 1.3),
-                    Transform().rotate(math.radians(90))
-                    ),
+def _linearInterpolationTransformMatrix(matrix1, matrix2, value):
+    """ Linear, 'oldstyle' interpolation of the transform matrix."""
+    return tuple(_interpolateValue(matrix1[i], matrix2[i], value) for i in range(len(matrix1)))
 
-                    (
-                    Transform().scale(.3, 1.3).rotate(math.radians(-15)),
-                    Transform().rotate(math.radians(90)).scale(.7, .3)
-                    ),
+def _polarDecomposeInterpolationTransformation(matrix1, matrix2, value):
+    """ Interpolate using the MathTransform method. """
+    m1 = MathTransform(matrix1)
+    m2 = MathTransform(matrix2)
+    return tuple(m1.interpolate(m2, value))
 
-                    (
-                    Transform().translate(250, 250).rotate(math.radians(-15)).translate(-250, -250),
-                    Transform().translate(0, 400).rotate(math.radians(80)).translate(-100, 0).rotate(math.radians(80)),
-                    ),
+def _mathPolarDecomposeInterpolationTransformation(matrix1, matrix2, value):
+    """ Interpolation with ShallowTransfor, wrapped by decompose / compose actions."""
+    off, scl, rot = MathTransform(matrix1).decompose()
+    m1 = ShallowTransform(off, scl, rot)
+    off, scl, rot = MathTransform(matrix2).decompose()
+    m2 = ShallowTransform(off, scl, rot)
+    m3 = m1 + value * (m2-m1)
+    m3 = MathTransform().compose(m3.offset, m3.scale, m3.rotation)
+    return tuple(m3)
 
-                    (
-                    Transform().skew(math.radians(50)).scale(1.5).rotate(math.radians(60)),
-                    Transform().rotate(math.radians(90))
-                    ),
+def _testFunctions(testData):
+    """
+    In this test various complex transformations are interpolated using 3 different methods:
+      - straight linear interpolation, the way glyphMath does it now.
+      - using the MathTransform interpolation method.
+      - using the ShallowTransform with an initial decompose and final compose.
 
-
-                  ]
-    transforms.reverse()
-    for m1, m2 in transforms:
-        print(m1, m2)
-
-    def interpolateValue(data1, data2, value):
-        return data1 * (1 - value) + data2 * value
-
-    def polarDecomposeInterpolationTransformation(matrix1, matrix2, value):
-        """ Interpolate using the MathTransform method. """
-        m1 = MathTransform(matrix1)
-        m2 = MathTransform(matrix2)
-        return tuple(m1.interpolate(m2, value))
-
-    def linearInterpolationTransformMatrix(matrix1, matrix2, value):
-        """ Linear, 'oldstyle' interpolation of the transform matrix."""
-        return tuple(interpolateValue(matrix1[i], matrix2[i], value) for i in range(len(matrix1)))
-
-    def mathPolarDecomposeInterpolationTransformation(matrix1, matrix2, value):
-        """ Interpolation with ShallowTransfor, wrapped by decompose / compose actions."""
-        off, scl, rot = MathTransform(matrix1).decompose()
-        m1 = ShallowTransform(off, scl, rot)
-        off, scl, rot = MathTransform(matrix2).decompose()
-        m2 = ShallowTransform(off, scl, rot)
-        m3 = m1 + value * (m2-m1)
-        m3 = MathTransform().compose(m3.offset, m3.scale, m3.rotation)
-        return tuple(m3)
-
-    def testWrapUnWrap(precision=12):
-        """ Wrap and unwrap a matrix with random values to establish rounding error"""
-        t1 = []
-        for i in range(6):
-            t1.append(random())
-        m = matrixToMathTransform(t1)
-        t2 = mathTransformToMatrix(m)
-        if not sum([round(t1[i]-t2[i],precision) for i in range(len(t1))]) == 0:
-            print("testWrapUnWrap", t1, t2)
-
-    for p in range(5,16):
-        print("testWrapUnWrap with precision", p)
-        for i in range(1000):
-            testWrapUnWrap(p)
-
+    >>> _testFunctions(_testData) # doctest: +ELLIPSIS
+    Traceback (most recent call last):
+        ...
+    FontMathWarning: Minor differences occured when comparing the interpolation functions.
+    """
     value = random()
-
     testFunctions = [
-        polarDecomposeInterpolationTransformation,
-        mathPolarDecomposeInterpolationTransformation,
-        linearInterpolationTransformMatrix,
+        _polarDecomposeInterpolationTransformation,
+        _mathPolarDecomposeInterpolationTransformation,
+        _linearInterpolationTransformMatrix,
     ]
-    for m1, m2 in transforms:
+    for m1, m2 in testData:
         results = []
         for func in testFunctions:
-            #print func.__name__
             r = func(m1, m2, value)
             results.append(r)
-        if not results[0]==results[1]:
-            # minor rounding errors can occur.
-            print("\t", results[0])
-            print("\t", results[1])
+        if not results[0] == results[1]:
+            raise FontMathWarning("Minor differences occured when comparing the interpolation functions.")
+
+def _testWrapUnWrap(precision=12):
+    """
+    Wrap and unwrap a matrix with random values to establish rounding error
+
+    >>> _testWrapUnWrap()
+    """
+    t1 = []
+    for i in range(6):
+        t1.append(random())
+    m = matrixToMathTransform(t1)
+    t2 = mathTransformToMatrix(m)
+    if not sum([round(t1[i]-t2[i], precision) for i in range(len(t1))]) == 0:
+        raise FontMathWarning("Matrix round-tripping failed for precision value %s." % precision)
+
+def _testWrapUnWrapPrecision():
+    """
+    Wrap and unwrap should have no rounding errors at least up to a precision value of 12.
+    Rounding errors seem to start occuring at a precision value of 14.
+
+    >>> for p in range(5,13):
+    ...     for i in range(1000):
+    ...         _testWrapUnWrap(p)
+
+    >>> for p in range(14,16):
+    ...     for i in range(1000):
+    ...         _testWrapUnWrap(p) # doctest: +ELLIPSIS
+    Traceback (most recent call last):
+        ...
+    FontMathWarning: Matrix round-tripping failed for precision value ...
+    """
+
+if __name__ == "__main__":
+    from random import random
+    import doctest
+    doctest.testmod()
