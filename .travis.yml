@@ -23,11 +23,13 @@ script:
   - python mathGuideline.py | tee /dev/stderr | grep "\*\*\*Test Failed\*\*\*"; if [[ ${PIPESTATUS[2]} == "0" ]]; then exit 1 ; fi
   - python mathInfo.py      | tee /dev/stderr | grep "\*\*\*Test Failed\*\*\*"; if [[ ${PIPESTATUS[2]} == "0" ]]; then exit 1 ; fi
   - python mathKerning.py   | tee /dev/stderr | grep "\*\*\*Test Failed\*\*\*"; if [[ ${PIPESTATUS[2]} == "0" ]]; then exit 1 ; fi
+  - python mathTransform.py | tee /dev/stderr | grep "\*\*\*Test Failed\*\*\*"; if [[ ${PIPESTATUS[2]} == "0" ]]; then exit 1 ; fi
   - coverage run --parallel-mode mathFunctions.py
   - coverage run --parallel-mode --source=mathGlyph.py mathGlyph.py
   - coverage run --parallel-mode mathGuideline.py
   - coverage run --parallel-mode --source=mathInfo.py mathInfo.py
   - coverage run --parallel-mode --source=mathKerning.py mathKerning.py
+  - coverage run --source=mathTransform.py mathTransform.py
 after_success:
   - coverage combine
   - coveralls
