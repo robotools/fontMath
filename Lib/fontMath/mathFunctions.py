@@ -22,6 +22,14 @@ def addPt(pt1, pt2):
     return pt1[0] + pt2[0], pt1[1] + pt2[1]
 
 def sub(v1, v2):
+    """
+    >>> sub(10, 10)
+    0
+    >>> sub(10, -10)
+    20
+    >>> sub(-10, 10)
+    -20
+    """
     return v1 - v2
 
 def subPt(pt1, pt2):
@@ -45,6 +53,12 @@ def mulPt(pt1, f):
     return pt1[0] * f1, pt1[1] * f2
 
 def div(v, f):
+    """
+    >>> div(4, 2) == 2
+    True
+    >>> div(4, 3) == 1.3333333333333333
+    True
+    """
     return v / f
 
 def divPt(pt, f):
