@@ -123,5 +123,6 @@ def _roundNumber(n, digits=None):
         return round(n, digits)
 
 if __name__ == "__main__":
+    import sys
     import doctest
-    doctest.testmod()
+    sys.exit(doctest.testmod().failed)

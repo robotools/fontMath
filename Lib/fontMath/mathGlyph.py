@@ -139,7 +139,7 @@ class MathGlyph(object):
         components
         anchors
         guidelines
-        
+
         this is used mainly for internal glyph math.
         """
         n = MathGlyph(None)
@@ -248,7 +248,7 @@ class MathGlyph(object):
         # image
         if self.image:
             copiedGlyph.image = _processMathTwoImage(self.image, factor, ptFunc)
-        
+
     # -------
     # Additional math
     # -------
@@ -279,7 +279,7 @@ class MathGlyph(object):
         if self.image:
             copiedGlyph.image = _roundImage(self.image, digits)
         return copiedGlyph
-        
+
 
     # -------
     # Pen API
@@ -504,9 +504,9 @@ class FilterRedundantPointPen(AbstractPointPen):
         points = self._points
         prevOnCurve = None
         offCurves = []
-            
+
         pointsToDraw = []
-            
+
         # deal with the first point
         pt, segmentType, smooth, name, identifier = points[0]
         # if it is an offcurve, add it to the offcurve list
@@ -1086,7 +1086,7 @@ def _processMathTwoTransformation(transformation, factor, func):
     xOffset, yOffset = func((xOffset, yOffset), factor)
     return (xScale, xyScale, yxScale, yScale, xOffset, yOffset)
 
-    
+
 # rounding
 
 def _roundContours(contours, digits=None):
@@ -1122,7 +1122,7 @@ def _roundTransformation(transformation, digits=None):
     """
     xScale, xyScale, yxScale, yScale, xOffset, yOffset = transformation
     return (xScale, xyScale, yxScale, yScale, _roundNumber(xOffset, digits), _roundNumber(yOffset, digits))
-    
+
 def _roundImage(image, digits=None):
     """
     >>> image = dict(fileName="foo", transformation=(1, 2, 3, 4, 4.99, 6.01), color="0,0,0,0")
@@ -1289,7 +1289,7 @@ def _testHeight():
     >>> glyph2 = glyph1 / (1, 2)
     >>> glyph2.height
     3.5
-    
+
     round
     -----
     >>> glyph1 = _setupTestGlyph()
@@ -1300,5 +1300,6 @@ def _testHeight():
     """
 
 if __name__ == "__main__":
+    import sys
     import doctest
-    doctest.testmod()
+    sys.exit(doctest.testmod().failed)
