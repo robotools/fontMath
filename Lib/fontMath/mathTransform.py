@@ -461,5 +461,6 @@ def _testWrapUnWrapPrecision():
 
 if __name__ == "__main__":
     from random import random
+    import sys
     import doctest
-    doctest.testmod()
+    sys.exit(doctest.testmod().failed)
