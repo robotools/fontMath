@@ -1,5 +1,5 @@
 from __future__ import print_function, division, absolute_import
-from mathFunctions import add, sub, mul, div
+from fontMath.mathFunctions import add, sub, mul, div
 
 # For Python3
 try:

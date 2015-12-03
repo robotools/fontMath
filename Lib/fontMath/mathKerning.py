@@ -1,6 +1,6 @@
 from __future__ import print_function, division, absolute_import
 from copy import deepcopy
-from mathFunctions import add, sub, mul, div
+from fontMath.mathFunctions import add, sub, mul, div
 """
 An object that serves kerning data from a
 class kerning dictionary.
