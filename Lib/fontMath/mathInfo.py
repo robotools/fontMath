@@ -337,6 +337,8 @@ class MathInfo(object):
         >>> m.postscriptSlantAngle = None
         >>> m.postscriptStemSnapH = [80.1, 90.2]
         >>> m.guidelines = [{'y': 100.99, 'x': None, 'angle': None, 'name': 'bar'}]
+        >>> m.italicAngle = -9.4
+        >>> m.postscriptBlueScale = 0.137
         >>> info = MathInfo(m)
         >>> info = info.round()
         >>> info.ascender
@@ -345,6 +347,10 @@ class MathInfo(object):
         -200
         >>> info.xHeight
         400
+        >>> m.italicAngle
+        -9.4
+        >>> m.postscriptBlueScale
+        0.137
         >>> info.postscriptSlantAngle
         >>> info.postscriptStemSnapH
         [80, 90]
@@ -364,7 +370,7 @@ class MathInfo(object):
         >>> sorted(expected) == sorted(written)
         True
         """
-        excludeFromRounding = ['postscriptBlueScale']
+        excludeFromRounding = ['postscriptBlueScale', 'italicAngle']
         copiedInfo = self.copy()
         # basic attributes
         for attr, (formatter, factorIndex) in _infoAttrs.items():
