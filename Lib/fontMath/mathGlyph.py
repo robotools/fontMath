@@ -84,10 +84,8 @@ class MathGlyph(object):
             self.height = None
             self.note = None
         else:
-            p = MathGlyphPen()
+            p = MathGlyphPen(self)
             glyph.drawPoints(p)
-            self.contours = p.contours
-            self.components = p.components
             self.anchors = [dict(anchor) for anchor in glyph.anchors]
             self.guidelines = [_expandGuideline(guideline) for guideline in glyph.guidelines]
             self.image = _expandImage(glyph.image)
@@ -285,8 +283,14 @@ class MathGlyph(object):
     # Pen API
     # -------
 
-    def drawPoints(self, pointPen):
+    def getPointPen(self):
+        """get a point pen for drawing to this object"""
+        return MathGlyphPen(self)
+
+    def drawPoints(self, pointPen, filterReduntantPoints=False):
         """draw self using pointPen"""
+        if filterReduntantPoints:
+            pointPen = FilterRedundantPointPen(pointPen)
         for contour in self.contours:
             pointPen.beginPath(identifier=contour["identifier"])
             for segmentType, pt, smooth, name, identifier in contour["points"]:
@@ -295,10 +299,10 @@ class MathGlyph(object):
         for component in self.components:
             pointPen.addComponent(component["baseGlyph"], component["transformation"], identifier=component["identifier"])
 
-    def draw(self, pen):
+    def draw(self, pen, filterReduntantPoints=False):
         """draw self using pen"""
         pointPen = PointToSegmentPen(pen)
-        self.drawPoints(pointPen)
+        self.drawPoints(pointPenfilterReduntantPoints=filterReduntantPoints)
 
     # ----------
     # Extraction
@@ -401,9 +405,13 @@ class MathGlyphPen(AbstractPointPen):
     'contour 1'
     """
 
-    def __init__(self):
-        self.contours = []
-        self.components = []
+    def __init__(self, glyph=None):
+        if glyph is None:
+            self.contours = []
+            self.components = []
+        else:
+            self.contours = glyph.contours
+            self.components = glyph.components
         self._contourIdentifier = None
         self._points = []
 
