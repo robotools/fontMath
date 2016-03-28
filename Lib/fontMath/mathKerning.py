@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import
 from copy import deepcopy
+from ufoLib.validators import kerningValidatorReportPairs
 from fontMath.mathFunctions import add, sub, mul, div
 
 """
@@ -592,9 +593,54 @@ class MathKerning(object):
         >>> sorted(font.groups.items())
         [('public.kern1.C', ['C', 'C1']), ('public.kern2.C', ['C', 'C1'])]
         """
+        self._resolveConflictingKerning()
         font.kerning.clear()
         font.kerning.update(self._kerning)
         font.groups.update(self.groups())
+
+    def _resolveConflictingKerning(self):
+        """
+        Resolve conflicting kerning by averaging the
+        conflicting pairs. This is not a "correct"
+        solution to the problem, but there is not
+        a correct solution. The problem is that two
+        source kerning dictionaries can be combined
+        through the math functions to create conflicting
+        pairs. The masters are not incorrect and the
+        conflicts are mathematically correct. However,
+        the conflicts are not logically solvable.
+        This logical conflict must not be passed to
+        the caller. There is not a right way to solve
+        this, so do the thing that yields a mathematically
+        reproducable result.
+
+        >>> groups = {
+        ...     "public.kern1.O" : ["O", "D", "Q"],
+        ...     "public.kern2.E" : ["E", "F"]
+        ... }
+        >>> kerning = {
+        ...     ("public.kern1.O", "public.kern2.E") : -100,
+        ...     ("public.kern1.O", "F") : -200,
+        ...     ("Q", "public.kern2.E") : -250,
+        ...     ("D", "F") : -300,
+        ... }
+        >>> obj = MathKerning(kerning, groups)
+        >>> obj._resolveConflictingKerning()
+        >>> sorted(obj._kerning.values())
+        [-300, -225.0, -100]
+        """
+        valid, errors, pairs = kerningValidatorReportPairs(self._kerning, self._groups)
+        if not valid:
+            for pair1, pair2 in pairs:
+                if pair1 not in self._kerning or pair2 not in self._kerning:
+                    continue
+                value1 = self._kerning[pair1]
+                value2 = self._kerning[pair2]
+                del self._kerning[pair2]
+                self._kerning[pair1] = (value1 + value2) / 2.0
+            valid, errors, pairs = kerningValidatorReportPairs(self._kerning, self._groups)
+            if not valid:
+                self._resolveConflictingKerning()
 
 
 if __name__ == "__main__":
