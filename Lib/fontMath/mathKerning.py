@@ -1,3 +1,6 @@
+from __future__ import print_function, division, absolute_import
+from copy import deepcopy
+from fontMath.mathFunctions import add, sub, mul, div
 """
 An object that serves kerning data from a
 class kerning dictionary.
@@ -11,9 +14,6 @@ used in class kerning pairs must have the
 standard kerning class prefix (@) at the begining
 of the group name.
 """
-
-from copy import deepcopy
-from mathFunctions import add, sub, mul, div
 
 
 class MathKerning(object):
@@ -40,7 +40,7 @@ class MathKerning(object):
                 continue
             self._groups[groupName] = list(glyphList)
             for glyphName in glyphList:
-                if not groupMap.has_key(glyphName):
+                if glyphName not in groupMap:
                     groupMap[glyphName] = []
                 if groupName not in groupMap[glyphName]:
                     groupMap[glyphName].append(groupName)
@@ -111,7 +111,7 @@ class MathKerning(object):
         >>> obj["X", "X"]
         0
         """
-        if self._kerning.has_key(pair):
+        if pair in self._kerning:
             return self._kerning[pair]
 
         left, right = pair
@@ -125,7 +125,7 @@ class MathKerning(object):
         fullClassed = []
         for l in potentialLeft:
             for r in potentialRight:
-                if self._kerning.has_key((l, r)):
+                if (l, r) in self._kerning:
                     v = self._kerning[l, r]
                     if l[0] == "@" and r[0] == "@":
                         fullClassed.append((l, r, v))
@@ -185,19 +185,19 @@ class MathKerning(object):
         if right[0] == "@":
             rightType = CLASS_TYPE
 
-        if self._kerning.has_key(pair):
+        if pair in self._kerning:
             potLeft = [left]
             potRight = [right]
-            if leftType == SINGLE_TYPE and self._groupMap.has_key(left):
-                    for groupName in self._groupMap[left]:
-                        potLeft.append(groupName)
-            if rightType == SINGLE_TYPE and self._groupMap.has_key(right):
-                    for groupName in self._groupMap[right]:
-                        potRight.append(groupName)
+            if leftType == SINGLE_TYPE and left in self._groupMap:
+                for groupName in self._groupMap[left]:
+                    potLeft.append(groupName)
+            if rightType == SINGLE_TYPE and right in self._groupMap:
+                for groupName in self._groupMap[right]:
+                    potRight.append(groupName)
             hits = []
             for left in potLeft:
                 for right in potRight:
-                    if self._kerning.has_key((left, right)):
+                    if (left, right) in self._kerning:
                         hits.append((left, right))
             for left, right in hits:
                 if leftType != CLASS_TYPE:
@@ -378,6 +378,8 @@ class MathKerning(object):
         k.cleanup()
         return k
 
+    __truediv__ = __div__
+
     def __rdiv__(self, value):
         """
         >>> kerning = {
@@ -397,6 +399,8 @@ class MathKerning(object):
         k = self._processMathTwo(value, div)
         k.cleanup()
         return k
+
+    __rtruediv__ = __rdiv__
 
     def round(self, multiple=1):
         """
@@ -433,7 +437,7 @@ class MathKerning(object):
         >>> sorted(obj.items())
         [(('@C', '@C'), 1), (('B', 'B'), 1), (('C', '@C'), 0), (('D', 'D'), 1), (('E', 'E'), 1.2)]
         """
-        for (left, right), v in self._kerning.items():
+        for (left, right), v in list(self._kerning.items()):
             if int(v) == v:
                 v = int(v)
                 self._kerning[left, right] = v

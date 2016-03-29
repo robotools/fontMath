@@ -1,4 +1,11 @@
-from mathFunctions import add, sub, mul, div
+from __future__ import print_function, division, absolute_import
+from fontMath.mathFunctions import add, sub, mul, div
+
+# For Python3
+try:
+    unicode
+except NameError:
+    unicode = str
 
 _infoAttrs = dict(
     unitsPerEm=int,
@@ -195,7 +202,13 @@ class MathInfo(object):
         name = None
         if hasattr(copiedInfo, "openTypeOS2WeightClass") and copiedInfo.openTypeOS2WeightClass is not None:
             v = copiedInfo.openTypeOS2WeightClass
-            v = int(round(v * .01) * 100)
+            v = v * .01
+            # Python3 rounds halves to nearest even integer
+            # but Python2 rounds halves up.
+            if round(0.5) != 1 and v % 1 == .5 and not int(v) % 2:
+                v = int((round(v) + 1) * 100)
+            else:
+                v = int(round(v) * 100)
             if v < 100:
                 v = 100
             elif v > 900:
@@ -295,7 +308,11 @@ class MathInfo(object):
         self._processMathTwo(copiedInfo, factor, div)
         return copiedInfo
 
+    __truediv__ = __div__
+
     __rdiv__ = __div__
+
+    __rtruediv__ = __div__
 
     def extractInfo(self, otherInfoObject):
         """
@@ -317,7 +334,7 @@ class MathInfo(object):
         >>> sorted(expected) == sorted(written)
         True
         """
-        for attr, typ in _infoAttrs.items() + [("postscriptWeightName", unicode)]:
+        for attr, typ in list(_infoAttrs.items()) + [("postscriptWeightName", unicode)]:
             if hasattr(self, attr):
                 v = getattr(self, attr)
                 if v is not None:
@@ -416,4 +433,3 @@ class _TestInfoObject(object):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-
