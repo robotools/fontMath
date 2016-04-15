@@ -71,9 +71,9 @@ class MathGlyph(object):
     """
 
     def __init__(self, glyph):
+        self.contours = []
+        self.components = []
         if glyph is None:
-            self.contours = []
-            self.components = []
             self.anchors = []
             self.guidelines = []
             self.image = _expandImage(None)
