@@ -1,4 +1,4 @@
-from mathFunctions import *
+from fontMath.mathFunctions import factorAngle, _roundNumber
 
 __all__ = [
     "_expandGuideline",
