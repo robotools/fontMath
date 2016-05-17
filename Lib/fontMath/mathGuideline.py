@@ -235,6 +235,7 @@ def _findPair(guidelines1, guidelines2, pairs, attrs):
 
 def _processMathOneGuidelines(guidelinePairs, ptFunc, func):
     """
+    >>> from fontMath.mathFunctions import add, addPt
     >>> guidelines = [
     ...     (
     ...         dict(x=1, y=3, angle=5, name="test", identifier="1", color="0,0,0,0"),
@@ -261,6 +262,7 @@ def _processMathOneGuidelines(guidelinePairs, ptFunc, func):
 
 def _processMathTwoGuidelines(guidelines, factor, func):
     """
+    >>> from fontMath.mathFunctions import mul
     >>> guidelines = [
     ...     dict(x=2, y=3, angle=5, name="test", identifier="1", color="0,0,0,0")
     ... ]

@@ -6,13 +6,11 @@ python:
 before_install:
   - git clone https://github.com/typesupply/defcon.git --branch ufo3
   - git clone https://github.com/robofab-developers/robofab.git --branch ufo3k
-  #- git clone https://github.com/behdad/fonttools.git
-  - git clone https://github.com/xen/fonttools2.git
+  - git clone https://github.com/behdad/fonttools.git
 install:
   - cd defcon; python setup.py install; cd ..
-  - cd robofab; python install.py; cd ..
-  #- cd fonttools; python setup.py install; cd ..
-  - cd fonttools2; python setup.py install; cd ..
+  - cd robofab; python setup.py install; cd ..
+  - cd fonttools; python setup.py install; cd ..
   # fontMath
   - python setup.py install
   - pip install coveralls
