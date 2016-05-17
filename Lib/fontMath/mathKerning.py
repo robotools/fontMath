@@ -466,36 +466,6 @@ class MathKerning(object):
 
     __truediv__ = __div__
 
-    def __rdiv__(self, factor):
-        """
-        >>> kerning = {
-        ...     ("A", "A") : 0,
-        ...     ("B", "B") : 4,
-        ...     ("C2", "public.kern2.C") : 0,
-        ...     ("public.kern1.C", "public.kern2.C") : 4,
-        ... }
-        >>> groups = {
-        ...     "public.kern1.C" : ["C1", "C2"],
-        ...     "public.kern2.C" : ["C1", "C2"],
-        ... }
-        >>> obj = 2 / MathKerning(kerning, groups)
-        >>> sorted(obj.items())
-        [(('B', 'B'), 2), (('C2', 'public.kern2.C'), 0), (('public.kern1.C', 'public.kern2.C'), 2)]
-
-        tuple factor
-        ------------
-        >>> obj = (4, 2) / MathKerning(kerning, groups)
-        >>> sorted(obj.items())
-        [(('B', 'B'), 1), (('C2', 'public.kern2.C'), 0), (('public.kern1.C', 'public.kern2.C'), 1)]
-        """
-        if isinstance(factor, tuple):
-            factor = factor[0]
-        k = self._processMathTwo(factor, div)
-        k.cleanup()
-        return k
-
-    __rtruediv__ = __rdiv__
-
     def _processMathTwo(self, factor, funct):
         kerning = deepcopy(self._kerning)
         for k, v in self._kerning.items():
