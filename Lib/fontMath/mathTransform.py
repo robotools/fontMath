@@ -329,53 +329,6 @@ class MathTransform(object):
         angle2 = self._interpolate(self.angle2, other.angle2, y)
         return self.compose((translateX, translateY), (scaleX, scaleY), (angle1, angle2))
 
-# ----
-# Test
-# ----
-
-_testData = [
-    (
-    Transform().rotate(math.radians(0)),
-    Transform().rotate(math.radians(90))
-    ),
-
-    (
-    Transform().skew(math.radians(60), math.radians(10)),
-    Transform().rotate(math.radians(90))
-    ),
-
-    (
-    Transform().scale(.3, 1.3),
-    Transform().rotate(math.radians(90))
-    ),
-
-    (
-    Transform().scale(.3, 1.3).rotate(math.radians(-15)),
-    Transform().rotate(math.radians(90)).scale(.7, .3)
-    ),
-
-    (
-    Transform().translate(250, 250).rotate(math.radians(-15)).translate(-250, -250),
-    Transform().translate(0, 400).rotate(math.radians(80)).translate(-100, 0).rotate(math.radians(80)),
-    ),
-
-    (
-    Transform().skew(math.radians(50)).scale(1.5).rotate(math.radians(60)),
-    Transform().rotate(math.radians(90))
-    ),
-]
-
-def _testTransforms(_testData):
-    """
-    >>> for m1, m2 in _testData:
-    ...     m1, m2
-    (<Transform [1 0 0 1 0 0]>, <Transform [0 1 -1 0 0 0]>)
-    (<Transform [1.0 0.176326980708 1.73205080757 1.0 0 0]>, <Transform [0 1 -1 0 0 0]>)
-    (<Transform [0.3 0.0 0.0 1.3 0 0]>, <Transform [0 1 -1 0 0 0]>)
-    (<Transform [0.289777747887 -0.336464758633 0.0776457135308 1.25570357418 0.0 0.0]>, <Transform [0.0 0.7 -0.3 0.0 0 0]>)
-    (<Transform [0.965925826289 -0.258819045103 0.258819045103 0.965925826289 -56.1862178479 73.2233047034]>, <Transform [-0.939692620786 0.342020143326 -0.342020143326 -0.939692620786 -17.3648177667 301.519224699]>)
-    (<Transform [2.29813332936 1.29903810568 -0.405222911231 0.75 0.0 0.0]>, <Transform [0 1 -1 0 0 0]>)
-    """
 
 class FontMathWarning(Exception): pass
 
@@ -402,62 +355,6 @@ def _mathPolarDecomposeInterpolationTransformation(matrix1, matrix2, value):
     m3 = MathTransform().compose(m3.offset, m3.scale, m3.rotation)
     return tuple(m3)
 
-def _testFunctions(testData):
-    """
-    In this test various complex transformations are interpolated using 3 different methods:
-      - straight linear interpolation, the way glyphMath does it now.
-      - using the MathTransform interpolation method.
-      - using the ShallowTransform with an initial decompose and final compose.
-
-    >>> _testFunctions(_testData) # doctest: +ELLIPSIS
-    Traceback (most recent call last):
-        ...
-    FontMathWarning: Minor differences occured when comparing the interpolation functions.
-    """
-    value = random()
-    testFunctions = [
-        _polarDecomposeInterpolationTransformation,
-        _mathPolarDecomposeInterpolationTransformation,
-        _linearInterpolationTransformMatrix,
-    ]
-    for m1, m2 in testData:
-        results = []
-        for func in testFunctions:
-            r = func(m1, m2, value)
-            results.append(r)
-        if not results[0] == results[1]:
-            raise FontMathWarning("Minor differences occured when comparing the interpolation functions.")
-
-def _testWrapUnWrap(precision=12):
-    """
-    Wrap and unwrap a matrix with random values to establish rounding error
-
-    >>> _testWrapUnWrap()
-    """
-    t1 = []
-    for i in range(6):
-        t1.append(random())
-    m = matrixToMathTransform(t1)
-    t2 = mathTransformToMatrix(m)
-    if not sum([round(t1[i]-t2[i], precision) for i in range(len(t1))]) == 0:
-        raise FontMathWarning("Matrix round-tripping failed for precision value %s." % precision)
-
-def _testWrapUnWrapPrecision():
-    """
-    Wrap and unwrap should have no rounding errors at least up to a precision value of 12.
-    Rounding errors seem to start occuring at a precision value of 14.
-
-    >>> for p in range(5,13):
-    ...     for i in range(1000):
-    ...         _testWrapUnWrap(p)
-
-    >>> for p in range(14,16):
-    ...     for i in range(1000):
-    ...         _testWrapUnWrap(p) # doctest: +ELLIPSIS
-    Traceback (most recent call last):
-        ...
-    FontMathWarning: Matrix round-tripping failed for precision value ...
-    """
 
 if __name__ == "__main__":
     from random import random

@@ -34,85 +34,11 @@ class MathInfo(object):
     # math with other info
 
     def __add__(self, otherInfo):
-        """
-        >>> info1 = MathInfo(_TestInfoObject())
-        >>> info2 = MathInfo(_TestInfoObject())
-        >>> info3 = info1 + info2
-        >>> written = {}
-        >>> expected = {}
-        >>> for attr, value in _testData.items():
-        ...     if value is None:
-        ...         continue
-        ...     written[attr] = getattr(info3, attr)
-        ...     if isinstance(value, list):
-        ...         expectedValue = [v + v for v in value]
-        ...     else:
-        ...         expectedValue = value + value
-        ...     expected[attr] = expectedValue
-        >>> sorted(expected) == sorted(written)
-        True
-
-        data subset (1st operand)
-        -------------------------
-        >>> info1 = MathInfo(_TestInfoObject(_testDataSubset))
-        >>> info2 = MathInfo(_TestInfoObject())
-        >>> info3 = info1 + info2
-        >>> written = {}
-        >>> expected = {}
-        >>> for attr, value in _testData.items():
-        ...     if value is None:
-        ...         continue
-        ...     written[attr] = getattr(info3, attr)
-        ...     if isinstance(value, list):
-        ...         expectedValue = [v + v for v in value]
-        ...     else:
-        ...         expectedValue = value + value
-        ...     expected[attr] = expectedValue
-        >>> sorted(expected) == sorted(written)
-        True
-
-        data subset (2nd operand)
-        -------------------------
-        >>> info1 = MathInfo(_TestInfoObject())
-        >>> info2 = MathInfo(_TestInfoObject(_testDataSubset))
-        >>> info3 = info1 + info2
-        >>> written = {}
-        >>> expected = {}
-        >>> for attr, value in _testData.items():
-        ...     if value is None:
-        ...         continue
-        ...     written[attr] = getattr(info3, attr)
-        ...     if isinstance(value, list):
-        ...         expectedValue = [v + v for v in value]
-        ...     else:
-        ...         expectedValue = value + value
-        ...     expected[attr] = expectedValue
-        >>> sorted(expected) == sorted(written)
-        True
-        """
         copiedInfo = self.copy()
         self._processMathOne(copiedInfo, otherInfo, addPt, add)
         return copiedInfo
 
     def __sub__(self, otherInfo):
-        """
-        >>> info1 = MathInfo(_TestInfoObject())
-        >>> info2 = MathInfo(_TestInfoObject())
-        >>> info3 = info1 - info2
-        >>> written = {}
-        >>> expected = {}
-        >>> for attr, value in _testData.items():
-        ...     if value is None:
-        ...         continue
-        ...     written[attr] = getattr(info3, attr)
-        ...     if isinstance(value, list):
-        ...         expectedValue = [v - v for v in value]
-        ...     else:
-        ...         expectedValue = value - value
-        ...     expected[attr] = expectedValue
-        >>> sorted(expected) == sorted(written)
-        True
-        """
         copiedInfo = self.copy()
         self._processMathOne(copiedInfo, otherInfo, subPt, sub)
         return copiedInfo
@@ -161,44 +87,6 @@ class MathInfo(object):
     # math with factor
 
     def __mul__(self, factor):
-        """
-        >>> info1 = MathInfo(_TestInfoObject())
-        >>> info2 = info1 * 2.5
-        >>> written = {}
-        >>> expected = {}
-        >>> for attr, value in _testData.items():
-        ...     if value is None:
-        ...         continue
-        ...     written[attr] = getattr(info2, attr)
-        ...     if isinstance(value, list):
-        ...         expectedValue = [v * 2.5 for v in value]
-        ...     else:
-        ...         expectedValue = value * 2.5
-        ...     expected[attr] = expectedValue
-        >>> sorted(expected) == sorted(written)
-        True
-
-        data subset
-        -----------
-        >>> info1 = MathInfo(_TestInfoObject(_testDataSubset))
-        >>> info2 = info1 * 2.5
-        >>> written = {}
-        >>> expected = {}
-        >>> for attr, value in _testDataSubset.items():
-        ...     if value is None:
-        ...         continue
-        ...     written[attr] = getattr(info2, attr)
-        ...     if attr == 'guidelines':
-        ...         guidelines = [_expandGuideline(guideline) for guideline in value]
-        ...         expectedValue = _processMathTwoGuidelines(guidelines, (2.5, 2.5), mul)
-        ...     elif isinstance(value, list):
-        ...         expectedValue = [v * 2.5 for v in value]
-        ...     else:
-        ...         expectedValue = value * 2.5
-        ...     expected[attr] = expectedValue
-        >>> sorted(expected) == sorted(written)
-        True
-        """
         if not isinstance(factor, tuple):
             factor = (factor, factor)
         copiedInfo = self.copy()
@@ -208,23 +96,6 @@ class MathInfo(object):
     __rmul__ = __mul__
 
     def __div__(self, factor):
-        """
-        >>> info1 = MathInfo(_TestInfoObject())
-        >>> info2 = info1 / 2
-        >>> written = {}
-        >>> expected = {}
-        >>> for attr, value in _testData.items():
-        ...     if value is None:
-        ...         continue
-        ...     written[attr] = getattr(info2, attr)
-        ...     if isinstance(value, list):
-        ...         expectedValue = [v / 2 for v in value]
-        ...     else:
-        ...         expectedValue = value / 2
-        ...     expected[attr] = expectedValue
-        >>> sorted(expected) == sorted(written)
-        True
-        """
         if not isinstance(factor, tuple):
             factor = (factor, factor)
         copiedInfo = self.copy()
@@ -272,40 +143,6 @@ class MathInfo(object):
     # special attributes
 
     def _processPostscriptWeightName(self, copiedInfo):
-        """
-        >>> info = MathInfo(_TestInfoObject())
-        >>> info._processPostscriptWeightName(info)
-        >>> info.postscriptWeightName
-        'Medium'
-        >>> info.openTypeOS2WeightClass = 549
-        >>> info._processPostscriptWeightName(info)
-        >>> info.postscriptWeightName
-        'Medium'
-        >>> info.openTypeOS2WeightClass = 550
-        >>> info._processPostscriptWeightName(info)
-        >>> info.postscriptWeightName
-        'Semi-bold'
-        >>> info.openTypeOS2WeightClass = 450
-        >>> info._processPostscriptWeightName(info)
-        >>> info.postscriptWeightName
-        'Medium'
-        >>> info.openTypeOS2WeightClass = 449
-        >>> info._processPostscriptWeightName(info)
-        >>> info.postscriptWeightName
-        'Normal'
-        >>> info.openTypeOS2WeightClass = 0
-        >>> info._processPostscriptWeightName(info)
-        >>> info.postscriptWeightName
-        'Thin'
-        >>> info.openTypeOS2WeightClass = -1000
-        >>> info._processPostscriptWeightName(info)
-        >>> info.postscriptWeightName
-        'Thin'
-        >>> info.openTypeOS2WeightClass = 1000
-        >>> info._processPostscriptWeightName(info)
-        >>> info.postscriptWeightName
-        'Black'
-        """
         # handle postscriptWeightName by taking the value
         # of openTypeOS2WeightClass and getting the closest
         # value from the OS/2 specification.
@@ -332,47 +169,6 @@ class MathInfo(object):
     # ----------
 
     def round(self, digits=None):
-        """
-        >>> m = _TestInfoObject()
-        >>> m.ascender = 699.99
-        >>> m.descender = -199.99
-        >>> m.xHeight = 399.66
-        >>> m.postscriptSlantAngle = None
-        >>> m.postscriptStemSnapH = [80.1, 90.2]
-        >>> m.guidelines = [{'y': 100.99, 'x': None, 'angle': None, 'name': 'bar'}]
-        >>> m.italicAngle = -9.4
-        >>> m.postscriptBlueScale = 0.137
-        >>> info = MathInfo(m)
-        >>> info = info.round()
-        >>> info.ascender
-        700
-        >>> info.descender
-        -200
-        >>> info.xHeight
-        400
-        >>> m.italicAngle
-        -9.4
-        >>> m.postscriptBlueScale
-        0.137
-        >>> info.postscriptSlantAngle
-        >>> info.postscriptStemSnapH
-        [80, 90]
-        >>> [sorted(gl.items()) for gl in info.guidelines]
-        [[('angle', 0), ('name', 'bar'), ('x', 0), ('y', 101)]]
-        >>> written = {}
-        >>> expected = {}
-        >>> for attr, value in _testData.items():
-        ...     if value is None:
-        ...         continue
-        ...     written[attr] = getattr(info, attr)
-        ...     if isinstance(value, list):
-        ...         expectedValue = [_roundNumber(v) for v in value]
-        ...     else:
-        ...         expectedValue = _roundNumber(value)
-        ...     expected[attr] = expectedValue
-        >>> sorted(expected) == sorted(written)
-        True
-        """
         excludeFromRounding = ['postscriptBlueScale', 'italicAngle']
         copiedInfo = self.copy()
         # basic attributes
@@ -591,89 +387,6 @@ _postscriptWeightNameOptions = {
     800 : "Extra-bold",
     900 : "Black"
 }
-
-# ----
-# Test
-# ----
-
-_testData = dict(
-    # generic
-    unitsPerEm=1000,
-    descender=-200,
-    xHeight=400,
-    capHeight=650,
-    ascender=700,
-    italicAngle=0,
-    # head
-    openTypeHeadLowestRecPPEM=5,
-    # hhea
-    openTypeHheaAscender=700,
-    openTypeHheaDescender=-200,
-    openTypeHheaLineGap=200,
-    openTypeHheaCaretSlopeRise=1,
-    openTypeHheaCaretSlopeRun=1,
-    openTypeHheaCaretOffset=1,
-    # OS/2
-    openTypeOS2WidthClass=5,
-    openTypeOS2WeightClass=500,
-    openTypeOS2TypoAscender=700,
-    openTypeOS2TypoDescender=-200,
-    openTypeOS2TypoLineGap=200,
-    openTypeOS2WinAscent=700,
-    openTypeOS2WinDescent=-200,
-    openTypeOS2SubscriptXSize=300,
-    openTypeOS2SubscriptYSize=300,
-    openTypeOS2SubscriptXOffset=0,
-    openTypeOS2SubscriptYOffset=-200,
-    openTypeOS2SuperscriptXSize=300,
-    openTypeOS2SuperscriptYSize=300,
-    openTypeOS2SuperscriptXOffset=0,
-    openTypeOS2SuperscriptYOffset=500,
-    openTypeOS2StrikeoutSize=50,
-    openTypeOS2StrikeoutPosition=300,
-    # Vhea
-    openTypeVheaVertTypoAscender=700,
-    openTypeVheaVertTypoDescender=-200,
-    openTypeVheaVertTypoLineGap=200,
-    openTypeVheaCaretSlopeRise=1,
-    openTypeVheaCaretSlopeRun=1,
-    openTypeVheaCaretOffset=1,
-    # postscript
-    postscriptSlantAngle=0,
-    postscriptUnderlineThickness=100,
-    postscriptUnderlinePosition=-150,
-    postscriptBlueValues=[-10, 0, 400, 410, 650, 660, 700, 710],
-    postscriptOtherBlues=[-210, -200],
-    postscriptFamilyBlues=[-10, 0, 400, 410, 650, 660, 700, 710],
-    postscriptFamilyOtherBlues=[-210, -200],
-    postscriptStemSnapH=[80, 90],
-    postscriptStemSnapV=[110, 130],
-    postscriptBlueFuzz=1,
-    postscriptBlueShift=7,
-    postscriptBlueScale=0.039625,
-    postscriptDefaultWidthX=400,
-    postscriptNominalWidthX=400,
-    # guidelines
-    guidelines=None
-)
-
-_testDataSubset = dict(
-    # generic
-    unitsPerEm=1000,
-    descender=-200,
-    xHeight=None,
-    # postscript
-    postscriptBlueValues=[-10, 0, 400, 410, 650],
-    # guidelines
-    guidelines=[{'y': 100, 'x': None, 'angle': None, 'name': 'bar', 'identifier': '2'}]
-)
-
-class _TestInfoObject(object):
-
-    def __init__(self, data=_testData):
-        for attr, value in data.items():
-            setattr(self, attr, value)
-
 
 if __name__ == "__main__":
     import sys

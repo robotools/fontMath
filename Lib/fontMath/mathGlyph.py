@@ -346,64 +346,6 @@ class MathGlyphPen(AbstractPointPen):
 
     """
     Point pen for building MathGlyph data structures.
-
-    >>> pen = MathGlyphPen()
-    >>> pen.beginPath(identifier="contour 1")
-    >>> pen.addPoint((  0, 100), "line", smooth=False, name="name 1", identifier="point 1")
-    >>> pen.addPoint((100, 100), "line", smooth=False, name="name 2", identifier="point 2")
-    >>> pen.addPoint((100,   0), "line", smooth=False, name="name 3", identifier="point 3")
-    >>> pen.addPoint((  0,   0), "line", smooth=False, name="name 4", identifier="point 4")
-    >>> pen.endPath()
-    >>> expected = [
-    ...     ("curve", (  0, 100), False, "name 1", "point 1"),
-    ...     (None,    (  0, 100), False, None,     None),
-    ...     (None,    (100, 100), False, None,     None),
-    ...     ("curve", (100, 100), False, "name 2", "point 2"),
-    ...     (None,    (100, 100), False, None,     None),
-    ...     (None,    (100,   0), False, None,     None),
-    ...     ("curve", (100,   0), False, "name 3", "point 3"),
-    ...     (None,    (100,   0), False, None,     None),
-    ...     (None,    (  0,   0), False, None,     None),
-    ...     ("curve", (  0,   0), False, "name 4", "point 4"),
-    ...     (None,    (  0,   0), False, None,     None),
-    ...     (None,    (  0, 100), False, None,     None),
-    ... ]
-    >>> pen.contours[-1]["points"] == expected
-    True
-    >>> pen.contours[-1]["identifier"]
-    'contour 1'
-
-    >>> pen = MathGlyphPen()
-    >>> pen.beginPath(identifier="contour 1")
-    >>> pen.addPoint((  0,  50), "curve", smooth=False, name="name 1", identifier="point 1")
-    >>> pen.addPoint(( 50, 100), "line", smooth=False, name="name 2", identifier="point 2")
-    >>> pen.addPoint(( 75, 100), None)
-    >>> pen.addPoint((100,  75), None)
-    >>> pen.addPoint((100,  50), "curve", smooth=True, name="name 3", identifier="point 3")
-    >>> pen.addPoint((100,  25), None)
-    >>> pen.addPoint(( 75,   0), None)
-    >>> pen.addPoint(( 50,   0), "curve", smooth=False, name="name 4", identifier="point 4")
-    >>> pen.addPoint(( 25,   0), None)
-    >>> pen.addPoint((  0,  25), None)
-    >>> pen.endPath()
-    >>> expected = [
-    ...     ("curve", (  0,  50), False, "name 1", "point 1"),
-    ...     (None,    (  0,  50), False, None,     None),
-    ...     (None,    ( 50, 100), False, None,     None),
-    ...     ("curve", ( 50, 100), False, "name 2", "point 2"),
-    ...     (None,    ( 75, 100), False, None,     None),
-    ...     (None,    (100,  75), False, None,     None),
-    ...     ("curve", (100,  50), True, "name 3", "point 3"),
-    ...     (None,    (100,  25), False, None,     None),
-    ...     (None,    ( 75,   0), False, None,     None),
-    ...     ("curve", ( 50,   0), False, "name 4", "point 4"),
-    ...     (None,    ( 25,   0), False, None,     None),
-    ...     (None,    (  0,  25), False, None,     None),
-    ... ]
-    >>> pen.contours[-1]["points"] == expected
-    True
-    >>> pen.contours[-1]["identifier"]
-    'contour 1'
     """
 
     def __init__(self, glyph=None):
@@ -481,35 +423,6 @@ class FilterRedundantPointPen(AbstractPointPen):
         self._points = []
 
     def _flushContour(self):
-        """
-        >>> points = [
-        ...     ("curve", (  0, 100), False, "name 1", "point 1"),
-        ...     (None,    (  0, 100), False, None,     None),
-        ...     (None,    (100, 100), False, None,     None),
-        ...     ("curve", (100, 100), False, "name 2", "point 2"),
-        ...     (None,    (100, 100), False, None,     None),
-        ...     (None,    (100,   0), False, None,     None),
-        ...     ("curve", (100,   0), False, "name 3", "point 3"),
-        ...     (None,    (100,   0), False, None,     None),
-        ...     (None,    (  0,   0), False, None,     None),
-        ...     ("curve", (  0,   0), False, "name 4", "point 4"),
-        ...     (None,    (  0,   0), False, None,     None),
-        ...     (None,    (  0, 100), False, None,     None),
-        ... ]
-        >>> testPen = _TestPointPen()
-        >>> filterPen = FilterRedundantPointPen(testPen)
-        >>> filterPen.beginPath(identifier="contour 1")
-        >>> for segmentType, pt, smooth, name, identifier in points:
-        ...     filterPen.addPoint(pt, segmentType=segmentType, smooth=smooth, name=name, identifier=identifier)
-        >>> filterPen.endPath()
-        >>> testPen.dump()
-        beginPath(identifier="contour 1")
-        addPoint((0, 100), segmentType="line", smooth=False, name="name 1", identifier="point 1")
-        addPoint((100, 100), segmentType="line", smooth=False, name="name 2", identifier="point 2")
-        addPoint((100, 0), segmentType="line", smooth=False, name="name 3", identifier="point 3")
-        addPoint((0, 0), segmentType="line", smooth=False, name="name 4", identifier="point 4")
-        endPath()
-        """
         points = self._points
         prevOnCurve = None
         offCurves = []
@@ -586,46 +499,6 @@ class FilterRedundantPointPen(AbstractPointPen):
     def addComponent(self, baseGlyph, transformation, identifier=None, **kwargs):
         self._pen.addComponent(baseGlyph, transformation, identifier)
 
-
-class _TestPointPen(AbstractPointPen):
-
-    def __init__(self):
-        self._text = []
-
-    def dump(self):
-        for line in self._text:
-            print(line)
-
-    def _prep(self, i):
-        if isinstance(i, basestring):
-            i = "\"%s\"" % i
-        return str(i)
-
-    def beginPath(self, identifier=None, **kwargs):
-        self._text.append("beginPath(identifier=%s)" % self._prep(identifier))
-
-    def addPoint(self, pt, segmentType=None, smooth=False, name=None, identifier=None, **kwargs):
-        self._text.append("addPoint(%s, segmentType=%s, smooth=%s, name=%s, identifier=%s)" % (
-                self._prep(pt),
-                self._prep(segmentType),
-                self._prep(smooth),
-                self._prep(name),
-                self._prep(identifier)
-            )
-        )
-
-    def endPath(self):
-        self._text.append("endPath()")
-
-    def addComponent(self, baseGlyph, transformation, identifier=None, **kwargs):
-        self._text.append("addComponent(baseGlyph=%s, transformation=%s, identifier=%s)" % (
-                self._prep(baseGlyph),
-                self._prep(transformation),
-                self._prep(identifier)
-            )
-        )
-
-
 # -------
 # Support
 # -------
@@ -633,19 +506,6 @@ class _TestPointPen(AbstractPointPen):
 # contours
 
 def _processMathOneContours(contours1, contours2, func):
-    """
-    >>> contours1 = [
-    ...     dict(identifier="contour 1", points=[("line", (1, 3), False, "test", "1")])
-    ... ]
-    >>> contours2 = [
-    ...     dict(identifier=None, points=[(None, (4, 6), True, None, None)])
-    ... ]
-    >>> expected = [
-    ...     dict(identifier="contour 1", points=[("line", (5, 9), False, "test", "1")])
-    ... ]
-    >>> _processMathOneContours(contours1, contours2, addPt) == expected
-    True
-    """
     result = []
     for index, contour1 in enumerate(contours1):
         contourIdentifier = contour1["identifier"]
@@ -661,16 +521,6 @@ def _processMathOneContours(contours1, contours2, func):
     return result
 
 def _processMathTwoContours(contours, factor, func):
-    """
-    >>> contours = [
-    ...     dict(identifier="contour 1", points=[("line", (1, 3), False, "test", "1")])
-    ... ]
-    >>> expected = [
-    ...     dict(identifier="contour 1", points=[("line", (2, 4.5), False, "test", "1")])
-    ... ]
-    >>> _processMathTwoContours(contours, (2, 1.5), mulPt) == expected
-    True
-    """
     result = []
     for contour in contours:
         contourIdentifier = contour["identifier"]
@@ -686,28 +536,6 @@ def _processMathTwoContours(contours, factor, func):
 # anchors
 
 def _anchorTree(anchors):
-    """
-    >>> anchors = [
-    ...     dict(identifier="1", name="test", x=1, y=2, color=None),
-    ...     dict(name="test", x=1, y=2, color=None),
-    ...     dict(name="test", x=3, y=4, color=None),
-    ...     dict(name="test", x=2, y=3, color=None),
-    ...     dict(name="test 2", x=1, y=2, color=None),
-    ... ]
-    >>> expected = {
-    ...     "test" : [
-    ...         ("1", 1, 2, None),
-    ...         (None, 1, 2, None),
-    ...         (None, 3, 4, None),
-    ...         (None, 2, 3, None),
-    ...     ],
-    ...     "test 2" : [
-    ...         (None, 1, 2, None)
-    ...     ]
-    ... }
-    >>> _anchorTree(anchors) == expected
-    True
-    """
     tree = {}
     for anchor in anchors:
         x = anchor["x"]
@@ -816,19 +644,6 @@ def _pairAnchors(anchorDict1, anchorDict2):
     return pairs
 
 def _processMathOneAnchors(anchorPairs, func):
-    """
-    >>> anchorPairs = [
-    ...     (
-    ...         dict(x=100, y=-100, name="foo", identifier="1", color="0,0,0,0"),
-    ...         dict(x=200, y=-200, name="bar", identifier="2", color="1,1,1,1")
-    ...     )
-    ... ]
-    >>> expected = [
-    ...     dict(x=300, y=-300, name="foo", identifier="1", color="0,0,0,0")
-    ... ]
-    >>> _processMathOneAnchors(anchorPairs, addPt) == expected
-    True
-    """
     result = []
     for anchor1, anchor2 in anchorPairs:
         anchor = dict(anchor1)
@@ -839,16 +654,6 @@ def _processMathOneAnchors(anchorPairs, func):
     return result
 
 def _processMathTwoAnchors(anchors, factor, func):
-    """
-    >>> anchors = [
-    ...     dict(x=100, y=-100, name="foo", identifier="1", color="0,0,0,0")
-    ... ]
-    >>> expected = [
-    ...     dict(x=200, y=-150, name="foo", identifier="1", color="0,0,0,0")
-    ... ]
-    >>> _processMathTwoAnchors(anchors, (2, 1.5), mulPt) == expected
-    True
-    """
     result = []
     for anchor in anchors:
         anchor = dict(anchor)
@@ -860,55 +665,6 @@ def _processMathTwoAnchors(anchors, factor, func):
 # components
 
 def _pairComponents(components1, components2):
-    """
-    >>> components1 = [
-    ...     dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier="1"),
-    ...     dict(baseGlyph="B", transformation=(0, 0, 0, 0, 0, 0), identifier="1"),
-    ...     dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier=None)
-    ... ]
-    >>> components2 = [
-    ...     dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier=None),
-    ...     dict(baseGlyph="B", transformation=(0, 0, 0, 0, 0, 0), identifier="1"),
-    ...     dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier="1")
-    ... ]
-    >>> expected = [
-    ...     (
-    ...         dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier="1"),
-    ...         dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier="1")
-    ...     ),
-    ...     (
-    ...         dict(baseGlyph="B", transformation=(0, 0, 0, 0, 0, 0), identifier="1"),
-    ...         dict(baseGlyph="B", transformation=(0, 0, 0, 0, 0, 0), identifier="1")
-    ...     ),
-    ...     (
-    ...         dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier=None),
-    ...         dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier=None)
-    ...     ),
-    ... ]
-    >>> _pairComponents(components1, components2) == expected
-    True
-
-    >>> components1 = [
-    ...     dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier=None),
-    ...     dict(baseGlyph="B", transformation=(0, 0, 0, 0, 0, 0), identifier=None)
-    ... ]
-    >>> components2 = [
-    ...     dict(baseGlyph="B", transformation=(0, 0, 0, 0, 0, 0), identifier=None),
-    ...     dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier=None)
-    ... ]
-    >>> expected = [
-    ...     (
-    ...         dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier=None),
-    ...         dict(baseGlyph="A", transformation=(0, 0, 0, 0, 0, 0), identifier=None)
-    ...     ),
-    ...     (
-    ...         dict(baseGlyph="B", transformation=(0, 0, 0, 0, 0, 0), identifier=None),
-    ...         dict(baseGlyph="B", transformation=(0, 0, 0, 0, 0, 0), identifier=None)
-    ...     ),
-    ... ]
-    >>> _pairComponents(components1, components2) == expected
-    True
-    """
     components1 = list(components1)
     components2 = list(components2)
     pairs = []
@@ -940,19 +696,6 @@ def _pairComponents(components1, components2):
     return pairs
 
 def _processMathOneComponents(componentPairs, func):
-    """
-    >>> components = [
-    ...    (
-    ...        dict(baseGlyph="A", transformation=( 1,  3,  5,  7,  9, 11), identifier="1"),
-    ...        dict(baseGlyph="A", transformation=(12, 14, 16, 18, 20, 22), identifier=None)
-    ...    )
-    ... ]
-    >>> expected = [
-    ...     dict(baseGlyph="A", transformation=(13, 17, 21, 25, 29, 33), identifier="1")
-    ... ]
-    >>> _processMathOneComponents(components, addPt) == expected
-    True
-    """
     result = []
     for component1, component2 in componentPairs:
         component = dict(component1)
@@ -961,16 +704,6 @@ def _processMathOneComponents(componentPairs, func):
     return result
 
 def _processMathTwoComponents(components, factor, func):
-    """
-    >>> components = [
-    ...     dict(baseGlyph="A", transformation=(1, 2, 3, 4, 5, 6), identifier="1"),
-    ... ]
-    >>> expected = [
-    ...     dict(baseGlyph="A", transformation=(2, 4, 4.5, 6, 10, 9), identifier="1")
-    ... ]
-    >>> _processMathTwoComponents(components, (2, 1.5), mulPt) == expected
-    True
-    """
     result = []
     for component in components:
         component = dict(component)
@@ -987,12 +720,6 @@ for key, value in zip(_imageTransformationKeys, _defaultImageTransformation):
     _defaultImageTransformationDict[key] = value
 
 def _expandImage(image):
-    """
-    >>> _expandImage(None) == dict(fileName=None, transformation=(1, 0, 0, 1, 0, 0), color=None)
-    True
-    >>> _expandImage(dict(fileName="foo")) == dict(fileName="foo", transformation=(1, 0, 0, 1, 0, 0), color=None)
-    True
-    """
     if image is None:
         fileName = None
         transformation = _defaultImageTransformation
@@ -1007,11 +734,6 @@ def _expandImage(image):
     return dict(fileName=fileName, transformation=transformation, color=color)
 
 def _compressImage(image):
-    """
-    >>> expected = dict(fileName="foo", color=None, xScale=1, xyScale=0, yxScale=0, yScale=1, xOffset=0, yOffset=0)
-    >>> _compressImage(dict(fileName="foo", transformation=(1, 0, 0, 1, 0, 0), color=None)) == expected
-    True
-    """
     fileName = image["fileName"]
     transformation = image["transformation"]
     color = image["color"]
@@ -1023,29 +745,11 @@ def _compressImage(image):
     return image
 
 def _pairImages(image1, image2):
-    """
-    >>> image1 = dict(fileName="foo", transformation=(1, 0, 0, 1, 0, 0), color=None)
-    >>> image2 = dict(fileName="foo", transformation=(2, 0, 0, 2, 0, 0), color="0,0,0,0")
-    >>> _pairImages(image1, image2) == (image1, image2)
-    True
-
-    >>> image1 = dict(fileName="foo", transformation=(1, 0, 0, 1, 0, 0), color=None)
-    >>> image2 = dict(fileName="bar", transformation=(1, 0, 0, 1, 0, 0), color=None)
-    >>> _pairImages(image1, image2) == ()
-    True
-    """
     if image1["fileName"] != image2["fileName"]:
         return ()
     return (image1, image2)
 
 def _processMathOneImage(imagePair, func):
-    """
-    >>> image1 = dict(fileName="foo", transformation=( 1,  3,  5,  7,  9, 11), color="0,0,0,0")
-    >>> image2 = dict(fileName="bar", transformation=(12, 14, 16, 18, 20, 22), color=None)
-    >>> expected = dict(fileName="foo", transformation=(13, 17, 21, 25, 29, 33), color="0,0,0,0")
-    >>> _processMathOneImage((image1, image2), addPt) == expected
-    True
-    """
     image1, image2 = imagePair
     fileName = image1["fileName"]
     color = image1["color"]
@@ -1053,12 +757,6 @@ def _processMathOneImage(imagePair, func):
     return dict(fileName=fileName, transformation=transformation, color=color)
 
 def _processMathTwoImage(image, factor, func):
-    """
-    >>> image = dict(fileName="foo", transformation=(1, 2, 3, 4, 5, 6), color="0,0,0,0")
-    >>> expected = dict(fileName="foo", transformation=(2, 4, 4.5, 6, 10, 9), color="0,0,0,0")
-    >>> _processMathTwoImage(image, (2, 1.5), mulPt) == expected
-    True
-    """
     fileName = image["fileName"]
     color = image["color"]
     transformation = _processMathTwoTransformation(image["transformation"], factor, func)
@@ -1068,13 +766,6 @@ def _processMathTwoImage(image, factor, func):
 # transformations
 
 def _processMathOneTransformation(transformation1, transformation2, func):
-    """
-    >>> transformation1 = ( 1,  3,  5,  7,  9, 11)
-    >>> transformation2 = (12, 14, 16, 18, 20, 22)
-    >>> expected = (13, 17, 21, 25, 29, 33)
-    >>> _processMathOneTransformation(transformation1, transformation2, addPt) == expected
-    True
-    """
     xScale1, xyScale1, yxScale1, yScale1, xOffset1, yOffset1 = transformation1
     xScale2, xyScale2, yxScale2, yScale2, xOffset2, yOffset2 = transformation2
     xScale, yScale = func((xScale1, yScale1), (xScale2, yScale2))
@@ -1083,12 +774,6 @@ def _processMathOneTransformation(transformation1, transformation2, func):
     return (xScale, xyScale, yxScale, yScale, xOffset, yOffset)
 
 def _processMathTwoTransformation(transformation, factor, func):
-    """
-    >>> transformation = (1, 2, 3, 4, 5, 6)
-    >>> expected = (2, 4, 4.5, 6, 10, 9)
-    >>> _processMathTwoTransformation(transformation, (2, 1.5), mulPt) == expected
-    True
-    """
     xScale, xyScale, yxScale, yScale, xOffset, yOffset = transformation
     xScale, yScale = func((xScale, yScale), factor)
     xyScale, yxScale = func((xyScale, yxScale), factor)
@@ -1099,18 +784,6 @@ def _processMathTwoTransformation(transformation, factor, func):
 # rounding
 
 def _roundContours(contours, digits=None):
-    """
-    >>> contour = [
-    ...     dict(identifier="contour 1", points=[("line", (0.55, 3.1), False, "test", "1")]),
-    ...     dict(identifier="contour 1", points=[("line", (0.55, 3.1), True, "test", "1")])
-    ... ]
-    >>> expected = [
-    ...     dict(identifier="contour 1", points=[("line", (1, 3), False, "test", "1")]),
-    ...     dict(identifier="contour 1", points=[("line", (1, 3), True, "test", "1")])
-    ... ]
-    >>> _roundContours(contour) == expected
-    True
-    """
     results = []
     for contour in contours:
         contour = dict(contour)
@@ -1123,22 +796,10 @@ def _roundContours(contours, digits=None):
     return results
 
 def _roundTransformation(transformation, digits=None):
-    """
-    >>> transformation = (1, 2, 3, 4, 4.99, 6.01)
-    >>> expected = (1, 2, 3, 4, 5, 6)
-    >>> _roundTransformation(transformation) == expected
-    True
-    """
     xScale, xyScale, yxScale, yScale, xOffset, yOffset = transformation
     return (xScale, xyScale, yxScale, yScale, _roundNumber(xOffset, digits), _roundNumber(yOffset, digits))
 
 def _roundImage(image, digits=None):
-    """
-    >>> image = dict(fileName="foo", transformation=(1, 2, 3, 4, 4.99, 6.01), color="0,0,0,0")
-    >>> expected = dict(fileName="foo", transformation=(1, 2, 3, 4, 5, 6), color="0,0,0,0")
-    >>> _roundImage(image) == expected
-    True
-    """
     image = dict(image)
     fileName = image["fileName"]
     color = image["color"]
@@ -1146,16 +807,6 @@ def _roundImage(image, digits=None):
     return dict(fileName=fileName, transformation=transformation, color=color)
 
 def _roundComponents(components, digits=None):
-    """
-    >>> components = [
-    ...     dict(baseGlyph="A", transformation=(1, 2, 3, 4, 5.1, 5.99), identifier="1"),
-    ... ]
-    >>> expected = [
-    ...     dict(baseGlyph="A", transformation=(1, 2, 3, 4, 5, 6), identifier="1")
-    ... ]
-    >>> _roundComponents(components) == expected
-    True
-    """
     result = []
     for component in components:
         component = dict(component)
@@ -1164,16 +815,6 @@ def _roundComponents(components, digits=None):
     return result
 
 def _roundAnchors(anchors, digits=None):
-    """
-    >>> anchors = [
-    ...     dict(x=99.9, y=-100.1, name="foo", identifier="1", color="0,0,0,0")
-    ... ]
-    >>> expected = [
-    ...     dict(x=100, y=-100, name="foo", identifier="1", color="0,0,0,0")
-    ... ]
-    >>> _roundAnchors(anchors) == expected
-    True
-    """
     result = []
     for anchor in anchors:
         anchor = dict(anchor)
@@ -1181,132 +822,6 @@ def _roundAnchors(anchors, digits=None):
         result.append(anchor)
     return result
 
-
-# -----
-# Tests
-# -----
-
-# these are tests that don't fit elsewhere
-
-def _setupTestGlyph():
-    glyph = MathGlyph(None)
-    glyph.width = 0
-    glyph.height = 0
-    return glyph
-
-def _testWidth():
-    """
-    add
-    ---
-    >>> glyph1 = _setupTestGlyph()
-    >>> glyph1.width = 1
-    >>> glyph2 = _setupTestGlyph()
-    >>> glyph2.width = 2
-    >>> glyph3 = glyph1 + glyph2
-    >>> glyph3.width
-    3
-
-    sub
-    ---
-    >>> glyph1 = _setupTestGlyph()
-    >>> glyph1.width = 3
-    >>> glyph2 = _setupTestGlyph()
-    >>> glyph2.width = 2
-    >>> glyph3 = glyph1 - glyph2
-    >>> glyph3.width
-    1
-
-    mul
-    ---
-    >>> glyph1 = _setupTestGlyph()
-    >>> glyph1.width = 2
-    >>> glyph2 = glyph1 * 3
-    >>> glyph2.width
-    6
-    >>> glyph1 = _setupTestGlyph()
-    >>> glyph1.width = 2
-    >>> glyph2 = glyph1 * (3, 1)
-    >>> glyph2.width
-    6
-
-    div
-    ---
-    >>> glyph1 = _setupTestGlyph()
-    >>> glyph1.width = 7
-    >>> glyph2 = glyph1 / 2
-    >>> glyph2.width
-    3.5
-    >>> glyph1 = _setupTestGlyph()
-    >>> glyph1.width = 7
-    >>> glyph2 = glyph1 / (2, 1)
-    >>> glyph2.width
-    3.5
-
-    round
-    -----
-    >>> glyph1 = _setupTestGlyph()
-    >>> glyph1.width = 6.99
-    >>> glyph2 = glyph1.round()
-    >>> glyph2.width
-    7
-    """
-
-def _testHeight():
-    """
-    add
-    ---
-    >>> glyph1 = _setupTestGlyph()
-    >>> glyph1.height = 1
-    >>> glyph2 = _setupTestGlyph()
-    >>> glyph2.height = 2
-    >>> glyph3 = glyph1 + glyph2
-    >>> glyph3.height
-    3
-
-    sub
-    ---
-    >>> glyph1 = _setupTestGlyph()
-    >>> glyph1.height = 3
-    >>> glyph2 = _setupTestGlyph()
-    >>> glyph2.height = 2
-    >>> glyph3 = glyph1 - glyph2
-    >>> glyph3.height
-    1
-
-    mul
-    ---
-    >>> glyph1 = _setupTestGlyph()
-    >>> glyph1.height = 2
-    >>> glyph2 = glyph1 * 3
-    >>> glyph2.height
-    6
-    >>> glyph1 = _setupTestGlyph()
-    >>> glyph1.height = 2
-    >>> glyph2 = glyph1 * (1, 3)
-    >>> glyph2.height
-    6
-
-    div
-    ---
-    >>> glyph1 = _setupTestGlyph()
-    >>> glyph1.height = 7
-    >>> glyph2 = glyph1 / 2
-    >>> glyph2.height
-    3.5
-    >>> glyph1 = _setupTestGlyph()
-    >>> glyph1.height = 7
-    >>> glyph2 = glyph1 / (1, 2)
-    >>> glyph2.height
-    3.5
-
-    round
-    -----
-    >>> glyph1 = _setupTestGlyph()
-    >>> glyph1.height = 6.99
-    >>> glyph2 = glyph1.round()
-    >>> glyph2.height
-    7
-    """
 
 if __name__ == "__main__":
     import sys
