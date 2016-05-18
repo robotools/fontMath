@@ -3,13 +3,14 @@ from __future__ import print_function
 from setuptools import setup
 
 try:
-    import robofab
+    import ufoLib
 except:
-    print("*** Warning: fontMath requires RoboFab, see:")
-    print("    robofab.com")
+    print("*** Warning: fontMath requires ufoLib, see:")
+    print("    github.com/unified-font-object/ufoLib")
 
 
-setup(name="fontMath",
+setup(
+    name="fontMath",
     version="0.2",
     description="A set of objects for performing math operations on font data.",
     author="Tal Leming",

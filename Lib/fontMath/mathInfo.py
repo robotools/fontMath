@@ -1,6 +1,9 @@
 from __future__ import division, absolute_import
-from fontMath.mathFunctions import *
-from fontMath.mathGuideline import *
+from fontMath.mathFunctions import (
+    add, addPt, div, factorAngle, mul, _roundNumber, sub, subPt)
+from fontMath.mathGuideline import (
+    _expandGuideline, _pairGuidelines, _processMathOneGuidelines,
+    _processMathTwoGuidelines, _roundGuidelines)
 
 
 class MathInfo(object):

@@ -1,9 +1,11 @@
 from __future__ import print_function, absolute_import
 from copy import deepcopy
-from robofab.pens.pointPen import AbstractPointPen
-from robofab.pens.adapterPens import PointToSegmentPen
-from fontMath.mathFunctions import *
-from fontMath.mathGuideline import *
+from fontMath.mathFunctions import (
+    add, addPt, div, divPt, mul, mulPt, _roundNumber, sub, subPt)
+from fontMath.mathGuideline import (
+    _compressGuideline, _expandGuideline, _pairGuidelines,
+    _processMathOneGuidelines, _processMathTwoGuidelines, _roundGuidelines)
+from ufoLib.pointPen import AbstractPointPen
 
 # ------------------
 # UFO 3 branch notes
@@ -301,7 +303,6 @@ class MathGlyph(object):
 
     def draw(self, pen, filterReduntantPoints=False):
         """draw self using pen"""
-        pointPen = PointToSegmentPen(pen)
         self.drawPoints(pointPenfilterReduntantPoints=filterReduntantPoints)
 
     # ----------
