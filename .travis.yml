@@ -1,29 +1,37 @@
+sudo: false
 language: python
-sudo: required
-python:
-  - "2.6"
-  - "2.7"
-  - "3.4"
-  - "3.5"
-before_install:
-  - git clone https://github.com/typesupply/defcon.git --branch ufo3
-  - git clone https://github.com/robofab-developers/robofab.git --branch ufo3k
-  - git clone https://github.com/behdad/fonttools.git
+matrix:
+  include:
+    - python: 2.7
+      env: TOXENV=py27
+    - python: 3.4
+      env: TOXENV=py34
+    - python: 3.5
+      env: TOXENV=py35
+    - python: pypy
+      env: TOXENV=pypy
+    - language: generic
+      os: osx
+      # the default 'osx' on Travis is 10.9 Mavericks, with Python 2.7.5
+      env: TOXENV=py27
+    - language: generic
+      os: osx
+      # this is to test on 10.11 El Capitan which comes with Python 2.7.10
+      osx_image: xcode7.3
+      env: TOXENV=py27
+    - language: generic
+      os: osx
+      env: TOXENV=py34
+    - language: generic
+      os: osx
+      env: TOXENV=py35
+    - language: generic
+      os: osx
+      env: TOXENV=pypy
+    # coveralls is not listed in tox's envlist, but should run in travis
+    - python: 3.5
+      env: TOXENV=coveralls
 install:
-  - cd defcon; python setup.py install; cd ..
-  - cd robofab; python setup.py install; cd ..
-  - cd fonttools; python setup.py install; cd ..
-  # fontMath
-  - python setup.py install
-  - pip install coveralls
+  - ./.travis/install.sh
 script:
-  - cd Lib/fontMath
-  - coverage run --parallel-mode mathFunctions.py
-  - coverage run --parallel-mode --source=mathGlyph.py mathGlyph.py
-  - coverage run --parallel-mode mathGuideline.py
-  - coverage run --parallel-mode --source=mathInfo.py mathInfo.py
-  - coverage run --parallel-mode --source=mathKerning.py mathKerning.py
-  - coverage run --source=mathTransform.py mathTransform.py
-after_success:
-  - coverage combine
-  - coveralls
+  - ./.travis/run.sh
