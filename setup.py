@@ -18,5 +18,6 @@ setup(
     url="http://code.typesupply.com",
     license="MIT",
     packages=["fontMath"],
-    package_dir={"":"Lib"}
+    package_dir={"": "Lib"},
+    test_suite="fontMath"
 )

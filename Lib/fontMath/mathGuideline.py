@@ -10,15 +10,6 @@ __all__ = [
 ]
 
 def _expandGuideline(guideline):
-    """
-    >>> guideline = dict(x=100, y=None, angle=None)
-    >>> sorted(_expandGuideline(guideline).items())
-    [('angle', 90), ('x', 100), ('y', 0)]
-
-    >>> guideline = dict(y=100, x=None, angle=None)
-    >>> sorted(_expandGuideline(guideline).items())
-    [('angle', 0), ('x', 0), ('y', 100)]
-    """
     guideline = dict(guideline)
     x = guideline.get("x")
     y = guideline.get("y")
@@ -33,23 +24,6 @@ def _expandGuideline(guideline):
     return guideline
 
 def _compressGuideline(guideline):
-    """
-    >>> guideline = dict(x=100, y=0, angle=90)
-    >>> sorted(_compressGuideline(guideline).items())
-    [('angle', None), ('x', 100), ('y', None)]
-
-    >>> guideline = dict(x=100, y=0, angle=270)
-    >>> sorted(_compressGuideline(guideline).items())
-    [('angle', None), ('x', 100), ('y', None)]
-
-    >>> guideline = dict(y=100, x=0, angle=0)
-    >>> sorted(_compressGuideline(guideline).items())
-    [('angle', None), ('x', None), ('y', 100)]
-
-    >>> guideline = dict(y=100, x=0, angle=180)
-    >>> sorted(_compressGuideline(guideline).items())
-    [('angle', None), ('x', None), ('y', 100)]
-    """
     guideline = dict(guideline)
     x = guideline["x"]
     y = guideline["y"]
@@ -65,139 +39,6 @@ def _compressGuideline(guideline):
     return guideline
 
 def _pairGuidelines(guidelines1, guidelines2):
-    """
-    name + identifier + (x, y, angle)
-    >>> guidelines1 = [
-    ...     dict(name="foo", identifier="1", x=1, y=2, angle=1),
-    ...     dict(name="foo", identifier="2", x=3, y=4, angle=2),
-    ... ]
-    >>> guidelines2 = [
-    ...     dict(name="foo", identifier="2", x=3, y=4, angle=2),
-    ...     dict(name="foo", identifier="1", x=1, y=2, angle=1)
-    ... ]
-    >>> expected = [
-    ...     (
-    ...         dict(name="foo", identifier="1", x=1, y=2, angle=1),
-    ...         dict(name="foo", identifier="1", x=1, y=2, angle=1)
-    ...     ),
-    ...     (
-    ...         dict(name="foo", identifier="2", x=3, y=4, angle=2),
-    ...         dict(name="foo", identifier="2", x=3, y=4, angle=2)
-    ...     )
-    ... ]
-    >>> _pairGuidelines(guidelines1, guidelines2) == expected
-    True
-
-    name + identifier
-    >>> guidelines1 = [
-    ...     dict(name="foo", identifier="1", x=1, y=2, angle=1),
-    ...     dict(name="foo", identifier="2", x=1, y=2, angle=2),
-    ... ]
-    >>> guidelines2 = [
-    ...     dict(name="foo", identifier="2", x=3, y=4, angle=3),
-    ...     dict(name="foo", identifier="1", x=3, y=4, angle=4)
-    ... ]
-    >>> expected = [
-    ...     (
-    ...         dict(name="foo", identifier="1", x=1, y=2, angle=1),
-    ...         dict(name="foo", identifier="1", x=3, y=4, angle=4)
-    ...     ),
-    ...     (
-    ...         dict(name="foo", identifier="2", x=1, y=2, angle=2),
-    ...         dict(name="foo", identifier="2", x=3, y=4, angle=3)
-    ...     )
-    ... ]
-    >>> _pairGuidelines(guidelines1, guidelines2) == expected
-    True
-
-    name + (x, y, angle)
-    >>> guidelines1 = [
-    ...     dict(name="foo", identifier="1", x=1, y=2, angle=1),
-    ...     dict(name="foo", identifier="2", x=3, y=4, angle=2),
-    ... ]
-    >>> guidelines2 = [
-    ...     dict(name="foo", identifier="3", x=3, y=4, angle=2),
-    ...     dict(name="foo", identifier="4", x=1, y=2, angle=1)
-    ... ]
-    >>> expected = [
-    ...     (
-    ...         dict(name="foo", identifier="1", x=1, y=2, angle=1),
-    ...         dict(name="foo", identifier="4", x=1, y=2, angle=1)
-    ...     ),
-    ...     (
-    ...         dict(name="foo", identifier="2", x=3, y=4, angle=2),
-    ...         dict(name="foo", identifier="3", x=3, y=4, angle=2)
-    ...     )
-    ... ]
-    >>> _pairGuidelines(guidelines1, guidelines2) == expected
-    True
-
-    identifier + (x, y, angle)
-    >>> guidelines1 = [
-    ...     dict(name="foo", identifier="1", x=1, y=2, angle=1),
-    ...     dict(name="bar", identifier="2", x=3, y=4, angle=2),
-    ... ]
-    >>> guidelines2 = [
-    ...     dict(name="xxx", identifier="2", x=3, y=4, angle=2),
-    ...     dict(name="yyy", identifier="1", x=1, y=2, angle=1)
-    ... ]
-    >>> expected = [
-    ...     (
-    ...         dict(name="foo", identifier="1", x=1, y=2, angle=1),
-    ...         dict(name="yyy", identifier="1", x=1, y=2, angle=1)
-    ...     ),
-    ...     (
-    ...         dict(name="bar", identifier="2", x=3, y=4, angle=2),
-    ...         dict(name="xxx", identifier="2", x=3, y=4, angle=2)
-    ...     )
-    ... ]
-    >>> _pairGuidelines(guidelines1, guidelines2) == expected
-    True
-
-    name
-    >>> guidelines1 = [
-    ...     dict(name="foo", identifier="1", x=1, y=2, angle=1),
-    ...     dict(name="bar", identifier="2", x=1, y=2, angle=2),
-    ... ]
-    >>> guidelines2 = [
-    ...     dict(name="bar", identifier="3", x=3, y=4, angle=3),
-    ...     dict(name="foo", identifier="4", x=3, y=4, angle=4)
-    ... ]
-    >>> expected = [
-    ...     (
-    ...         dict(name="foo", identifier="1", x=1, y=2, angle=1),
-    ...         dict(name="foo", identifier="4", x=3, y=4, angle=4)
-    ...     ),
-    ...     (
-    ...         dict(name="bar", identifier="2", x=1, y=2, angle=2),
-    ...         dict(name="bar", identifier="3", x=3, y=4, angle=3)
-    ...     )
-    ... ]
-    >>> _pairGuidelines(guidelines1, guidelines2) == expected
-    True
-
-    identifier
-    >>> guidelines1 = [
-    ...     dict(name="foo", identifier="1", x=1, y=2, angle=1),
-    ...     dict(name="bar", identifier="2", x=1, y=2, angle=2),
-    ... ]
-    >>> guidelines2 = [
-    ...     dict(name="xxx", identifier="2", x=3, y=4, angle=3),
-    ...     dict(name="yyy", identifier="1", x=3, y=4, angle=4)
-    ... ]
-    >>> expected = [
-    ...     (
-    ...         dict(name="foo", identifier="1", x=1, y=2, angle=1),
-    ...         dict(name="yyy", identifier="1", x=3, y=4, angle=4)
-    ...     ),
-    ...     (
-    ...         dict(name="bar", identifier="2", x=1, y=2, angle=2),
-    ...         dict(name="xxx", identifier="2", x=3, y=4, angle=3)
-    ...     )
-    ... ]
-    >>> _pairGuidelines(guidelines1, guidelines2) == expected
-    True
-    """
     guidelines1 = list(guidelines1)
     guidelines2 = list(guidelines2)
     pairs = []
@@ -234,20 +75,6 @@ def _findPair(guidelines1, guidelines2, pairs, attrs):
             pairs.append((guideline1, guideline2))
 
 def _processMathOneGuidelines(guidelinePairs, ptFunc, func):
-    """
-    >>> from fontMath.mathFunctions import add, addPt
-    >>> guidelines = [
-    ...     (
-    ...         dict(x=1, y=3, angle=5, name="test", identifier="1", color="0,0,0,0"),
-    ...         dict(x=6, y=8, angle=10, name=None, identifier=None, color=None)
-    ...     )
-    ... ]
-    >>> expected = [
-    ...     dict(x=7, y=11, angle=15, name="test", identifier="1", color="0,0,0,0")
-    ... ]
-    >>> _processMathOneGuidelines(guidelines, addPt, add) == expected
-    True
-    """
     result = []
     for guideline1, guideline2 in guidelinePairs:
         guideline = dict(guideline1)
@@ -261,19 +88,6 @@ def _processMathOneGuidelines(guidelinePairs, ptFunc, func):
     return result
 
 def _processMathTwoGuidelines(guidelines, factor, func):
-    """
-    >>> from fontMath.mathFunctions import mul
-    >>> guidelines = [
-    ...     dict(x=2, y=3, angle=5, name="test", identifier="1", color="0,0,0,0")
-    ... ]
-    >>> expected = [
-    ...     dict(x=4, y=4.5, angle=3.75, name="test", identifier="1", color="0,0,0,0")
-    ... ]
-    >>> result = _processMathTwoGuidelines(guidelines, (2, 1.5), mul)
-    >>> result[0]["angle"] = round(result[0]["angle"], 2)
-    >>> result == expected
-    True
-    """
     result = []
     for guideline in guidelines:
         guideline = dict(guideline)
@@ -285,17 +99,6 @@ def _processMathTwoGuidelines(guidelines, factor, func):
     return result
 
 def _roundGuidelines(guidelines, digits=None):
-    """
-    >>> guidelines = [
-    ...     dict(x=1.99, y=3.01, angle=5, name="test", identifier="1", color="0,0,0,0")
-    ... ]
-    >>> expected = [
-    ...     dict(x=2, y=3, angle=5, name="test", identifier="1", color="0,0,0,0")
-    ... ]
-    >>> result = _roundGuidelines(guidelines)
-    >>> result == expected
-    True
-    """
     results = []
     for guideline in guidelines:
         guideline = dict(guideline)
