@@ -25,11 +25,10 @@ from ufoLib.pointPen import AbstractPointPen
 # X image
 #
 # - is there any cruft that can be removed?
-# X why is divPt here? move all of those to the math funcions
-#   and get rid of the robofab dependency.
+# X why is divPt here? move all of those to the math functions
 # - FilterRedundantPointPen._flushContour is a mess
-# X for the pt math funcons, always send (x, y) factors instead
-#   of coercing within the funcion. the coercion can happen at
+# X for the pt math functions, always send (x, y) factors instead
+#   of coercing within the function. the coercion can happen at
 #   the beginning of the _processMathTwo method.
 #   - try list comprehensions in the point math for speed
 #
