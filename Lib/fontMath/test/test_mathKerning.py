@@ -324,6 +324,119 @@ class MathKerningTest(unittest.TestCase):
              (('C2', 'public.kern2.C'), 0),
              (('public.kern1.C', 'public.kern2.C'), 2)])
 
+    def test_compare_same_kerning_only(self):
+        kerning1 = {
+            ("A", "A"): 0,
+            ("B", "B"): 4,
+        }
+        kerning2 = {
+            ("A", "A"): 0,
+            ("B", "B"): 4,
+        }
+        mathKerning1 = MathKerning(kerning1, {})
+        mathKerning2 = MathKerning(kerning2, {})
+        self.assertFalse(mathKerning1 < mathKerning2)
+        self.assertFalse(mathKerning1 > mathKerning2)
+        self.assertEqual(mathKerning1, mathKerning2)
+
+    def test_compare_same_kerning_same_groups(self):
+        kerning1 = {
+            ("A", "A"): 0,
+            ("B", "B"): 4,
+            ("C2", "public.kern2.C"): 0,
+            ("public.kern1.C", "public.kern2.C"): 4,
+        }
+        kerning2 = {
+            ("A", "A"): 0,
+            ("B", "B"): 4,
+            ("C2", "public.kern2.C"): 0,
+            ("public.kern1.C", "public.kern2.C"): 4,
+        }
+        groups = {
+            "public.kern1.C": ["C1", "C2"],
+            "public.kern2.C": ["C1", "C2"],
+        }
+        mathKerning1 = MathKerning(kerning1, groups)
+        mathKerning2 = MathKerning(kerning2, groups)
+        self.assertFalse(mathKerning1 < mathKerning2)
+        self.assertFalse(mathKerning1 > mathKerning2)
+        self.assertEqual(mathKerning1, mathKerning2)
+
+    def test_compare_diff_kerning_diff_groups(self):
+        kerning1 = {
+            ("A", "A"): 0,
+            ("B", "B"): 4,
+            ("C2", "public.kern2.C"): 0,
+            ("public.kern1.C", "public.kern2.C"): 4,
+        }
+        kerning2 = {
+            ("A", "A"): 0,
+            ("C2", "public.kern2.C"): 0,
+            ("public.kern1.C", "public.kern2.C"): 4,
+        }
+        groups1 = {
+            "public.kern1.C": ["C1", "C2"],
+            "public.kern2.C": ["C1", "C2", "C3"],
+        }
+        groups2 = {
+            "public.kern1.C": ["C1", "C2"],
+            "public.kern2.C": ["C1", "C2"],
+        }
+        mathKerning1 = MathKerning(kerning1, groups1)
+        mathKerning2 = MathKerning(kerning2, groups2)
+        self.assertFalse(mathKerning1 < mathKerning2)
+        self.assertTrue(mathKerning1 > mathKerning2)
+        self.assertNotEqual(mathKerning1, mathKerning2)
+
+    def test_compare_diff_kerning_same_groups(self):
+        kerning1 = {
+            ("A", "A"): 0,
+            ("B", "B"): 4,
+            ("C2", "public.kern2.C"): 0,
+            ("public.kern1.C", "public.kern2.C"): 4,
+        }
+        kerning2 = {
+            ("A", "A"): 0,
+            ("C2", "public.kern2.C"): 0,
+            ("public.kern1.C", "public.kern2.C"): 4,
+        }
+        groups = {
+            "public.kern1.C": ["C1", "C2"],
+            "public.kern2.C": ["C1", "C2"],
+        }
+        mathKerning1 = MathKerning(kerning1, groups)
+        mathKerning2 = MathKerning(kerning2, groups)
+        self.assertFalse(mathKerning1 < mathKerning2)
+        self.assertTrue(mathKerning1 > mathKerning2)
+        self.assertNotEqual(mathKerning1, mathKerning2)
+
+    def test_compare_same_kerning_diff_groups(self):
+        kerning1 = {
+            ("A", "A"): 0,
+            ("B", "B"): 4,
+            ("C2", "public.kern2.C"): 0,
+            ("public.kern1.C", "public.kern2.C"): 4,
+        }
+        kerning2 = {
+            ("A", "A"): 0,
+            ("B", "B"): 4,
+            ("C2", "public.kern2.C"): 0,
+            ("public.kern1.C", "public.kern2.C"): 4,
+        }
+        groups1 = {
+            "public.kern1.C": ["C1", "C2"],
+            "public.kern2.C": ["C1", "C2"],
+        }
+        groups2 = {
+            "public.kern1.C": ["C1", "C2"],
+            "public.kern2.C": ["C1", "C2", "C3"],
+        }
+        mathKerning1 = MathKerning(kerning1, groups1)
+        mathKerning2 = MathKerning(kerning2, groups2)
+        self.assertTrue(mathKerning1 < mathKerning2)
+        self.assertFalse(mathKerning1 > mathKerning2)
+        self.assertNotEqual(mathKerning1, mathKerning2)
+
     def test_div_tuple_factor(self):
         kerning = {
             ("A", "A"): 0,
