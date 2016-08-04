@@ -257,6 +257,53 @@ class MathKerning(object):
         font.kerning.update(self._kerning)
         font.groups.update(self.groups())
 
+    # -------
+    # Sorting
+    # -------
+    def _isLessish(self, first, second):
+        if len(first) < len(second):
+            return True
+        elif len(first) > len(second):
+            return False
+
+        first_keys = sorted(first)
+        second_keys = sorted(second)
+        for i, key in enumerate(first_keys):
+            if first_keys[i] < second_keys[i]:
+                return True
+            elif first_keys[i] > second_keys[i]:
+                return False
+            elif first[key] < second[key]:
+                return True
+        return None
+
+    def __lt__(self, other):
+        if other is None:
+            return False
+
+        lessish = self._isLessish(self._kerning, other._kerning)
+        if lessish is not None:
+            return lessish
+
+        lessish = self._isLessish(self._side1Groups, other._side1Groups)
+        if lessish is not None:
+            return lessish
+
+        lessish = self._isLessish(self._side2Groups, other._side2Groups)
+        if lessish is not None:
+            return lessish
+
+        return False
+
+    def __eq__(self, other):
+        if self._kerning != other._kerning:
+            return False
+        if self._side1Groups != other._side1Groups:
+            return False
+        if self._side2Groups != other._side2Groups:
+            return False
+        return True
+
 
 if __name__ == "__main__":
     import sys
