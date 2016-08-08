@@ -127,6 +127,21 @@ class MathInfoTest(unittest.TestCase):
             expected[attr] = expectedValue
         self.assertEqual(sorted(expected), sorted(written))
 
+    def test_compare_same(self):
+        info1 = MathInfo(_TestInfoObject())
+        info2 = MathInfo(_TestInfoObject())
+        self.assertFalse(info1 < info2)
+        self.assertFalse(info1 > info2)
+        self.assertEqual(info1, info2)
+
+    def test_compare_different(self):
+        info1 = MathInfo(_TestInfoObject())
+        info2 = MathInfo(_TestInfoObject())
+        info2.ascender = info2.ascender - 1
+        self.assertFalse(info1 < info2)
+        self.assertTrue(info1 > info2)
+        self.assertNotEqual(info1, info2)
+
     def test_weight_name(self):
         info1 = MathInfo(_TestInfoObject())
         info2 = MathInfo(_TestInfoObject())
