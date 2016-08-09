@@ -232,6 +232,45 @@ class MathInfo(object):
         if hasattr(self, "postscriptWeightName"):
             otherInfoObject.postscriptWeightName = self.postscriptWeightName
 
+    # -------
+    # Sorting
+    # -------
+
+    def __lt__(self, other):
+        if set(self.__dict__.keys()) < set(other.__dict__.keys()):
+            return True
+        elif set(self.__dict__.keys()) > set(other.__dict__.keys()):
+            return False
+        for attr, value in self.__dict__.items():
+            other_value = getattr(other, attr)
+            if value is not None and other_value is not None:
+                # guidelines is a list of dicts
+                if attr == "guidelines":
+                    if len(value) < len(other_value):
+                        return True
+                    elif len(value) > len(other_value):
+                        return False
+                    for i, guide in enumerate(value):
+                        if set(guide) < set(other_value[i]):
+                            return True
+                        elif set(guide) > set(other_value[i]):
+                            return False
+                        for key, val in guide.items():
+                            if key in other_value[i]:
+                                if val < other_value[i][key]:
+                                    return True
+                elif value < other_value:
+                    return True
+        return False
+
+    def __eq__(self, other):
+        if set(self.__dict__.keys()) != set(other.__dict__.keys()):
+            return False
+        for attr, value in self.__dict__.items():
+            if hasattr(other, attr) and value != getattr(other, attr):
+                return False
+        return True
+
 
 # ----------
 # Formatters
