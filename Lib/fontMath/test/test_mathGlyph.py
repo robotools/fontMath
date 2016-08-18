@@ -369,6 +369,32 @@ class MathGlyphTest(unittest.TestCase):
         ]
         self.assertEqual(glyph2.guidelines, expected)
 
+    def test_guidelines_valid_angle(self):
+        glyph1 = self._setupTestGlyph()
+        glyph1.guidelines = [
+            dict(name="foo", identifier="1", x=0, y=0, angle=1)
+        ]
+        glyph2 = self._setupTestGlyph()
+        glyph2.guidelines = [
+            dict(name="foo", identifier="1", x=0, y=0, angle=359)
+        ]
+
+        expected_add = [dict(name="foo", identifier="1", x=0, y=0, angle=0)]
+        glyph3 = glyph1 + glyph2
+        self.assertEqual(glyph3.guidelines, expected_add)
+
+        expected_sub = [dict(name="foo", identifier="1", x=0, y=0, angle=2)]
+        glyph4 = glyph1 - glyph2
+        self.assertEqual(glyph4.guidelines, expected_sub)
+
+        expected_mul = [dict(name="foo", identifier="1", x=0, y=0, angle=359)]
+        glyph5 = glyph2 * 5
+        self.assertEqual(glyph5.guidelines, expected_mul)
+
+        expected_div = [dict(name="foo", identifier="1", x=0, y=0, angle=359)]
+        glyph6 = glyph2 / 5
+        self.assertEqual(glyph6.guidelines, expected_div)
+
     def test_anchors_add(self):
         glyph1 = self._setupTestGlyph()
         glyph1.anchors = [
