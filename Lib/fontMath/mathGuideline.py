@@ -83,7 +83,7 @@ def _processMathOneGuidelines(guidelinePairs, ptFunc, func):
         guideline["x"], guideline["y"] = ptFunc(pt1, pt2)
         angle1 = guideline1["angle"]
         angle2 = guideline2["angle"]
-        guideline["angle"] = func(angle1, angle2)
+        guideline["angle"] = func(angle1, angle2) % 360
         result.append(guideline)
     return result
 
@@ -94,7 +94,7 @@ def _processMathTwoGuidelines(guidelines, factor, func):
         guideline["x"] = func(guideline["x"], factor[0])
         guideline["y"] = func(guideline["y"], factor[1])
         angle = guideline["angle"]
-        guideline["angle"] = factorAngle(angle, factor, func)
+        guideline["angle"] = factorAngle(angle, factor, func) % 360
         result.append(guideline)
     return result
 
