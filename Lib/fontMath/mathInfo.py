@@ -202,6 +202,7 @@ class MathInfo(object):
 
     def extractInfo(self, otherInfoObject):
         """
+        >>> from fontMath.test.test_mathInfo import _TestInfoObject, _testData
         >>> info1 = MathInfo(_TestInfoObject())
         >>> info2 = info1 * 2.5
         >>> info3 = _TestInfoObject()

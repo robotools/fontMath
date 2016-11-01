@@ -3,15 +3,19 @@ __pycache__/
 *.py[co]
 *$py.class
 
-# Packaging
+# Distribution / Packaging
 *.egg-info
+*.eggs
 MANIFEST
+build/
+dist/
 
 # Unit test and coverage files
-.cache
+.cache/
 .coverage
 .coverage.*
-.tox
+.tox/
+htmlcov/
 
 # OS X Finder
 .DS_Store

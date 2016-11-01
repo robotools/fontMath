@@ -3,35 +3,25 @@ language: python
 matrix:
   include:
     - python: 2.7
-      env: TOXENV=py27
-    - python: 3.4
-      env: TOXENV=py34
     - python: 3.5
-      env: TOXENV=py35
-    - python: pypy
-      env: TOXENV=pypy
-    - language: generic
-      os: osx
-      # the default 'osx' on Travis is 10.9 Mavericks, with Python 2.7.5
-      env: TOXENV=py27
-    - language: generic
-      os: osx
-      # this is to test on 10.11 El Capitan which comes with Python 2.7.10
-      osx_image: xcode7.3
-      env: TOXENV=py27
-    - language: generic
-      os: osx
-      env: TOXENV=py34
-    - language: generic
-      os: osx
-      env: TOXENV=py35
-    - language: generic
-      os: osx
-      env: TOXENV=pypy
-    # coveralls is not listed in tox's envlist, but should run in travis
+      env: BUILD_DIST=true
     - python: 3.5
       env: TOXENV=coveralls
 install:
-  - ./.travis/install.sh
+  - pip install --upgrade pip setuptools wheel
+  - pip install tox-travis
 script:
-  - ./.travis/run.sh
+  - tox
+deploy:
+  # deploy to PyPI on tags
+  provider: pypi
+  server: https://upload.pypi.org/legacy/
+  on:
+    repo: typesupply/fontMath
+    tags: true
+    all_branches: true
+    condition: "$BUILD_DIST == true"
+  user: anthrotype
+  password:
+    secure: C2WiMc/BaWqgJWrBsyxyKDZXtP5QC8TsORf3yaxMYUlrpflbetwYyv215HaVg0s7wFV0SAJkQhjIvgzpgSTmyiiRXsi0Adw87HEot0hCBNfz04WhUzi5UWR43qM0Kd1mQLYfDQB+QSlyE8ytx1YDk4mH23DKFEAvNTXPMzrWDPaeqFS+I8b120TFWdDdjLeMcSgejTd1zhkPNt/zXvyzAANGWWHHhNcRz6DjX7bcKQanFh0387l22niNSua/dVZJaYJUTeUMjWTVn9HWRxjTv3b53LVaHZV6n3VBK5jUAXo4z0yF3RxUpJCIVgH1dkRKAzkKDbNzey9mIM2uEjMCM8M/wWHENJBbfy8VCPZZ5YVywZMmjc5Qi+Nw0NzyLW9uW6am2XYhgvJlTO+igQbr1hds9wAvNzmGvd/Kic+J2nNZdzq8iQrwwbZHrSlPdACgWUmumvfB2Vqf+4Vky/Xa8PSAFcnvF/HuR8bNYAeHiDeQWw91fp5kXWJr0VsvHv+Eqopoyzh1lIfsg9iOEJctcUEdWQctrMb178H6RggIOyYvsOmYtGQJK8UIVSs8lZV8toXLzjEsnxgq3wC6fzXwQyJ8+kJmXA6UEMmd0hfMjZHKnKHk/IdLS9lor8QufEh79vkBTuwSXZPz6iyCQPOr3unazlo/DfrBz7g6C7XLjbo=
+  distributions: sdist bdist_wheel
