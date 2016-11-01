@@ -1,1 +1,4 @@
 include License.txt
+include requirements.txt dev-requirements.txt
+include tox.ini
+include .coveragerc
