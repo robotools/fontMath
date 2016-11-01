@@ -1,2 +1,2 @@
-git+https://github.com/behdad/fonttools
-git+https://github.com/unified-font-object/ufoLib
+fonttools==3.1.2
+ufoLib==2.0.0
