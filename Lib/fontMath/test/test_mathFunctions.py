@@ -45,7 +45,7 @@ class MathFunctionsTest(unittest.TestCase):
 
     def test_factorAngle(self):
         f = factorAngle(5, (2, 1.5), mul)
-        self.assertEqual(round(f, 2), 3.75)
+        self.assertEqual(_roundNumber(f, 2), 3.75)
 
     def test_roundNumber(self):
         # round to integer:
@@ -53,9 +53,11 @@ class MathFunctionsTest(unittest.TestCase):
         self.assertEqual(_roundNumber(0.1), 0)
         self.assertEqual(_roundNumber(0.99), 1)
         self.assertEqual(_roundNumber(0.499), 0)
-        self.assertEqual(_roundNumber(0.5), 1)
+        self.assertEqual(_roundNumber(0.5), 0)
         self.assertEqual(_roundNumber(-0.499), 0)
-        self.assertEqual(_roundNumber(-0.5), -1)
+        self.assertEqual(_roundNumber(-0.5), 0)
+        self.assertEqual(_roundNumber(1.5), 2)
+        self.assertEqual(_roundNumber(-1.5), -2)
 
     def test_roundNumber_to_float(self):
         # round to float with specified decimals:
