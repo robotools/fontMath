@@ -1,5 +1,6 @@
 from __future__ import division
 import math
+from fontTools.misc.py23 import round3 as _roundNumber
 
 __all__ = [
     "add",
@@ -12,7 +13,6 @@ __all__ = [
     "divPt",
     "factorAngle",
     "_roundNumber",
-
 ]
 
 def add(v1, v2):
@@ -52,17 +52,6 @@ def factorAngle(angle, f, func):
         )
     )
 
-def _roundNumber(n, digits=None):
-    # Python3 rounds halves to nearest even integer but Python2 rounds
-    # halves up in positives and down in negatives
-    if round(0.5) != 1 and n % 1 == .5 and not int(n) % 2:
-        if digits is None:
-            return int((round(n) + (abs(n) / n) * 1))
-        return int((round(n) + 1, digits))
-    else:
-        if digits is None:
-            return int(round(n))
-        return round(n, digits)
 
 if __name__ == "__main__":
     import sys
