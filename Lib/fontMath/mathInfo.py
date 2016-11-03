@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import
 from fontMath.mathFunctions import (
     add, addPt, div, factorAngle, mul, _roundNumber, sub, subPt)
+from fontTools.misc.py23 import round2
 from fontMath.mathGuideline import (
     _expandGuideline, _pairGuidelines, _processMathOneGuidelines,
     _processMathTwoGuidelines, _roundGuidelines)
@@ -149,14 +150,9 @@ class MathInfo(object):
         name = None
         if hasattr(copiedInfo, "openTypeOS2WeightClass") and copiedInfo.openTypeOS2WeightClass is not None:
             v = copiedInfo.openTypeOS2WeightClass
-            v = v * .01
-            # Python3 rounds halves to nearest even integer
-            # but Python2 rounds halves up.
-            if round(0.5) != 1 and v % 1 == .5 and not int(v) % 2:
-                v = int((round(v) + 1) * 100)
-            else:
-                v = int(round(v) * 100)
-            v = int(round(v * .01) * 100)
+            # here we use Python 2 rounding (i.e. away from 0) instead of Python 3:
+            # e.g. 150 -> 200 and 250 -> 300, instead of 150 -> 200 and 250 -> 200
+            v = int(round2(v, -2))
             if v < 100:
                 v = 100
             elif v > 900:
@@ -328,7 +324,7 @@ def _openTypeOS2WidthClassFormatter(value):
     >>> _openTypeOS2WidthClassFormatter(12)
     9
     """
-    value = int(round(value))
+    value = int(round2(value))
     if value > 9:
         value = 9
     elif value < 1:
