@@ -179,7 +179,7 @@ class MathInfo(object):
                 v = getattr(copiedInfo, attr)
                 if v is not None:
                     if factorIndex == 3:
-                        v = int(round(v))
+                        v = _roundNumber(v)
                     else:
                         if isinstance(v, (list, tuple)):
                             v = [_roundNumber(a, digits) for a in v]
@@ -203,6 +203,7 @@ class MathInfo(object):
     def extractInfo(self, otherInfoObject):
         """
         >>> from fontMath.test.test_mathInfo import _TestInfoObject, _testData
+        >>> from fontMath.mathFunctions import _roundNumber
         >>> info1 = MathInfo(_TestInfoObject())
         >>> info2 = info1 * 2.5
         >>> info3 = _TestInfoObject()
@@ -214,9 +215,9 @@ class MathInfo(object):
         ...         continue
         ...     written[attr] = getattr(info2, attr)
         ...     if isinstance(value, list):
-        ...         expectedValue = [int(round(v * 2.5)) for v in value]
+        ...         expectedValue = [_roundNumber(v * 2.5) for v in value]
         ...     elif isinstance(value, int):
-        ...         expectedValue = int(round(value * 2.5))
+        ...         expectedValue = _roundNumber(value * 2.5)
         ...     else:
         ...         expectedValue = value * 2.5
         ...     expected[attr] = expectedValue
@@ -284,7 +285,7 @@ def _numberFormatter(value):
     return value
 
 def _integerFormatter(value):
-    return int(round(value))
+    return _roundNumber(value)
 
 def _floatFormatter(value):
     return float(value)
@@ -347,7 +348,7 @@ def _openTypeOS2WeightClassFormatter(value):
     >>> _openTypeOS2WeightClassFormatter(120)
     120
     """
-    value = int(round(value))
+    value = _roundNumber(value)
     if value < 0:
         value = 0
     return value

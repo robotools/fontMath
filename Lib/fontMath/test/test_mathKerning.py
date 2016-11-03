@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 import unittest
+from fontMath.mathFunctions import _roundNumber
 from fontMath.mathKerning import MathKerning
 
 
@@ -14,7 +15,7 @@ class TestKerning(object):
     def asDict(self, returnIntegers=True):
         if not returnIntegers:
             return self._kerning
-        kerning = {k: int(round(v)) for (k, v) in self._kerning.items()}
+        kerning = {k: _roundNumber(v) for (k, v) in self._kerning.items()}
         return kerning
 
     def update(self, kerningDict):
