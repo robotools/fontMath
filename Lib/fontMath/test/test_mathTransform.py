@@ -1,6 +1,7 @@
 import unittest
 import math
 from random import random
+from fontMath.mathFunctions import _roundNumber
 from fontMath.mathTransform import (
     Transform, FontMathWarning, matrixToMathTransform, mathTransformToMatrix,
     _polarDecomposeInterpolationTransformation,
@@ -108,7 +109,7 @@ class MathTransformTest(unittest.TestCase):
         m = matrixToMathTransform(t1)
         t2 = mathTransformToMatrix(m)
 
-        if not sum([round(t1[i] - t2[i], precision)
+        if not sum([_roundNumber(t1[i] - t2[i], precision)
                     for i in range(len(t1))]) == 0:
             raise FontMathWarning(
                 "Matrix round-tripping failed for precision value %s."

@@ -1,5 +1,5 @@
 import unittest
-from fontMath.mathFunctions import add, addPt, mul
+from fontMath.mathFunctions import add, addPt, mul, _roundNumber
 from fontMath.mathGuideline import (
     _expandGuideline, _compressGuideline, _pairGuidelines,
     _processMathOneGuidelines, _processMathTwoGuidelines, _roundGuidelines
@@ -215,7 +215,7 @@ class MathGuidelineTest(unittest.TestCase):
             dict(x=4, y=4.5, angle=3.75, name="test", identifier="1", color="0,0,0,0")
         ]
         result = _processMathTwoGuidelines(guidelines, (2, 1.5), mul)
-        result[0]["angle"] = round(result[0]["angle"], 2)
+        result[0]["angle"] = _roundNumber(result[0]["angle"], 2)
         self.assertEqual(result, expected)
 
     def test_roundGuidelines(self):

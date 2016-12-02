@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import
 from copy import deepcopy
 from fontMath.mathFunctions import add, sub, mul, div
+from fontTools.misc.py23 import round2
 
 """
 An object that serves kerning data from a
@@ -232,7 +233,7 @@ class MathKerning(object):
     def round(self, multiple=1):
         multiple = float(multiple)
         for k, v in self._kerning.items():
-            self._kerning[k] = int(round(int(round(v / multiple)) * multiple))
+            self._kerning[k] = int(round2(int(round2(v / multiple)) * multiple))
 
     # -------
     # Cleanup
