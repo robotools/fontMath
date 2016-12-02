@@ -1,6 +1,6 @@
 from __future__ import division
 import math
-from fontTools.misc.py23 import round3 as _roundNumber
+from fontTools.misc.py23 import round3 as _round3
 
 __all__ = [
     "add",
@@ -51,6 +51,12 @@ def factorAngle(angle, f, func):
             func(y, f2), func(x, f1)
         )
     )
+
+def _roundNumber(number, ndigits=None):
+    # workaround inconsistent round() behavior in Python < 3.6:
+    # floats accept a second argument ndigits=None, whereas integers
+    # raise TypeError. See https://bugs.python.org/issue27936
+    return _round3(number) if ndigits is None else _round3(number, ndigits)
 
 
 if __name__ == "__main__":
