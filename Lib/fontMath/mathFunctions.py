@@ -1,6 +1,7 @@
 from __future__ import division
 import math
 from fontTools.misc.py23 import round3 as _round3
+import sys
 
 __all__ = [
     "add",
@@ -52,11 +53,17 @@ def factorAngle(angle, f, func):
         )
     )
 
-def _roundNumber(number, ndigits=None):
-    # workaround inconsistent round() behavior in Python < 3.6:
-    # floats accept a second argument ndigits=None, whereas integers
-    # raise TypeError. See https://bugs.python.org/issue27936
-    return _round3(number) if ndigits is None else _round3(number, ndigits)
+if (3,) <= sys.version_info[:2] < (3, 6):
+    def _roundNumber(number, ndigits=None):
+        # workaround inconsistent round() behavior in Python < 3.6:
+        # floats accept a second argument ndigits=None, whereas integers
+        # raise TypeError. See https://bugs.python.org/issue27936
+        # NOTE: fonttools HEAD includes a patch for this:
+        # https://github.com/fonttools/fonttools/pull/757
+        # TODO(anthrotype): update once new version of fonttools is released
+        return _round3(number) if ndigits is None else _round3(number, ndigits)
+else:
+    _roundNumber = _round3
 
 
 if __name__ == "__main__":
