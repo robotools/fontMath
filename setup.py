@@ -13,7 +13,7 @@ wheel = ['wheel'] if needs_wheel else []
 
 setup(
     name="fontMath",
-    version="0.4.1",
+    version="0.4.2",
     description="A set of objects for performing math operations on font data.",
     # long_description=long_description,
     author="Tal Leming",
@@ -28,7 +28,7 @@ setup(
         'pytest>=3.0.3',
     ],
     install_requires=[
-        "fonttools>=3.1.2",
+        "fonttools>=3.3.0",
         "ufoLib>=2.0.0",
     ],
     classifiers=[
