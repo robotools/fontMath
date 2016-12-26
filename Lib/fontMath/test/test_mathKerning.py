@@ -521,6 +521,28 @@ class MathKerningTest(unittest.TestCase):
             [('public.kern1.C', ['C', 'C1']),
              ('public.kern2.C', ['C', 'C1'])])
 
+    def test_fallback(self):
+        groups = {
+            "public.kern1.A" : ["A", "A.alt"],
+            "public.kern2.O" : ["O", "O.alt"]
+        }
+        kerning1 = {
+            ("A", "O") : 1000,
+            ("public.kern1.A", "public.kern2.O") : 100
+        }
+        kerning2 = {
+            ("public.kern1.A", "public.kern2.O") : 200
+        }
+
+        kerning1 = MathKerning(kerning1, groups)
+        kerning2 = MathKerning(kerning2, groups)
+
+        kerning3 = kerning1 + kerning2
+
+        self.assertEqual(
+            kerning3["A", "O"],
+            1200)
+
 
 if __name__ == "__main__":
     unittest.main()
