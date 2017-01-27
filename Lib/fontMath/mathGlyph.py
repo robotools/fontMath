@@ -97,31 +97,17 @@ class MathGlyph(object):
             self.height = glyph.height
             self.note = glyph.note
 
-    def __cmp__(self, other):
-        flag = False
-        if self.name != other.name:
-            flag = True
-        if self.unicodes != other.unicodes:
-            flag = True
-        if self.width != other.width:
-            flag = True
-        if self.height != other.height:
-            flag = True
-        if self.note != other.note:
-            flag = True
-        if self.lib != other.lib:
-            flag = True
-        if self.contours != other.contours:
-            flag = True
-        if self.components != other.components:
-            flag = True
-        if self.anchors != other.anchors:
-            flag = True
-        if self.guidelines != other.guidelines:
-            flag = True
-        if self.image != other.image:
-            flag = True
-        return flag
+    def __eq__(self, other):
+        try:
+            return all(getattr(self, attr) == getattr(other, attr)
+                       for attr in ("name", "unicodes", "width", "height",
+                                    "note", "lib", "contours", "components",
+                                    "anchors", "guidelines", "image"))
+        except AttributeError:
+            return NotImplemented
+
+    def __ne__(self, other):
+        return not self == other
 
     # ----
     # Copy
