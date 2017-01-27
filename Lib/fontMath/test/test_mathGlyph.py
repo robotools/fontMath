@@ -31,6 +31,47 @@ class MathGlyphTest(unittest.TestCase):
         glyph.height = 0
         return glyph
 
+    def test__eq__(self):
+        glyph1 = self._setupTestGlyph()
+        glyph2 = self._setupTestGlyph()
+        self.assertEqual(glyph1, glyph2)
+
+        glyph2.width = 1
+        self.assertFalse(glyph1 == glyph2)
+
+        nonglyph = object()
+        self.assertFalse(glyph1 == nonglyph)
+
+        glyph1 = MathGlyph(None)
+        glyph1.name = 'space'
+        glyph1.width = 100
+
+        class MyGlyph(object):
+            pass
+        other = MyGlyph()
+        other.name = 'space'
+        other.width = 100
+        other.height = None
+        other.contours = []
+        other.components = []
+        other.anchors = []
+        other.guidelines = []
+        other.image = {'fileName': None,
+                       'transformation': (1, 0, 0, 1, 0, 0),
+                       'color': None}
+        other.lib = {}
+        other.unicodes = None
+        other.note = None
+        self.assertEqual(glyph1, other)
+
+    def test__ne__(self):
+        glyph1 = self._setupTestGlyph()
+        glyph2 = MathGlyph(None)
+        glyph2.width = 1
+        glyph2.name = 'a'
+        self.assertNotEqual(glyph1, glyph2)
+        self.assertNotEqual(glyph1, 'foo')
+
     def test_width_add(self):
         glyph1 = self._setupTestGlyph()
         glyph1.width = 1
