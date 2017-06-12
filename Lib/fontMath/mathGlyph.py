@@ -274,9 +274,9 @@ class MathGlyph(object):
         """get a point pen for drawing to this object"""
         return MathGlyphPen(self)
 
-    def drawPoints(self, pointPen, filterReduntantPoints=False):
+    def drawPoints(self, pointPen, filterRedundantPoints=False):
         """draw self using pointPen"""
-        if filterReduntantPoints:
+        if filterRedundantPoints:
             pointPen = FilterRedundantPointPen(pointPen)
         for contour in self.contours:
             pointPen.beginPath(identifier=contour["identifier"])
@@ -286,9 +286,9 @@ class MathGlyph(object):
         for component in self.components:
             pointPen.addComponent(component["baseGlyph"], component["transformation"], identifier=component["identifier"])
 
-    def draw(self, pen, filterReduntantPoints=False):
+    def draw(self, pen, filterRedundantPoints=False):
         """draw self using pen"""
-        self.drawPoints(pointPenfilterReduntantPoints=filterReduntantPoints)
+        self.drawPoints(pointPenfilterRedundantPoints=filterRedundantPoints)
 
     # ----------
     # Extraction
