@@ -73,6 +73,8 @@ def _findPair(guidelines1, guidelines2, pairs, attrs):
             removeFromGuidelines1.append(guideline1)
             guidelines2.remove(guideline2)
             pairs.append((guideline1, guideline2))
+    for removeGuide in removeFromGuidelines1:
+        guidelines1.remove(removeGuide)
 
 def _processMathOneGuidelines(guidelinePairs, ptFunc, func):
     result = []
