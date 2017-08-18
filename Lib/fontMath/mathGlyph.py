@@ -288,7 +288,9 @@ class MathGlyph(object):
 
     def draw(self, pen, filterRedundantPoints=False):
         """draw self using pen"""
-        self.drawPoints(pointPenfilterRedundantPoints=filterRedundantPoints)
+        from ufoLib.pointPen import PointToSegmentPen
+        pointPen = PointToSegmentPen(pen)
+        self.drawPoints(pointPen, filterRedundantPoints=filterRedundantPoints)
 
     # ----------
     # Extraction
