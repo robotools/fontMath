@@ -712,6 +712,8 @@ def _expandImage(image):
         transformation = _defaultImageTransformation
         color = None
     else:
+        if hasattr(image, "naked"):
+            image = image.naked()
         fileName = image["fileName"]
         color = image.get("color")
         transformation = tuple([
