@@ -177,15 +177,15 @@ class MathKerning(object):
             kerning[k] = v
         g1 = self.groups()
         g2 = other.groups()
-        if g1 == g2:
-            groups = g1
+        if g1 == g2 or not g1 or not g2:
+            groups = g1 or g2
         else:
             comboGroups = set(g1.keys()) | set(g2.keys())
             groups = dict.fromkeys(comboGroups, None)
             for groupName in comboGroups:
                 s1 = set(g1.get(groupName, []))
                 s2 = set(g2.get(groupName, []))
-                groups[groupName] = list(s1 | s2)
+                groups[groupName] = sorted(list(s1 | s2))
         ks = MathKerning(kerning, groups)
         return ks
 
