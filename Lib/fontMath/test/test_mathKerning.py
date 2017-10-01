@@ -150,10 +150,10 @@ class MathKerningTest(unittest.TestCase):
              (('public.kern1.NotIn1', 'C'), 1),
              (('public.kern1.NotIn2', 'C'), 1)])
         self.assertEqual(
-            sorted(obj.groups()["public.kern1.D"]),
+            obj.groups()["public.kern1.D"],
             ['D', 'H'])
         self.assertEqual(
-            sorted(obj.groups()["public.kern2.D"]),
+            obj.groups()["public.kern2.D"],
             ['D', 'H'])
 
     def test_add_same_groups(self):
@@ -189,10 +189,10 @@ class MathKerningTest(unittest.TestCase):
              (('public.kern1.NotIn1', 'C'), 1),
              (('public.kern1.NotIn2', 'C'), 1)])
         self.assertEqual(
-            sorted(obj.groups()["public.kern1.D"]),
+            obj.groups()["public.kern1.D"],
             ['D', 'H'])
         self.assertEqual(
-            sorted(obj.groups()["public.kern2.D"]),
+            obj.groups()["public.kern2.D"],
             ['D', 'H'])
 
     def test_sub(self):
@@ -229,10 +229,10 @@ class MathKerningTest(unittest.TestCase):
              (('public.kern1.NotIn1', 'C'), -1),
              (('public.kern1.NotIn2', 'C'), 1)])
         self.assertEqual(
-            sorted(obj.groups()["public.kern1.D"]),
+            obj.groups()["public.kern1.D"],
             ['D', 'H'])
         self.assertEqual(
-            sorted(obj.groups()["public.kern2.D"]),
+            obj.groups()["public.kern2.D"],
             ['D', 'H'])
 
     def test_mul(self):
