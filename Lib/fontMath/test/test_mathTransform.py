@@ -69,35 +69,38 @@ class MathTransformTest(unittest.TestCase):
         if not hasattr(self, "assertRaisesRegex"):
             self.assertRaisesRegex = self.assertRaisesRegexp
 
-    def test_functions(self):
-        """
-        In this test various complex transformations are interpolated using
-        3 different methods:
-          - straight linear interpolation, the way glyphMath does it now.
-          - using the MathTransform interpolation method.
-          - using the ShallowTransform with an initial decompose and final
-            compose.
-        """
-        value = random()
-        testFunctions = [
-            _polarDecomposeInterpolationTransformation,
-            _mathPolarDecomposeInterpolationTransformation,
-            _linearInterpolationTransformMatrix,
-        ]
-        with self.assertRaisesRegex(
-                FontMathWarning,
-                "Minor differences occured when "
-                "comparing the interpolation functions."):
-            for i, m in enumerate(_testData):
-                m1, m2 = m
-                results = []
-                for func in testFunctions:
-                    r = func(m1, m2, value)
-                    results.append(r)
-                if not results[0] == results[1]:
-                    raise FontMathWarning(
-                        "Minor differences occured when "
-                        "comparing the interpolation functions.")
+    # Disabling this test as it fails intermittently and it's not clear what it
+    # does (cf. https://github.com/typesupply/fontMath/issues/35)
+    #
+    # def test_functions(self):
+    #     """
+    #     In this test various complex transformations are interpolated using
+    #     3 different methods:
+    #       - straight linear interpolation, the way glyphMath does it now.
+    #       - using the MathTransform interpolation method.
+    #       - using the ShallowTransform with an initial decompose and final
+    #         compose.
+    #     """
+    #     value = random()
+    #     testFunctions = [
+    #         _polarDecomposeInterpolationTransformation,
+    #         _mathPolarDecomposeInterpolationTransformation,
+    #         _linearInterpolationTransformMatrix,
+    #     ]
+    #     with self.assertRaisesRegex(
+    #             FontMathWarning,
+    #             "Minor differences occured when "
+    #             "comparing the interpolation functions."):
+    #         for i, m in enumerate(_testData):
+    #             m1, m2 = m
+    #             results = []
+    #             for func in testFunctions:
+    #                 r = func(m1, m2, value)
+    #                 results.append(r)
+    #             if not results[0] == results[1]:
+    #                 raise FontMathWarning(
+    #                     "Minor differences occured when "
+    #                     "comparing the interpolation functions.")
 
     def _wrapUnWrap(self, precision=12):
         """
