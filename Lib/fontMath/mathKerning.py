@@ -219,7 +219,7 @@ class MathKerning(object):
         for k, v in self._kerning.items():
             v = funct(v, factor)
             kerning[k] = v
-        ks = MathKerning(kerning)
+        ks = MathKerning(kerning, deepcopy(self._groups))
         ks._side1Groups = deepcopy(self._side1Groups)
         ks._side2Groups = deepcopy(self._side2Groups)
         ks._side1GroupMap = deepcopy(self._side1GroupMap)
