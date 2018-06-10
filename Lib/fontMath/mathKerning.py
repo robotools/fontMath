@@ -19,7 +19,11 @@ side2Prefix = "public.kern2."
 
 class MathKerning(object):
 
-    def __init__(self, kerning={}, groups={}):
+    def __init__(self, kerning=None, groups=None):
+        if kerning is None:
+            kerning = {}
+        if groups is None:
+            groups = {}
         self.update(kerning)
         self.updateGroups(groups)
 
@@ -144,11 +148,7 @@ class MathKerning(object):
     # ----
 
     def copy(self):
-        k = MathKerning(self._kerning)
-        k._side1Groups = deepcopy(self._side1Groups)
-        k._side2Groups = deepcopy(self._side2Groups)
-        k._side1GroupMap = deepcopy(self._side1GroupMap)
-        k._side2GroupMap = deepcopy(self._side2GroupMap)
+        k = MathKerning(self._kerning, self._groups)
         return k
 
     # ----
@@ -219,11 +219,7 @@ class MathKerning(object):
         for k, v in self._kerning.items():
             v = funct(v, factor)
             kerning[k] = v
-        ks = MathKerning(kerning, deepcopy(self._groups))
-        ks._side1Groups = deepcopy(self._side1Groups)
-        ks._side2Groups = deepcopy(self._side2Groups)
-        ks._side1GroupMap = deepcopy(self._side1GroupMap)
-        ks._side2GroupMap = deepcopy(self._side2GroupMap)
+        ks = MathKerning(kerning, self._groups)
         return ks
 
     # ---------
