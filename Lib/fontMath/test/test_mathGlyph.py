@@ -703,21 +703,25 @@ class PrivateFuncsTest(unittest.TestCase):
             dict(name="test", x=1, y=2, color=None),
             dict(name="test", x=3, y=4, color=None),
             dict(name="test", x=2, y=3, color=None),
-            dict(name="test 2", x=1, y=2, color=None),
+            dict(name="c", x=1, y=2, color=None),
+            dict(name="a", x=0, y=0, color=None),
         ]
         self.assertEqual(
-            _anchorTree(anchors),
-            {
-                "test": [
+            list(_anchorTree(anchors).items()),
+            [
+                ("test", [
                     ("1", 1, 2, None),
                     (None, 1, 2, None),
                     (None, 3, 4, None),
-                    (None, 2, 3, None),
-                ],
-                "test 2": [
+                    (None, 2, 3, None)
+                ]),
+                ("c", [
                     (None, 1, 2, None)
-                ]
-            }
+                ]),
+                ("a", [
+                    (None, 0, 0, None)
+                ])
+            ]
         )
 
     def test_pairAnchors_matching_identifiers(self):
