@@ -1,5 +1,6 @@
 from __future__ import print_function, absolute_import
 from copy import deepcopy
+from collections import OrderedDict
 from fontMath.mathFunctions import (
     add, addPt, div, divPt, mul, mulPt, _roundNumber, sub, subPt)
 from fontMath.mathGuideline import (
@@ -12,8 +13,6 @@ from ufoLib.pointPen import AbstractPointPen
 # ------------------
 #
 # to do:
-# X anchors
-#   - try to preserve ordering?
 # X components
 #   X identifiers
 # X contours
@@ -523,7 +522,7 @@ def _processMathTwoContours(contours, factor, func):
 # anchors
 
 def _anchorTree(anchors):
-    tree = {}
+    tree = OrderedDict()
     for anchor in anchors:
         x = anchor["x"]
         y = anchor["y"]
