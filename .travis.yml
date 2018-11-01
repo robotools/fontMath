@@ -1,4 +1,8 @@
 language: python
+env:
+  global:
+    - TWINE_USERNAME="anthrotype"
+    - secure: vRHkHnV3UaKJQ9l/TwQrbngF06ij9c3HhEjryhg5WCHgWLKBgwxGpX++m3pmzG32rBM7eJwtDH2m9liuXWueuh1Ae81sQzRvcOSHOJRUAWvTMXQAeTGsC6Y6OMsbiMT1OCJxuapAPPbNepVTSVu9TjbeJtabQ/yfCWZzoF4ZhnG6DNgrIPwLqVf0BUQ1zoOCHtQog9ZkcYSb5vrSnx/Ig4z4mLVvygQ6ZQElDJH+x/F508pTR8xeQH/1+BxDVctvkQDbhbFaHbNHcb2nuLLYpScFk9eJiuSHw2EZaqS5W2q9tqdGb86Fjf5fjuxT3i7+EXLI3bnVzKQsqE43nWk9p8in28jcnQDFH8oEJf4o5h3q0CEVigHn4RPGv0Lks4ESbWC7MbRS3CvpXztio+NGXKX7w66cw9E2lVhVypVKtuiUiYk9+jzXMCBUoN0IdHoWj44nt9lYqkguAU//068GZM/5iu8TJyMwssi6bYj3KLQgYSC/2etDGtLtvyMShI6uuqlVEXHWhC85IDmVZmsp/zWrQlNzabSq23gCpfXqPwlJIOSzZva+FE+H7D0oEPRwUxBNsBHa6TiMtD+TxLJM4Tsx/d1NO2xOLLyDY5j0Mqn+pIzPYDGm7vQDw/JxFVpAX2XopYUEuplsHK/FiDhrm8JgwBSzSkoiWO88++MkRks=
 matrix:
   include:
     - python: 2.7
@@ -9,20 +13,15 @@ matrix:
     - python: 3.7
       dist: xenial
 install:
-  - pip install --upgrade pip setuptools wheel
   - pip install tox-travis
 script:
   - tox
-deploy:
-  # deploy to PyPI on tags
-  provider: pypi
-  server: https://upload.pypi.org/legacy/
-  on:
-    repo: typesupply/fontMath
-    tags: true
-    all_branches: true
-    condition: "$BUILD_DIST == true"
-  user: anthrotype
-  password:
-    secure: C2WiMc/BaWqgJWrBsyxyKDZXtP5QC8TsORf3yaxMYUlrpflbetwYyv215HaVg0s7wFV0SAJkQhjIvgzpgSTmyiiRXsi0Adw87HEot0hCBNfz04WhUzi5UWR43qM0Kd1mQLYfDQB+QSlyE8ytx1YDk4mH23DKFEAvNTXPMzrWDPaeqFS+I8b120TFWdDdjLeMcSgejTd1zhkPNt/zXvyzAANGWWHHhNcRz6DjX7bcKQanFh0387l22niNSua/dVZJaYJUTeUMjWTVn9HWRxjTv3b53LVaHZV6n3VBK5jUAXo4z0yF3RxUpJCIVgH1dkRKAzkKDbNzey9mIM2uEjMCM8M/wWHENJBbfy8VCPZZ5YVywZMmjc5Qi+Nw0NzyLW9uW6am2XYhgvJlTO+igQbr1hds9wAvNzmGvd/Kic+J2nNZdzq8iQrwwbZHrSlPdACgWUmumvfB2Vqf+4Vky/Xa8PSAFcnvF/HuR8bNYAeHiDeQWw91fp5kXWJr0VsvHv+Eqopoyzh1lIfsg9iOEJctcUEdWQctrMb178H6RggIOyYvsOmYtGQJK8UIVSs8lZV8toXLzjEsnxgq3wC6fzXwQyJ8+kJmXA6UEMmd0hfMjZHKnKHk/IdLS9lor8QufEh79vkBTuwSXZPz6iyCQPOr3unazlo/DfrBz7g6C7XLjbo=
-  distributions: sdist bdist_wheel
+after_success:
+  # if it's a tagged commit, upload distribution packages to pypi
+  - |
+    if [ -n "$TRAVIS_TAG" ] && [ "$TRAVIS_REPO_SLUG" == "typesupply/fontMath" ] && [ "$BUILD_SDIST" == true ]; then
+        pip install --upgrade twine pip setuptools wheel
+        python setup.py sdist
+        pip wheel --no-deps --wheel-dir dist .
+        twine upload dist/*.whl dist/*.zip
+    fi
