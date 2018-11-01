@@ -28,8 +28,7 @@ setup(
         'pytest>=3.0.3',
     ],
     install_requires=[
-        "fonttools>=3.3.0",
-        "ufoLib>=2.0.0",
+        "fonttools>=3.32.0",
     ],
     classifiers=[
         'Development Status :: 4 - Beta',

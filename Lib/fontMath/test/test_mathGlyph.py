@@ -1,6 +1,6 @@
 from __future__ import division
 import unittest
-from ufoLib.pointPen import AbstractPointPen
+from fontTools.pens.pointPen import AbstractPointPen
 from fontMath.mathFunctions import addPt, mulPt
 from fontMath.mathGlyph import (
     MathGlyph, MathGlyphPen, FilterRedundantPointPen,

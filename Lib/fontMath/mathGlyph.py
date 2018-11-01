@@ -6,7 +6,7 @@ from fontMath.mathFunctions import (
 from fontMath.mathGuideline import (
     _compressGuideline, _expandGuideline, _pairGuidelines,
     _processMathOneGuidelines, _processMathTwoGuidelines, _roundGuidelines)
-from ufoLib.pointPen import AbstractPointPen
+from fontTools.pens.pointPen import AbstractPointPen
 
 # ------------------
 # UFO 3 branch notes
@@ -287,7 +287,7 @@ class MathGlyph(object):
 
     def draw(self, pen, filterRedundantPoints=False):
         """draw self using pen"""
-        from ufoLib.pointPen import PointToSegmentPen
+        from fontTools.pens.pointPen import PointToSegmentPen
         pointPen = PointToSegmentPen(pen)
         self.drawPoints(pointPen, filterRedundantPoints=filterRedundantPoints)
 
