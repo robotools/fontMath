@@ -60,9 +60,11 @@ class MathInfo(object):
                 else:
                     v = self._processMathOneNumber(a, b, func)
             elif a is not None and b is None:
-                v = a
+                #v = a
+                v = 0
             elif b is not None and a is None:
-                v = b
+                #v = b
+                v = 0
             if v is not None:
                 setattr(copiedInfo, attr, v)
         # special attributes
