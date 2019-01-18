@@ -9,7 +9,7 @@ matrix:
     - python: 3.6
       env:
         - BUILD_DIST=true
-        - TOXENV=coveralls
+        - TOXENV=coverage
     - python: 3.7
       dist: xenial
 install:
