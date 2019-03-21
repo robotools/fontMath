@@ -1,6 +1,7 @@
 from __future__ import division
 import math
-from fontTools.misc.py23 import round3 as _roundNumber
+from fontTools.misc.py23 import round3
+from fontTools.misc.fixedTools import otRound
 import sys
 
 __all__ = [
@@ -52,6 +53,54 @@ def factorAngle(angle, f, func):
             func(y, f2), func(x, f1)
         )
     )
+
+
+def setRoundIntegerFunction(func):
+    """ Globally set function for rounding floats to integers.
+
+    The function signature must be:
+
+        def func(value: float) -> int
+    """
+    global _ROUND_INTEGER_FUNC
+    _ROUND_INTEGER_FUNC = func
+
+
+def setRoundFloatFunction(func):
+    """ Globally set function for rounding floats within given precision.
+
+    The function signature must be:
+
+        def func(value: float, ndigits: int) -> float
+    """
+    global _ROUND_FLOAT_FUNC
+    _ROUND_FLOAT_FUNC = func
+
+
+_ROUND_INTEGER_FUNC = otRound
+_ROUND_FLOAT_FUNC = round3
+
+
+def _roundNumber(value, ndigits=None):
+    """When ndigits is None, rounds float value to nearest integer towards
+    +Infinity.
+    For fractional values of 0.5 and higher, take the next higher integer;
+    for other fractional values, truncate.
+
+    When ndigits is not None, use the Python 3 built-in round function,
+    which returns a float rounded with ndigits precision using the Banker's
+    rounding algorithm.
+
+    You can change the default rounding functions using setRoundIntegerFunction
+    and/or setRoundFloatFunction.
+
+    https://docs.microsoft.com/en-us/typography/opentype/spec/otvaroverview
+    https://github.com/fonttools/fonttools/issues/1248#issuecomment-383198166
+    https://github.com/robotools/fontMath/issues/148
+    """
+    if ndigits is not None:
+        return _ROUND_FLOAT_FUNC(value, ndigits)
+    return _ROUND_INTEGER_FUNC(value)
 
 
 if __name__ == "__main__":
