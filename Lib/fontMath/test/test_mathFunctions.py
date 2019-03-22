@@ -1,6 +1,10 @@
 import unittest
+from fontTools.misc.py23 import round2
+from fontTools.misc.fixedTools import otRound
 from fontMath.mathFunctions import (
-    add, addPt, sub, subPt, mul, mulPt, div, divPt, factorAngle, _roundNumber
+    add, addPt, sub, subPt, mul, mulPt, div, divPt, factorAngle, _roundNumber,
+    setRoundIntegerFunction, setRoundFloatFunction,
+    _ROUND_INTEGER_FUNC, _ROUND_FLOAT_FUNC,
 )
 
 
@@ -66,6 +70,24 @@ class MathFunctionsTest(unittest.TestCase):
         self.assertEqual(_roundNumber(0.3333, 1), 0.3)
         self.assertEqual(_roundNumber(0.3333, 2), 0.33)
         self.assertEqual(_roundNumber(0.3333, 3), 0.333)
+
+    def test_set_custom_round_integer_func(self):
+        default = _ROUND_INTEGER_FUNC
+        try:
+            setRoundIntegerFunction(otRound)
+            self.assertEqual(_roundNumber(0.5), 1)
+            self.assertEqual(_roundNumber(-1.5), -1)
+        finally:
+            setRoundIntegerFunction(default)
+
+    def test_set_custom_round_float_func(self):
+        default = _ROUND_FLOAT_FUNC
+        try:
+            setRoundFloatFunction(round2)
+            self.assertEqual(_roundNumber(0.55, 1), 0.6)
+            self.assertEqual(_roundNumber(-1.555, 2), -1.55)
+        finally:
+            setRoundIntegerFunction(default)
 
 
 if __name__ == "__main__":
