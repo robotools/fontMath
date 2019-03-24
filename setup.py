@@ -18,7 +18,7 @@ setup(
     # long_description=long_description,
     author="Tal Leming",
     author_email="tal@typesupply.com",
-    url="https://github.com/typesupply/fontMath",
+    url="https://github.com/robotools/fontMath",
     license="MIT",
     package_dir={"": "Lib"},
     packages=find_packages("Lib"),

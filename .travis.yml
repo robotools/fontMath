@@ -19,7 +19,7 @@ script:
 after_success:
   # if it's a tagged commit, upload distribution packages to pypi
   - |
-    if [ -n "$TRAVIS_TAG" ] && [ "$TRAVIS_REPO_SLUG" == "typesupply/fontMath" ] && [ "$BUILD_DIST" == true ]; then
+    if [ -n "$TRAVIS_TAG" ] && [ "$TRAVIS_REPO_SLUG" == "robotools/fontMath" ] && [ "$BUILD_DIST" == true ]; then
         pip install --upgrade twine pip setuptools wheel
         python setup.py sdist
         pip wheel --no-deps --wheel-dir dist .
