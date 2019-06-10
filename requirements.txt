@@ -1,1 +1,1 @@
-fonttools==3.41.2
+fonttools==3.42.0
