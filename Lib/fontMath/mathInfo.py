@@ -73,8 +73,7 @@ class MathInfo(object):
                     v = b
                 else:
                     v = None if attr in _numberListAttrs else 0
-            if v is not None:
-                setattr(copiedInfo, attr, v)
+            setattr(copiedInfo, attr, v)
         # special attributes
         self._processPostscriptWeightName(copiedInfo)
         # guidelines

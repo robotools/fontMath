@@ -214,7 +214,7 @@ class MathInfoTest(unittest.TestCase):
             expected[attr] = expectedValue
         self.assertEqual(sorted(expected), sorted(written))
 
-    def test_sub_undefined_number_list_does_nothing(self):
+    def test_sub_undefined_number_list_sets_None(self):
         self.assertIn("postscriptBlueValues", _numberListAttrs)
 
         info1 = _TestInfoObject()
@@ -227,11 +227,11 @@ class MathInfoTest(unittest.TestCase):
 
         m3 = m2 - m1
 
-        self.assertEqual(m3.postscriptBlueValues, [1, 2, 3])
+        self.assertIsNone(m3.postscriptBlueValues)
 
         m4 = m1 - m2
 
-        self.assertEqual(m4.postscriptBlueValues, None)
+        self.assertIsNone(m4.postscriptBlueValues)
 
 
 # ----
