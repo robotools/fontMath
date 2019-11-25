@@ -13,7 +13,7 @@ wheel = ['wheel'] if needs_wheel else []
 
 setup(
     name="fontMath",
-    version="0.5.1",
+    version="0.5.2.dev0",
     description="A set of objects for performing math operations on font data.",
     # long_description=long_description,
     author="Tal Leming",
