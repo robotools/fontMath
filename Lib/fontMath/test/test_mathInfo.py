@@ -1,6 +1,6 @@
 import unittest
 from fontMath.mathFunctions import _roundNumber
-from fontMath.mathInfo import MathInfo
+from fontMath.mathInfo import MathInfo, _numberListAttrs
 
 
 class MathInfoTest(unittest.TestCase):
@@ -213,6 +213,27 @@ class MathInfoTest(unittest.TestCase):
                 expectedValue = _roundNumber(value)
             expected[attr] = expectedValue
         self.assertEqual(sorted(expected), sorted(written))
+
+    def test_sub_undefined_number_list_does_nothing(self):
+        self.assertIn("postscriptBlueValues", _numberListAttrs)
+
+        info1 = _TestInfoObject()
+        info1.postscriptBlueValues = None
+        m1 = MathInfo(info1)
+
+        info2 = _TestInfoObject()
+        info2.postscriptBlueValues = [1, 2, 3]
+        m2 = MathInfo(info2)
+
+        m3 = m2 - m1
+
+        self.assertEqual(m3.postscriptBlueValues, [1, 2, 3])
+
+        m4 = m1 - m2
+
+        self.assertEqual(m4.postscriptBlueValues, None)
+
+
 # ----
 # Test Data
 # ----
