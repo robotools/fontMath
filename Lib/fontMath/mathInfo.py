@@ -59,18 +59,20 @@ class MathInfo(object):
                     v = self._processMathOneNumberList(a, b, func)
                 else:
                     v = self._processMathOneNumber(a, b, func)
+            # when one of the terms is undefined, we treat addition and subtraction
+            # differently...
+            # https://github.com/robotools/fontMath/issues/175
+            # https://github.com/robotools/fontMath/issues/136
             elif a is not None and b is None:
-                #v = a
                 if func == add:
                     v = a
                 else:
-                    v = 0
+                    v = None if attr in _numberListAttrs else 0
             elif b is not None and a is None:
-                #v = b
                 if func is add:
                     v = b
                 else:
-                    v = 0
+                    v = None if attr in _numberListAttrs else 0
             if v is not None:
                 setattr(copiedInfo, attr, v)
         # special attributes
@@ -420,6 +422,12 @@ _infoAttrs = dict(
     # this will be handled in a special way
     # postscriptWeightName=unicode
 )
+
+_numberListAttrs = {
+    attr
+    for attr, (formatter, _) in _infoAttrs.items()
+    if formatter is _numberListFormatter
+}
 
 _postscriptWeightNameOptions = {
     100 : "Thin",
