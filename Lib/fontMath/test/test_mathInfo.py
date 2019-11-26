@@ -233,6 +233,29 @@ class MathInfoTest(unittest.TestCase):
 
         self.assertIsNone(m4.postscriptBlueValues)
 
+    def test_number_lists_with_different_lengths(self):
+        self.assertIn("postscriptBlueValues", _numberListAttrs)
+
+        info1 = _TestInfoObject()
+        info1.postscriptBlueValues = [1, 2]
+        m1 = MathInfo(info1)
+
+        info2 = _TestInfoObject()
+        info2.postscriptBlueValues = [1, 2, 3]
+        m2 = MathInfo(info2)
+
+        m3 = m2 - m1
+
+        self.assertIsNone(m3.postscriptBlueValues)
+
+        m4 = m1 - m2
+
+        self.assertIsNone(m4.postscriptBlueValues)
+
+        m5 = m1 + m2
+
+        self.assertIsNone(m5.postscriptBlueValues)
+
 
 # ----
 # Test Data
