@@ -70,7 +70,8 @@ class MathGlyph(object):
         same order as the original.
     """
 
-    def __init__(self, glyph):
+    def __init__(self, glyph, strict=False):
+        self.strict = strict
         self.contours = []
         self.components = []
         if glyph is None:
@@ -84,7 +85,7 @@ class MathGlyph(object):
             self.height = None
             self.note = None
         else:
-            p = MathGlyphPen(self)
+            p = MathGlyphPen(self, strict=strict)
             glyph.drawPoints(p)
             self.anchors = [dict(anchor) for anchor in glyph.anchors]
             self.guidelines = [_expandGuideline(guideline) for guideline in glyph.guidelines]
@@ -334,7 +335,8 @@ class MathGlyphPen(AbstractPointPen):
     Point pen for building MathGlyph data structures.
     """
 
-    def __init__(self, glyph=None):
+    def __init__(self, glyph=None,  strict=False):
+        self.strict = strict # do not add offcurvess
         if glyph is None:
             self.contours = []
             self.components = []
@@ -374,18 +376,21 @@ class MathGlyphPen(AbstractPointPen):
         holdingOffCurves = []
         for index, point in enumerate(points):
             segmentType = point[0]
-            if segmentType == "line":
-                pt, smooth, name, identifier = point[1:]
-                prevPt = points[index - 1][1]
-                if index == 0:
-                    holdingOffCurves.append((None, prevPt, False, None, None))
-                    holdingOffCurves.append((None, pt, False, None, None))
-                else:
-                    contourPoints.append((None, prevPt, False, None, None))
-                    contourPoints.append((None, pt, False, None, None))
-                contourPoints.append(("curve", pt, smooth, name, identifier))
-            else:
+            if self.strict:
                 contourPoints.append(point)
+            else:
+                if segmentType == "line":
+                    pt, smooth, name, identifier = point[1:]
+                    prevPt = points[index - 1][1]
+                    if index == 0:
+                        holdingOffCurves.append((None, prevPt, False, None, None))
+                        holdingOffCurves.append((None, pt, False, None, None))
+                    else:
+                        contourPoints.append((None, prevPt, False, None, None))
+                        contourPoints.append((None, pt, False, None, None))
+                    contourPoints.append(("curve", pt, smooth, name, identifier))
+                else:
+                    contourPoints.append(point)
         contourPoints.extend(holdingOffCurves)
 
     def beginPath(self, identifier=None):
