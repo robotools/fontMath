@@ -44,6 +44,8 @@ def divPt(pt, f):
 
 def factorAngle(angle, f, func):
     (f1, f2) = f
+    if f1 == f2:
+        return func(angle, f1)
     rangle = math.radians(angle)
     x = math.cos(rangle)
     y = math.sin(rangle)
