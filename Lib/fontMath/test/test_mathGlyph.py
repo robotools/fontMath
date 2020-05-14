@@ -895,15 +895,32 @@ class PrivateFuncsTest(unittest.TestCase):
 
     def test_processMathTwoComponents(self):
         components = [
-            dict(baseGlyph="A", transformation=(1, 2, 3, 4, 5, 6),
-                 identifier="1"),
+            dict(baseGlyph="A", transformation=(1, 2, 3, 4, 5, 6), identifier="1")
+        ]
+        scaled_components = [
+            dict(baseGlyph="A", transformation=(2, 4, 4.5, 6, 10, 9), identifier="1")
         ]
         self.assertEqual(
             _processMathTwoComponents(components, (2, 1.5), mulPt),
+            scaled_components
+        )
+        self.assertEqual(
+            _processMathTwoComponents(
+                components, (2, 1.5), mulPt, scaleComponentTransform=True
+            ),
+            scaled_components
+        )
+        self.assertEqual(
+            _processMathTwoComponents(
+                components, (2, 1.5), mulPt, scaleComponentTransform=False
+            ),
             [
-                dict(baseGlyph="A", transformation=(2, 4, 4.5, 6, 10, 9),
-                     identifier="1")
-            ]
+                dict(
+                    baseGlyph="A",
+                    transformation=(1, 2, 3, 4, 10, 9),
+                    identifier="1"
+                )
+            ],
         )
 
     def test_expandImage(self):
@@ -978,6 +995,14 @@ class PrivateFuncsTest(unittest.TestCase):
         self.assertEqual(
             _processMathTwoTransformation(transformation, (2, 1.5), mulPt),
             (2, 4, 4.5, 6, 10, 9)
+        )
+        self.assertEqual(
+            _processMathTwoTransformation(transformation, (2, 1.5), mulPt, doScale=True),
+            (2, 4, 4.5, 6, 10, 9)
+        )
+        self.assertEqual(
+            _processMathTwoTransformation(transformation, (2, 1.5), mulPt, doScale=False),
+            (1, 2, 3, 4, 10, 9)
         )
 
     def test_roundContours(self):

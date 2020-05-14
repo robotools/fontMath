@@ -70,7 +70,19 @@ class MathGlyph(object):
         same order as the original.
     """
 
-    def __init__(self, glyph):
+    def __init__(self, glyph, scaleComponentTransform=True):
+        """Initialize a new MathGlyph object.
+
+        Args:
+            glyph: Input defcon or defcon-like Glyph object to copy from. Set to None to
+                to make an empty MathGlyph.
+            scaleComponentTransform (bool): when performing multiplication or division, by
+                default all elements of a component's affine transformation matrix are
+                multiplied by the given scalar. If scaleComponentTransform is False, then
+                only the component's xOffset and yOffset attributes are scaled, whereas the
+                xScale, xyScale, yxScale and yScale attributes are kept unchanged.
+        """
+        self.scaleComponentTransform = scaleComponentTransform
         self.contours = []
         self.components = []
         if glyph is None:
@@ -220,7 +232,9 @@ class MathGlyph(object):
         # components
         copiedGlyph.components = []
         if self.components:
-            copiedGlyph.components = _processMathTwoComponents(self.components, factor, ptFunc)
+            copiedGlyph.components = _processMathTwoComponents(
+                self.components, factor, ptFunc, scaleComponentTransform=self.scaleComponentTransform
+            )
         # anchors
         copiedGlyph.anchors = []
         if self.anchors:
@@ -689,11 +703,13 @@ def _processMathOneComponents(componentPairs, func):
         result.append(component)
     return result
 
-def _processMathTwoComponents(components, factor, func):
+def _processMathTwoComponents(components, factor, func, scaleComponentTransform=True):
     result = []
     for component in components:
         component = dict(component)
-        component["transformation"] = _processMathTwoTransformation(component["transformation"], factor, func)
+        component["transformation"] = _processMathTwoTransformation(
+            component["transformation"], factor, func, doScale=scaleComponentTransform
+        )
         result.append(component)
     return result
 
@@ -761,10 +777,11 @@ def _processMathOneTransformation(transformation1, transformation2, func):
     xOffset, yOffset = func((xOffset1, yOffset1), (xOffset2, yOffset2))
     return (xScale, xyScale, yxScale, yScale, xOffset, yOffset)
 
-def _processMathTwoTransformation(transformation, factor, func):
+def _processMathTwoTransformation(transformation, factor, func, doScale=True):
     xScale, xyScale, yxScale, yScale, xOffset, yOffset = transformation
-    xScale, yScale = func((xScale, yScale), factor)
-    xyScale, yxScale = func((xyScale, yxScale), factor)
+    if doScale:
+        xScale, yScale = func((xScale, yScale), factor)
+        xyScale, yxScale = func((xyScale, yxScale), factor)
     xOffset, yOffset = func((xOffset, yOffset), factor)
     return (xScale, xyScale, yxScale, yScale, xOffset, yOffset)
 
