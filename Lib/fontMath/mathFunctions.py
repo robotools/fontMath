@@ -44,6 +44,10 @@ def divPt(pt, f):
 
 def factorAngle(angle, f, func):
     (f1, f2) = f
+    # If both factors are equal, assume a scalar factor and scale the angle as such.
+    if f1 == f2:
+        return func(angle, f1)
+    # Otherwise, scale x and y components separately.
     rangle = math.radians(angle)
     x = math.cos(rangle)
     y = math.sin(rangle)

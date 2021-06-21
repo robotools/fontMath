@@ -95,6 +95,26 @@ class MathInfoTest(unittest.TestCase):
             expected[attr] = expectedValue
         self.assertEqual(sorted(expected.items()), sorted(written.items()))
 
+    def test_angle(self):
+        info1 = MathInfo(_TestInfoObject())
+        info1.italicAngle = 10
+
+        info2 = info1 - info1
+        self.assertEqual(info2.italicAngle, 0)
+        info2 = info1 + info1 + info1
+        self.assertEqual(info2.italicAngle, 30)
+        info2 = 10 * info1
+        self.assertEqual(info2.italicAngle, 100)
+        info2 = info1 / 20 
+        self.assertEqual(info2.italicAngle, 0.5)
+
+        info2 = info1 * 2.5
+        self.assertEqual(info2.italicAngle, 25)
+        info2 = info1 * (2.5, 2.5)
+        self.assertEqual(info2.italicAngle, 25)
+        info2 = info1 * (2.5, 5)
+        self.assertEqual(round(info2.italicAngle), 19)
+
     def test_mul_data_subset(self):
         info1 = MathInfo(_TestInfoObject(_testDataSubset))
         info2 = info1 * 2.5
@@ -268,7 +288,7 @@ _testData = dict(
     xHeight=400,
     capHeight=650,
     ascender=700,
-    italicAngle=0,
+    italicAngle=5,
     # head
     openTypeHeadLowestRecPPEM=5,
     # hhea
@@ -304,7 +324,7 @@ _testData = dict(
     openTypeVheaCaretSlopeRun=1,
     openTypeVheaCaretOffset=1,
     # postscript
-    postscriptSlantAngle=0,
+    postscriptSlantAngle=-5,
     postscriptUnderlineThickness=100,
     postscriptUnderlinePosition=-150,
     postscriptBlueValues=[-10, 0, 400, 410, 650, 660, 700, 710],

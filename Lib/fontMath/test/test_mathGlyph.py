@@ -392,7 +392,7 @@ class MathGlyphTest(unittest.TestCase):
         ]
         glyph2 = glyph1 * 3
         expected = [
-            dict(x=1 * 3, y=3 * 3, angle=5, name="test", identifier="1",
+            dict(x=1 * 3, y=3 * 3, angle=15, name="test", identifier="1",
                  color="0,0,0,0")
         ]
         self.assertEqual(glyph2.guidelines, expected)
@@ -428,11 +428,11 @@ class MathGlyphTest(unittest.TestCase):
         glyph4 = glyph1 - glyph2
         self.assertEqual(glyph4.guidelines, expected_sub)
 
-        expected_mul = [dict(name="foo", identifier="1", x=0, y=0, angle=359)]
+        expected_mul = [dict(name="foo", identifier="1", x=0, y=0, angle=355)]
         glyph5 = glyph2 * 5
         self.assertEqual(glyph5.guidelines, expected_mul)
 
-        expected_div = [dict(name="foo", identifier="1", x=0, y=0, angle=359)]
+        expected_div = [dict(name="foo", identifier="1", x=0, y=0, angle=71.8)]
         glyph6 = glyph2 / 5
         self.assertEqual(glyph6.guidelines, expected_div)
 
