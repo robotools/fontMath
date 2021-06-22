@@ -397,21 +397,18 @@ class MathGlyphPen(AbstractPointPen):
         holdingOffCurves = []
         for index, point in enumerate(points):
             segmentType = point[0]
-            if self.strict:
-                contourPoints.append(point)
-            else:
-                if segmentType == "line":
-                    pt, smooth, name, identifier = point[1:]
-                    prevPt = points[index - 1][1]
-                    if index == 0:
-                        holdingOffCurves.append((None, prevPt, False, None, None))
-                        holdingOffCurves.append((None, pt, False, None, None))
-                    else:
-                        contourPoints.append((None, prevPt, False, None, None))
-                        contourPoints.append((None, pt, False, None, None))
-                    contourPoints.append(("curve", pt, smooth, name, identifier))
+            if segmentType == "line" and not self.strict:
+                pt, smooth, name, identifier = point[1:]
+                prevPt = points[index - 1][1]
+                if index == 0:
+                    holdingOffCurves.append((None, prevPt, False, None, None))
+                    holdingOffCurves.append((None, pt, False, None, None))
                 else:
-                    contourPoints.append(point)
+                    contourPoints.append((None, prevPt, False, None, None))
+                    contourPoints.append((None, pt, False, None, None))
+                contourPoints.append(("curve", pt, smooth, name, identifier))
+            else:
+                contourPoints.append(point)
         contourPoints.extend(holdingOffCurves)
 
     def beginPath(self, identifier=None):
