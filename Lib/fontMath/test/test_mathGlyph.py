@@ -543,6 +543,27 @@ class MathGlyphPenTest(unittest.TestCase):
         self.assertEqual(pen.contours[-1]["points"], expected)
         self.assertEqual(pen.contours[-1]["identifier"], 'contour 1')
 
+    def test_pen_with_lines_strict(self):
+        pen = MathGlyphPen(strict=True)
+        pen.beginPath(identifier="contour 1")
+        pen.addPoint((0,   100), "line", smooth=False, name="name 1",
+                     identifier="point 1")
+        pen.addPoint((100, 100), "line", smooth=False, name="name 2",
+                     identifier="point 2")
+        pen.addPoint((100, 0),   "line", smooth=False, name="name 3",
+                     identifier="point 3")
+        pen.addPoint((0,   0),   "line", smooth=False, name="name 4",
+                     identifier="point 4")
+        pen.endPath()
+        expected = [
+            ("line", (0,   100), False, "name 1", "point 1"),
+            ("line", (100, 100), False, "name 2", "point 2"),
+            ("line", (100, 0),   False, "name 3", "point 3"),
+            ("line", (0,   0),   False, "name 4", "point 4"),
+        ]
+        self.assertEqual(pen.contours[-1]["points"], expected)
+        self.assertEqual(pen.contours[-1]["identifier"], 'contour 1')
+
     def test_pen_with_lines_and_curves(self):
         pen = MathGlyphPen()
         pen.beginPath(identifier="contour 1")
@@ -566,6 +587,39 @@ class MathGlyphPenTest(unittest.TestCase):
             (None,    (0,   50), False, None,     None),
             (None,    (50, 100), False, None,     None),
             ("curve", (50, 100), False, "name 2", "point 2"),
+            (None,    (75, 100), False, None,     None),
+            (None,    (100, 75), False, None,     None),
+            ("curve", (100, 50), True, "name 3", "point 3"),
+            (None,    (100, 25), False, None,     None),
+            (None,    (75,   0), False, None,     None),
+            ("curve", (50,   0), False, "name 4", "point 4"),
+            (None,    (25,   0), False, None,     None),
+            (None,    (0,   25), False, None,     None),
+        ]
+        self.assertEqual(pen.contours[-1]["points"], expected)
+        self.assertEqual(pen.contours[-1]["identifier"], 'contour 1')
+
+    def test_pen_with_lines_and_curves_strict(self):
+        pen = MathGlyphPen(strict=True)
+        pen.beginPath(identifier="contour 1")
+        pen.addPoint((0,   50), "curve", smooth=False, name="name 1",
+                     identifier="point 1")
+        pen.addPoint((50, 100), "line",  smooth=False, name="name 2",
+                     identifier="point 2")
+        pen.addPoint((75, 100), None)
+        pen.addPoint((100, 75), None)
+        pen.addPoint((100, 50), "curve", smooth=True,  name="name 3",
+                     identifier="point 3")
+        pen.addPoint((100, 25), None)
+        pen.addPoint((75,   0), None)
+        pen.addPoint((50,   0), "curve", smooth=False, name="name 4",
+                     identifier="point 4")
+        pen.addPoint((25,   0), None)
+        pen.addPoint((0,   25), None)
+        pen.endPath()
+        expected = [
+            ("curve", (0,   50), False, "name 1", "point 1"),
+            ("line", (50, 100), False, "name 2", "point 2"),
             (None,    (75, 100), False, None,     None),
             (None,    (100, 75), False, None,     None),
             ("curve", (100, 50), True, "name 3", "point 3"),

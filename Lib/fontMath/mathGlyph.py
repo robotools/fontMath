@@ -70,7 +70,7 @@ class MathGlyph(object):
         same order as the original.
     """
 
-    def __init__(self, glyph, scaleComponentTransform=True):
+    def __init__(self, glyph, scaleComponentTransform=True, strict=False):
         """Initialize a new MathGlyph object.
 
         Args:
@@ -81,10 +81,15 @@ class MathGlyph(object):
                 multiplied by the given scalar. If scaleComponentTransform is False, then
                 only the component's xOffset and yOffset attributes are scaled, whereas the
                 xScale, xyScale, yxScale and yScale attributes are kept unchanged.
+            strict (bool): when set to False, offcurve points will be added to all 
+                straight segments to improve compatibility. Any offcurves that are
+                still on-point will be filtered when extracted. When set to True,
+                no offcurves will be added or filtered. 
         """
         self.scaleComponentTransform = scaleComponentTransform
         self.contours = []
         self.components = []
+        self.strict = strict
         if glyph is None:
             self.anchors = []
             self.guidelines = []
@@ -96,7 +101,7 @@ class MathGlyph(object):
             self.height = None
             self.note = None
         else:
-            p = MathGlyphPen(self)
+            p = MathGlyphPen(self, strict=self.strict)
             glyph.drawPoints(p)
             self.anchors = [dict(anchor) for anchor in glyph.anchors]
             self.guidelines = [_expandGuideline(guideline) for guideline in glyph.guidelines]
@@ -323,8 +328,11 @@ class MathGlyph(object):
         glyph.clearAnchors()
         glyph.clearGuidelines()
         glyph.lib.clear()
-        cleanerPen = FilterRedundantPointPen(pointPen)
-        self.drawPoints(cleanerPen)
+        if self.strict:
+            self.drawPoints(pointPen)
+        else:
+            cleanerPen = FilterRedundantPointPen(pointPen)
+            self.drawPoints(cleanerPen)
         glyph.anchors = [dict(anchor) for anchor in self.anchors]
         glyph.guidelines = [_compressGuideline(guideline) for guideline in self.guidelines]
         glyph.image = _compressImage(self.image)
@@ -348,7 +356,8 @@ class MathGlyphPen(AbstractPointPen):
     Point pen for building MathGlyph data structures.
     """
 
-    def __init__(self, glyph=None):
+    def __init__(self, glyph=None, strict=False):
+        self.strict = strict # do not add offcurvess
         if glyph is None:
             self.contours = []
             self.components = []
@@ -388,7 +397,7 @@ class MathGlyphPen(AbstractPointPen):
         holdingOffCurves = []
         for index, point in enumerate(points):
             segmentType = point[0]
-            if segmentType == "line":
+            if segmentType == "line" and not self.strict:
                 pt, smooth, name, identifier = point[1:]
                 prevPt = points[index - 1][1]
                 if index == 0:
