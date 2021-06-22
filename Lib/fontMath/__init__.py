@@ -10,4 +10,4 @@ from fontMath.mathInfo import MathInfo
 from fontMath.mathKerning import MathKerning
 
 
-version = __version__ = "0.7.0.dev0"
+version = __version__ = "0.7.0"
