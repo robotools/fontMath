@@ -13,7 +13,6 @@ wheel = ['wheel'] if needs_wheel else []
 
 setup(
     name="fontMath",
-    version="0.6.1.dev0",
     description="A set of objects for performing math operations on font data.",
     # long_description=long_description,
     author="Tal Leming",
@@ -22,8 +21,13 @@ setup(
     license="MIT",
     package_dir={"": "Lib"},
     packages=find_packages("Lib"),
+    include_package_data=True,
     test_suite="fontMath",
-    setup_requires=pytest_runner + wheel,
+    use_scm_version={
+        "write_to": 'Lib/fontMath/_version.py',
+        "write_to_template": '__version__ = "{version}"',
+    },
+    setup_requires=pytest_runner + wheel + ['setuptools_scm'],
     tests_require=[
         'pytest>=3.0.3',
     ],
@@ -41,4 +45,5 @@ setup(
         'Topic :: Multimedia :: Graphics :: Editors :: Vector-Based',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
+    zip_safe=True,
 )

@@ -20,3 +20,6 @@ htmlcov/
 # OS X Finder
 .DS_Store
 .pytest_cache
+
+# auto-generated version file
+Lib/fontMath/_version.py
