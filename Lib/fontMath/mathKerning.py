@@ -168,6 +168,10 @@ class MathKerning(object):
         return k
 
     def _processMathOne(self, other, funct):
+        g1 = self.groups()
+        g2 = other.groups()
+        if g1 != g2:
+            raise ValueError("Kerning groups must be exactly the same.")
         comboPairs = set(self._kerning.keys()) | set(other._kerning.keys())
         kerning = dict.fromkeys(comboPairs, None)
         for k in comboPairs:
@@ -175,17 +179,7 @@ class MathKerning(object):
             v2 = other.get(k)
             v = funct(v1, v2)
             kerning[k] = v
-        g1 = self.groups()
-        g2 = other.groups()
-        if g1 == g2 or not g1 or not g2:
-            groups = g1 or g2
-        else:
-            comboGroups = set(g1.keys()) | set(g2.keys())
-            groups = dict.fromkeys(comboGroups, None)
-            for groupName in comboGroups:
-                s1 = set(g1.get(groupName, []))
-                s2 = set(g2.get(groupName, []))
-                groups[groupName] = sorted(list(s1 | s2))
+        groups = g1 or g2
         ks = MathKerning(kerning, groups)
         return ks
 

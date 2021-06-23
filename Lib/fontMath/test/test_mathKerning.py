@@ -115,7 +115,7 @@ class MathKerningTest(unittest.TestCase):
         obj2 = obj1.copy()
         self.assertEqual(sorted(obj1.items()), sorted(obj2.items()))
 
-    def test_add(self):
+    def test_add_different_groups(self):
         kerning1 = {
             ("A", "A"): 1,
             ("B", "B"): 1,
@@ -140,21 +140,8 @@ class MathKerningTest(unittest.TestCase):
             "public.kern1.D": ["D", "H"],
             "public.kern2.D": ["D", "H"],
         }
-        obj = MathKerning(kerning1, groups1) + MathKerning(kerning2, groups2)
-        self.assertEqual(
-            sorted(obj.items()),
-            [(('B', 'B'), 2),
-             (('NotIn1', 'NotIn1'), 1),
-             (('NotIn2', 'NotIn2'), 1),
-             (('public.kern1.D', 'public.kern2.D'), 2),
-             (('public.kern1.NotIn1', 'C'), 1),
-             (('public.kern1.NotIn2', 'C'), 1)])
-        self.assertEqual(
-            obj.groups()["public.kern1.D"],
-            ['D', 'H'])
-        self.assertEqual(
-            obj.groups()["public.kern2.D"],
-            ['D', 'H'])
+        with self.assertRaises(ValueError):
+            obj = MathKerning(kerning1, groups1) + MathKerning(kerning2, groups2)
 
     def test_add_same_groups(self):
         kerning1 = {
@@ -195,7 +182,7 @@ class MathKerningTest(unittest.TestCase):
             obj.groups()["public.kern2.D"],
             ['D', 'H'])
 
-    def test_sub(self):
+    def test_sub_different_groups(self):
         kerning1 = {
             ("A", "A"): 1,
             ("B", "B"): 1,
@@ -220,14 +207,36 @@ class MathKerningTest(unittest.TestCase):
             "public.kern1.D": ["D"],
             "public.kern2.D": ["D", "H"],
         }
+        with self.assertRaises(ValueError):
+            obj = MathKerning(kerning1, groups1) - MathKerning(kerning2, groups2)
+
+    def test_sub_same_groups(self):
+        kerning1 = {
+            ("A", "A"): 1,
+            ("B", "B"): 1,
+            ("NotIn2", "NotIn2"): 1,
+            ("public.kern1.D", "public.kern2.D"): 1,
+        }
+        groups1 = {
+            "public.kern1.D": ["D", "H"],
+            "public.kern2.D": ["D", "H"],
+        }
+        kerning2 = {
+            ("A", "A"): -1,
+            ("B", "B"): 1,
+            ("NotIn1", "NotIn1"): 1,
+            ("public.kern1.D", "public.kern2.D"): 1,
+        }
+        groups2 = {
+            "public.kern1.D": ["D", "H"],
+            "public.kern2.D": ["D", "H"],
+        }
         obj = MathKerning(kerning1, groups1) - MathKerning(kerning2, groups2)
         self.assertEqual(
             sorted(obj.items()),
             [(('A', 'A'), 2),
              (('NotIn1', 'NotIn1'), -1),
-             (('NotIn2', 'NotIn2'), 1),
-             (('public.kern1.NotIn1', 'C'), -1),
-             (('public.kern1.NotIn2', 'C'), 1)])
+             (('NotIn2', 'NotIn2'), 1)])
         self.assertEqual(
             obj.groups()["public.kern1.D"],
             ['D', 'H'])
