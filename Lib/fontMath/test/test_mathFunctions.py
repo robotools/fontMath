@@ -1,10 +1,9 @@
 import unittest
-from fontTools.misc.py23 import round2
 from fontTools.misc.fixedTools import otRound
 from fontMath.mathFunctions import (
     add, addPt, sub, subPt, mul, mulPt, div, divPt, factorAngle, _roundNumber,
     setRoundIntegerFunction, setRoundFloatFunction,
-    _ROUND_INTEGER_FUNC, _ROUND_FLOAT_FUNC,
+    _ROUND_INTEGER_FUNC, _ROUND_FLOAT_FUNC, round2
 )
 
 

@@ -1,6 +1,5 @@
 from __future__ import division
 import math
-from fontTools.misc.py23 import round3
 import sys
 
 __all__ = [
@@ -58,6 +57,40 @@ def factorAngle(angle, f, func):
     )
 
 
+def round2(number, ndigits=None):
+    """
+    Implementation of Python 2 built-in round() function.
+    Rounds a number to a given precision in decimal digits (default
+    0 digits). The result is a floating point number. Values are rounded
+    to the closest multiple of 10 to the power minus ndigits; if two
+    multiples are equally close, rounding is done away from 0.
+    ndigits may be negative.
+    See Python 2 documentation:
+    https://docs.python.org/2/library/functions.html?highlight=round#round
+
+    This is taken from the to-be-deprecated py23 fuction of fonttools
+    """
+    import decimal as _decimal
+
+    if ndigits is None:
+        ndigits = 0
+
+    if ndigits < 0:
+        exponent = 10 ** (-ndigits)
+        quotient, remainder = divmod(number, exponent)
+        if remainder >= exponent // 2 and number >= 0:
+            quotient += 1
+        return float(quotient * exponent)
+    else:
+        exponent = _decimal.Decimal("10") ** (-ndigits)
+
+        d = _decimal.Decimal.from_float(number).quantize(
+            exponent, rounding=_decimal.ROUND_HALF_UP
+        )
+
+        return float(d)
+
+
 def setRoundIntegerFunction(func):
     """ Globally set function for rounding floats to integers.
 
@@ -80,8 +113,8 @@ def setRoundFloatFunction(func):
     _ROUND_FLOAT_FUNC = func
 
 
-_ROUND_INTEGER_FUNC = round3
-_ROUND_FLOAT_FUNC = round3
+_ROUND_INTEGER_FUNC = round
+_ROUND_FLOAT_FUNC = round
 
 
 def _roundNumber(value, ndigits=None):

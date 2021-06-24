@@ -1,7 +1,6 @@
 from __future__ import division, absolute_import
 from copy import deepcopy
-from fontMath.mathFunctions import add, sub, mul, div
-from fontTools.misc.py23 import round2
+from fontMath.mathFunctions import add, sub, mul, div, round2
 
 """
 An object that serves kerning data from a
