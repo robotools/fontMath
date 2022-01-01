@@ -45,5 +45,6 @@ setup(
         'Topic :: Multimedia :: Graphics :: Editors :: Vector-Based',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
+    python_requires='>=3.7',
     zip_safe=True,
 )
