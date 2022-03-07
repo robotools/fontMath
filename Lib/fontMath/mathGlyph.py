@@ -81,10 +81,10 @@ class MathGlyph(object):
                 multiplied by the given scalar. If scaleComponentTransform is False, then
                 only the component's xOffset and yOffset attributes are scaled, whereas the
                 xScale, xyScale, yxScale and yScale attributes are kept unchanged.
-            strict (bool): when set to False, offcurve points will be added to all 
+            strict (bool): when set to False, offcurve points will be added to all
                 straight segments to improve compatibility. Any offcurves that are
                 still on-point will be filtered when extracted. When set to True,
-                no offcurves will be added or filtered. 
+                no offcurves will be added or filtered.
         """
         self.scaleComponentTransform = scaleComponentTransform
         self.contours = []
@@ -432,74 +432,49 @@ class FilterRedundantPointPen(AbstractPointPen):
         self._points = []
 
     def _flushContour(self):
+        # keep the point order and
+        # change the removed flag if the point should be removed
         points = self._points
-        prevOnCurve = None
-        offCurves = []
+        for index, data in enumerate(points):
+            if data["segmentType"] == "curve":
+                prevOnCurve = points[index - 3]
+                prevOffCurve1 = points[index - 2]
+                prevOffCurve2 = points[index - 1]
+                # check if the curve is a super bezier
+                if prevOnCurve["segmentType"] is not None:
+                    if prevOnCurve["pt"] == prevOffCurve1["pt"] and prevOffCurve2["pt"] == data["pt"]:
+                        # the off curves are on top of the on curve point
+                        # change the segmentType
+                        data["segmentType"] = "line"
+                        # flag the off curves to be removed
+                        prevOffCurve1["removed"] = True
+                        prevOffCurve2["removed"] = True
 
-        pointsToDraw = []
-
-        # deal with the first point
-        pt, segmentType, smooth, name, identifier = points[0]
-        # if it is an offcurve, add it to the offcurve list
-        if segmentType is None:
-            offCurves.append((pt, segmentType, smooth, name, identifier))
-        else:
-            # potential redundancy
-            if segmentType == "curve":
-                # gather preceding off curves
-                testOffCurves = []
-                lastPoint = None
-                for i in range(len(points)):
-                    i = -i - 1
-                    testPoint = points[i]
-                    testSegmentType = testPoint[1]
-                    if testSegmentType is not None:
-                        lastPoint = testPoint[0]
-                        break
-                    testOffCurves.append(testPoint[0])
-                # if two offcurves exist we can test for redundancy
-                if len(testOffCurves) == 2:
-                    if testOffCurves[1] == lastPoint and testOffCurves[0] == pt:
-                        segmentType = "line"
-                        # remove the last two points
-                        points = points[:-2]
-            # add the point to the contour
-            pointsToDraw.append((pt, segmentType, smooth, name, identifier))
-            prevOnCurve = pt
-        for pt, segmentType, smooth, name, identifier in points[1:]:
-            # store offcurves
-            if segmentType is None:
-                offCurves.append((pt, segmentType, smooth, name, identifier))
-                continue
-            # curves are a potential redundancy
-            elif segmentType == "curve":
-                if len(offCurves) == 2:
-                    # test for redundancy
-                    if offCurves[0][0] == prevOnCurve and offCurves[1][0] == pt:
-                        offCurves = []
-                        segmentType = "line"
-            # add all offcurves
-            for offCurve in offCurves:
-                pointsToDraw.append(offCurve)
-            # add the on curve
-            pointsToDraw.append((pt, segmentType, smooth, name, identifier))
-            # reset the stored data
-            prevOnCurve = pt
-            offCurves = []
-        # catch any remaining offcurves
-        if len(offCurves) != 0:
-            for offCurve in offCurves:
-                pointsToDraw.append(offCurve)
-        # draw to the pen
-        for pt, segmentType, smooth, name, identifier in pointsToDraw:
-            self._pen.addPoint(pt, segmentType, smooth=smooth, name=name, identifier=identifier)
+        for data in points:
+            if not data["removed"]:
+                self._pen.addPoint(
+                    data["pt"],
+                    data["segmentType"],
+                    smooth=data["smooth"],
+                    name=data["name"],
+                    identifier=data["identifier"]
+                )
 
     def beginPath(self, identifier=None, **kwargs):
         self._points = []
         self._pen.beginPath(identifier=identifier)
 
     def addPoint(self, pt, segmentType=None, smooth=False, name=None, identifier=None, **kwargs):
-        self._points.append((pt, segmentType, smooth, name, identifier))
+        self._points.append(
+            dict(
+                pt=pt,
+                segmentType=segmentType,
+                smooth=smooth,
+                name=name,
+                identifier=identifier,
+                removed=False
+            )
+        )
 
     def endPath(self):
         self._flushContour()
@@ -507,6 +482,7 @@ class FilterRedundantPointPen(AbstractPointPen):
 
     def addComponent(self, baseGlyph, transformation, identifier=None, **kwargs):
         self._pen.addComponent(baseGlyph, transformation, identifier)
+
 
 # -------
 # Support
