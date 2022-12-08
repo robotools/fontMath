@@ -509,6 +509,12 @@ class MathGlyphTest(unittest.TestCase):
         glyph2 = glyph1.round()
         self.assertEqual(glyph2.image, expected)
 
+    def test_copy(self):
+        glyph1 = self._setupTestGlyph()
+        glyph1.unicodes = []
+        glyph2 = glyph1.copy()
+        self.assertEqual(glyph1, glyph2)
+
 
 class MathGlyphPenTest(unittest.TestCase):
     def __init__(self, methodName):

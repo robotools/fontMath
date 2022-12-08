@@ -131,7 +131,7 @@ class MathGlyph(object):
 
     def copy(self):
         """return a new MathGlyph containing all data in self"""
-        return MathGlyph(self)
+        return MathGlyph(self, scaleComponentTransform=self.scaleComponentTransform, strict=self.strict)
 
     def copyWithoutMathSubObjects(self):
         """
@@ -143,7 +143,7 @@ class MathGlyph(object):
 
         this is used mainly for internal glyph math.
         """
-        n = MathGlyph(None)
+        n = MathGlyph(None, scaleComponentTransform=self.scaleComponentTransform, strict=self.strict)
         n.name = self.name
         if self.unicodes is not None:
             n.unicodes = list(self.unicodes)
