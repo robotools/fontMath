@@ -511,6 +511,7 @@ class MathGlyphTest(unittest.TestCase):
 
     def test_copy(self):
         glyph1 = self._setupTestGlyph()
+        glyph1.unicodes = []
         glyph2 = glyph1.copy()
         self.assertEqual(glyph1, glyph2)
 
