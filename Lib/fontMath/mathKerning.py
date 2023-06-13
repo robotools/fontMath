@@ -18,13 +18,14 @@ side2Prefix = "public.kern2."
 
 class MathKerning(object):
 
-    def __init__(self, kerning=None, groups=None):
+    def __init__(self, kerning=None, groups=None, strictGroups=False):
         if kerning is None:
             kerning = {}
         if groups is None:
             groups = {}
         self.update(kerning)
         self.updateGroups(groups)
+        self.strictGroups = strictGroups
 
     # -------
     # Loading
@@ -167,6 +168,11 @@ class MathKerning(object):
         return k
 
     def _processMathOne(self, other, funct):
+        g1 = self.groups()
+        g2 = other.groups()
+        if self.strictGroups or other.strictGroups:
+            if g1 != g2:
+                raise ValueError("Kerning groups must be exactly the same.")
         comboPairs = set(self._kerning.keys()) | set(other._kerning.keys())
         kerning = dict.fromkeys(comboPairs, None)
         for k in comboPairs:
@@ -174,8 +180,6 @@ class MathKerning(object):
             v2 = other.get(k)
             v = funct(v1, v2)
             kerning[k] = v
-        g1 = self.groups()
-        g2 = other.groups()
         if g1 == g2 or not g1 or not g2:
             groups = g1 or g2
         else:
