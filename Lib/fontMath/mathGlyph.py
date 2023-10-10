@@ -173,7 +173,8 @@ class MathGlyph(object):
         # width
         copiedGlyph.width = func(self.width, otherGlyph.width)
         # height
-        copiedGlyph.height = func(self.height, otherGlyph.height)
+        if self.height is not None and otherGlyph.height is not None:
+            copiedGlyph.height = func(self.height, otherGlyph.height)
         # contours
         copiedGlyph.contours = []
         if self.contours:
@@ -229,7 +230,8 @@ class MathGlyph(object):
         # width
         copiedGlyph.width = func(self.width, factor[0])
         # height
-        copiedGlyph.height = func(self.height, factor[1])
+        if self.height is not None:
+            copiedGlyph.height = func(self.height, factor[1])
         # contours
         copiedGlyph.contours = []
         if self.contours:
