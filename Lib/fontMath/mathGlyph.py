@@ -66,7 +66,7 @@ class MathGlyph(object):
     -   absolute contour compatibility is required
     -   absolute component, anchor, guideline and image compatibility is NOT required.
         in cases of incompatibility in this data, only compatible data is processed and
-        returned. becuase of this, anchors and components may not be returned in the
+        returned. because of this, anchors and components may not be returned in the
         same order as the original.
     """
 
