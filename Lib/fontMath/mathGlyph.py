@@ -381,18 +381,19 @@ class MathGlyphPen(AbstractPointPen):
         contourPoints = self.contours[-1]["points"]
         points = self._points
         # move offcurves at the beginning of the contour to the end
-        haveOnCurve = False
-        for point in points:
-            if point[0] is not None:
-                haveOnCurve = True
-                break
-        if haveOnCurve:
-            while 1:
-                if points[0][0] is None:
-                    point = points.pop(0)
-                    points.append(point)
-                else:
+        if not self.strict:
+            haveOnCurve = False
+            for point in points:
+                if point[0] is not None:
+                    haveOnCurve = True
                     break
+            if haveOnCurve:
+                while 1:
+                    if points[0][0] is None:
+                        point = points.pop(0)
+                        points.append(point)
+                    else:
+                        break
         # convert lines to curves
         holdingOffCurves = []
         for index, point in enumerate(points):
