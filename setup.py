@@ -40,11 +40,10 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 3',
         'Topic :: Multimedia :: Graphics :: Editors :: Vector-Based',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
-    python_requires='>=3.7',
+    python_requires='>=3.9',
     zip_safe=True,
 )
